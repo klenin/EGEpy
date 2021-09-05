@@ -12,6 +12,9 @@ questions = [ q.generate() for q in [
     A01.Simple(rnd),
     A02.SportsmanNumbers(rnd),
     A02.CarNumbers(rnd),
+    A02.Units(rnd),
+    A02.MinRoutes(rnd),
+    A02.SportAthleteNumbers(rnd),
     A03.Ones(rnd),
 ] ]
 
