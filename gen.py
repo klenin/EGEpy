@@ -1,14 +1,19 @@
+import sys
+
 import EGE.GenBase
 import EGE.Html
 import EGE.Random
+import EGE.Gen.EGE.A01
 import EGE.Gen.EGE.A03
 
 rnd = EGE.Random.Random(2342134)
 
-questions = [
-    EGE.Gen.EGE.A03.Ones(rnd).generate(),
-    EGE.Gen.EGE.A03.Ones(rnd).generate(),
-    EGE.GenBase.SingleChoice(rnd, 'q2', 1).set_variants([ 'v1', 'v2', 'v3' ]),
-]
+questions = [ q.generate() for q in [
+    EGE.Gen.EGE.A01.Recode(rnd),
+    EGE.Gen.EGE.A01.Simple(rnd),
+    EGE.Gen.EGE.A03.Ones(rnd),
+] ]
 
+if not sys.stdout.isatty():
+    sys.stdout.reconfigure(encoding='utf-8')
 print(EGE.Html.make_html(questions))
