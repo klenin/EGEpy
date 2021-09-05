@@ -9,7 +9,7 @@ def bits_or_bytes(rnd: Random, n: int):
 
 @dataclass
 class FromTo:
-    from_: str; to: str; change: str = None
+    from_: str; to: str; change: str = ''
 
 class Recode(SingleChoice):
 

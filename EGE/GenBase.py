@@ -11,10 +11,13 @@ class Question:
         self.text = text
         self.correct = correct
 
-    def post_process():
+    def generate(self):
+        raise ValueError()
+
+    def post_process(self):
         pass
 
-    def export_type():
+    def export_type(self):
         raise EGEError()
 
 
@@ -22,7 +25,7 @@ class SingleChoice(Question):
 
     def __init__(self, rnd, text: str = None, correct: int = 0):
         super().__init__(rnd, text, correct)
-        self.variants = []
+        self.variants: list = []
 
     def export_type(self):
         return 'sc'

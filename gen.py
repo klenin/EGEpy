@@ -16,5 +16,5 @@ questions = [ q.generate() for q in [
 ] ]
 
 if not sys.stdout.isatty():
-    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8') # type: ignore
 print(EGE.Html.make_html(questions))

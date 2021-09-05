@@ -1,22 +1,22 @@
 
 from functools import partial
 
-def _remove_trailing_underline(s):
+def _remove_trailing_underline(s: str):
     return s[:-1] if s[-1] == '_' else s
 
 def attrs_str(**kwargs):
     return ''.join(
         f" {_remove_trailing_underline(k)}=\"{v}\"" for k, v in sorted(kwargs.items()))
 
-def open_tag(tag, attrs = {}, rest = '>'):
+def open_tag(tag: str, attrs: dict = {}, rest: str = '>'):
     return '<' + tag + attrs_str(**attrs) + rest
 
-def tag(tag, body = None, **attrs):
+def tag(tag: str, body = None, **attrs):
     if hasattr(body, '__iter__'):
         body = ''.join(body)
     return open_tag(tag, attrs, f">{body}</{tag}>" if body else '/>')
 
-def close_tag(tag):
+def close_tag(tag: str):
     return f"</{tag}>"
 
 def _build():

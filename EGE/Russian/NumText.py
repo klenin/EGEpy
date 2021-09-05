@@ -70,10 +70,10 @@ case_defs = {
     ),
 }
 
-def num_by_words(num: int, gender: int, case: str = 'nominative'):
+def num_by_words(num: int, gender: int, case_name: str = 'nominative'):
     if not (0 <= num < 1000):
         raise ValueError()
-    case = case_defs[case]
+    case = case_defs[case_name]
     if num == 0:
         return case.zeroes
     hundreds = num >= 100 and case.hundreds[num // 100 - 1]
