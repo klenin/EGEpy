@@ -1,6 +1,3 @@
-# Copyright © 2021 Alexander S. Klenin
-# Licensed under GPL version 2 or later.
-# http://github.com/klenin/EGE2
 
 from dataclasses import dataclass
 
