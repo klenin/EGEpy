@@ -20,9 +20,43 @@ def close_tag(tag: str):
     return f"</{tag}>"
 
 def _build():
-    for fn in ['div', 'li', 'ol']:
+    for fn in [ 'code', 'div', 'li', 'ol', 'p', 'table', 'td', 'th', 'tr', 'ul' ]:
         globals()[fn] = partial(tag, fn)
 _build()
+
+def row(tag_: str, data: list):
+    return tag('tr', ''.join(tag(tag_, d) for d in data))
+
+def row_n(tag_: str, data: list): return row(tag_, data) + "\n"
+
+def cdata(body: str): return f"<![CDATA[{body}]]>"
+
+def pre(data: str, **attrs): return tag('pre', cdata(data), **attrs)
+
+def style(**kwargs):
+    return { 'style':
+        ' '.join(k.replace('_', '-') + f": {v};" for k, v in sorted(kwargs.items()))
+    }
+
+def div_xy(text, x: int, y: int, **attrs):
+    return tag('div', text, **style(width=f"{x}px", height=f"{y}px", **attrs))
+
+nbsp = ' '
+
+def tag2(tag1: str, tag2: str, body: list, attrs1, attrs2):
+    return tag(tag1, [ tag(tag2, b, **attrs2) for b in body ], **attrs1)
+
+def ul_li(body: list, attrs1={}, attrs2={}):
+    return tag2('ul', 'li', body, attrs1, attrs2)
+
+def ol_li(body: list, attrs1={}, attrs2={}):
+    return tag2('ol', 'li', body, attrs1, attrs2)
+
+def escape(s: str):
+    return (s.
+        replace('&', '&amp;').
+        replace('<', '&lt;').
+        replace('>', '&gt;'))
 
 def global_head():
     return """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"

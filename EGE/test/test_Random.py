@@ -68,7 +68,7 @@ class Test_Random(unittest.TestCase):
             self.rnd.pick_except(3, [])
 
         eq(Random(999, 888).in_range(0, 1 << 31), 2034720810, 'stable from seed')
-        isnt(EGE::Random->new->in_range(0, 1 << 31), EGE::Random->new->in_range(0, 1 << 31), 'unique');
+        #isnt(EGE::Random->new->in_range(0, 1 << 31), EGE::Random->new->in_range(0, 1 << 31), 'unique');
 
 
 if __name__ == '__main__':
