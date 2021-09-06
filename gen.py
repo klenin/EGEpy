@@ -3,15 +3,16 @@ import sys
 import EGE.GenBase
 import EGE.Html
 import EGE.Random
-import EGE.Gen.EGE.A01
-import EGE.Gen.EGE.A03
+from EGE.Gen.EGE import A01, A02, A03
 
 rnd = EGE.Random.Random(2342134)
 
 questions = [ q.generate() for q in [
-    EGE.Gen.EGE.A01.Recode(rnd),
-    EGE.Gen.EGE.A01.Simple(rnd),
-    EGE.Gen.EGE.A03.Ones(rnd),
+    A01.Recode(rnd),
+    A01.Simple(rnd),
+    A02.SportsmanNumbers(rnd),
+    A02.CarNumbers(rnd),
+    A03.Ones(rnd),
 ] ]
 
 if not sys.stdout.isatty():

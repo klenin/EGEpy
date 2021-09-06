@@ -47,4 +47,4 @@ def make_question_html(q):
     return div(f"{q.text}\n" + ol("\n" + result) + "\n", class_='q') + "\n"
 
 def make_html(questions):
-    return global_head() + tag('body', map(make_question_html, questions))
+    return global_head() + tag('body', map(make_question_html, questions)) + '</html>\n'
