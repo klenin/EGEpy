@@ -29,14 +29,14 @@ class Test_Random(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, '<', msg='in_range empty'):
             self.rnd.in_range(1, 0)
 
-        eq(self.rnd.in_range_except(1, 2, 1), 2, 'in_range_except')
-        eq(self.rnd.in_range_except(1, 4, [ 1, 2, 3 ]), 4, 'in_range_except many')
+        eq(self.rnd.in_range(1, 2, exclude=1), 2, 'in_range exclude')
+        eq(self.rnd.in_range(1, 4, exclude=[ 1, 2, 3 ]), 4, 'in_range exclude many')
 
         cnt = Counter()
         for _ in range(3000):
-            cnt[self.rnd.in_range_except(1, 7, [ 1, 3, 4, 6 ])] += 1
-        eq(set(cnt), { 2, 5, 7 }, 'in_range_except historgam 1')
-        eq(sum(1 for _, c in cnt.items() if abs(c - 1000) > 99), 0, 'in_range_except historgam 2')
+            cnt[self.rnd.in_range(1, 7, exclude=[ 1, 3, 4, 6 ])] += 1
+        eq(set(cnt), { 2, 5, 7 }, 'in_range exclude historgam 1')
+        eq(sum(1 for _, c in cnt.items() if abs(c - 1000) > 99), 0, 'in_range exclude historgam 2')
 
         eq(self.rnd.pick([ 99 ]), 99, 'pick 1')
 
@@ -53,7 +53,7 @@ class Test_Random(unittest.TestCase):
         a_d = [ 'a', 'b', 'c', 'd' ]
         for i in range(1, 4):
             p = self.rnd.pick(a_d)
-            v = self.rnd.pick_except(p, a_d)
+            v = self.rnd.pick(a_d, exclude=p)
             self.assertIn(v, a_d, f"in {i}")
             self.assertNotEqual(v, p, f"out {i}")
 
@@ -64,8 +64,8 @@ class Test_Random(unittest.TestCase):
             self.rnd.pick([])
         with self.assertRaisesRegex(ValueError, 'pick_n', msg='pick_n too many'):
             self.rnd.pick_n(3, [ 1, 2 ])
-        with self.assertRaisesRegex(ValueError, 'except', msg='except nothing'):
-            self.rnd.pick_except(3, [])
+        with self.assertRaisesRegex(ValueError, 'exclude', msg='exclude nothing'):
+            self.rnd.pick([1], exclude=1)
 
         eq(Random(999, 888).in_range(0, 1 << 31), 2034720810, 'stable from seed')
         #isnt(EGE::Random->new->in_range(0, 1 << 31), EGE::Random->new->in_range(0, 1 << 31), 'unique');

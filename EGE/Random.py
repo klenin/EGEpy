@@ -24,13 +24,12 @@ class Random:
     def coin(self) -> int:
         return self.get(2)
 
-    def in_range(self, lo: int, hi: int) -> int:
+    def in_range(self, lo: int, hi: int, exclude=None) -> int:
         if hi < lo:
             raise ValueError('hi < lo')
-        return self.get(hi - lo + 1) + lo
-
-    def in_range_except(self, lo: int, hi: int, exclude) -> int:
-        if isinstance(exclude, list):
+        if not exclude:
+            return self.get(hi - lo + 1) + lo
+        elif isinstance(exclude, list):
             exclude = frozenset(exclude)
             r = self.in_range(lo, hi - len(exclude))
             for e in exclude:
@@ -42,17 +41,17 @@ class Random:
             r = self.in_range(lo, hi - 1)
             return r if r < exclude else r + 1
 
-    def pick(self, array):
+    def pick(self, array: list, exclude=None):
         if len(array) == 0:
             raise ValueError('pick from empty array');
-        return array[self.get(len(array))]
-
-    # Не проверяя, предполагает, что exclude элементом array.
-    def pick_except(self, exclude, array):
-        if len(array) <= 1:
-            raise ValueError('except nothing')
-        a = array[self.get(len(array) - 1)]
-        return array[-1] if a == exclude else a
+        if exclude:
+            if len(array) <= 1:
+                raise ValueError('exclude nothing')
+            # Не проверяя, предполагает, что exclude является элементом array.
+            a = array[self.get(len(array) - 1)]
+            return array[-1] if a == exclude else a
+        else:
+            return array[self.get(len(array))]
 
     def pick_n(self, n: int, array):
         if n > len(array):
