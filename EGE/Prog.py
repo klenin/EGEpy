@@ -5,25 +5,22 @@ from .Prog import Lang
 from . import Html as html
 from . import Utils
 
-
 class SynElement:
 
     def to_lang_named(self, lang_name: str, options):
-        lang = dir(Lang)['lang_name'](options)
+        lang = getattr(Lang, 'lang_name')(options)
         ret = self.to_lang(lang)
         h = lang.html
         if isinstance(h, dict):
             if h['lang_marking']:
-                lines = "\n".join(
-                    html.tag('pre', line, class_=lang_name) got line in ret.split("\n"))
+                ret = "\n".join(
+                    html.tag('pre', line, class_=lang_name) for line in ret.split("\n"))
             if h['pre']:
                 ret = html.tag('pre', ret)
-        }
-        $ret;
-    }
+        return ret
 
-    def to_lang(self): pass
-    def run(self): pass
+    def to_lang(self, attr): pass
+    def run(self, attr): pass
 
     def assign(self, env, value): pass
 
@@ -32,7 +29,7 @@ class SynElement:
         self.run(env)
         return env[name]
 
-    def gather_vars(self): pass
+    def gather_vars(self, *args): pass
 
     def visit_dfs1(self, fn, depth: int = 1):
         fn(self, depth)
@@ -43,7 +40,7 @@ class SynElement:
         yield self
         yield from self._visit_children(depth + 1)
 
-    def _visit_children(self): pass
+    def _visit_children(self, *attr): pass
 
     def count_if(self, cond):
         return sum(1 for se in self.visit_dfs() if cond(se))
@@ -53,12 +50,12 @@ class SynElement:
 
     def get_type(self): pass # { (split ':', ref $_[0])[-1] }
 
-    def complexity(self): raise ValueError()
+    def complexity(self, *attr): raise ValueError()
 
-    def needs_parens(self): return False
+    def needs_parens(self, *args): return False
 
 
-class BlackBox(SynElement);
+class BlackBox(SynElement):
 
     def __init__(self, code, lang = None, assign = None):
         self.code = code
@@ -69,7 +66,7 @@ class BlackBox(SynElement);
         if self.assign:
             self.assign(env, value)
 
-    def to_lang_named(self, lang_name):
+    def to_lang_named(self, lang_name, options=None):
         return self.lang[lang_name]
 
     def to_lang(self, lang): return self.to_lang_named(lang.name)
@@ -103,23 +100,24 @@ class Assign(SynElement):
             raise ValueError(f"Assign to iterator: '{name}'")
 
         # провека, что все переменные expr определены
-        self.expr.polinom_degree(env, mistakes, iter_);
+        self.expr.polinom_degree(env, mistakes, iter_)
         # вычисляем степень выражения без итераторов, если ошибка, значит в выражении присутсвует итератор
         try:
             env[name] = self.expr.polinom_degree(env, mistakes, {})
         except:
-            raise ValueError f"Assign iterator to: '{name}'"
+            raise ValueError(f"Assign iterator to: '{name}'")
 
 
 @dataclass
 class Index(SynElement):
-    array
-    indices
+
+    def __init__(self, array, indices):
+        self.array = array
+        self.indices = indices
 
     def to_lang(self, lang):
-        return lang.get_fmt('index_fmt') % tuple(
-            self.array.to_lang(lang),
-            *', '.join(i.to_lang(lang) for i in self.indices))
+        return lang.get_fmt('index_fmt') % tuple([self.array.to_lang(lang),
+                                                  ', '.join(i.to_lang(lang) for i in self.indices)])
 
     def run(self, env):
         v = self.array.run(env)
@@ -141,13 +139,14 @@ class Index(SynElement):
 
 @dataclass
 class CallFunc(SynElement):
-    func
-    args
+    def __init__(self, func, args):
+        self.func = func
+        self.args = args
 
     def to_lang(self, lang):
-        return lang.get_fmt('call_func_fmt') % tuple(
+        return lang.get_fmt('call_func_fmt') % tuple([
             self.func,
-            *lang.get_fmt('args_separator').join(a.to_lang(lang) for a in self.args))
+            *lang.get_fmt('args_separator').join(a.to_lang(lang) for a in self.args)])
 
     def run(self, env):
         arg_val = [ a.run(env) for a in self.args ]
@@ -164,7 +163,7 @@ class CallFuncAggregate(CallFunc):
         for i in range(new_env['&count']):
             for k, v in new_env['&columns']:
                 new_env[k] = v[i]
-            arg_val = [ a.run(new_env) for self.args ]
+            arg_val = [ a.run(new_env) for a in self.args ]
             ans = func.call(arg_val, new_env, self)
         env['&result'][self] = ans
 
@@ -172,14 +171,13 @@ class CallFuncAggregate(CallFunc):
 class Print(SynElement):
 
     def __init__(self, type_, args):
-        super.__init__()
         self.type_ = type_
         self.args = args
         fmt_types = { 'num': 'print_fmt', 'str': 'print_str_fmt' }
         self.fmt = fmt_types[self.type_]
 
     def to_lang(self, lang):
-        return lang.get_fmt(self.fmt}) % tuple(
+       return lang.get_fmt(self.fmt) % tuple(
             lang.get_fmt('args_separator').join(a.to_lang(lang) for a in self.args))
 
     def run(self, env):
@@ -187,7 +185,7 @@ class Print(SynElement):
         o = '<out>'
         if o in env:
             env[o] += "\n" + line
-        else
+        else:
             env[o] = line
 
 
@@ -201,46 +199,51 @@ class Op(SynElement):
     def children(self): return [ getattr(self, c) for c in self._children() ]
 
     def run(self, env):
-        return eval(self.run_fmt() % tuple(c.run(env) for c in self.children))
+        return eval(self.run_fmt() % tuple(c.run(env) for c in self.children()))
 
     def prio(self, lang):
         return lang.prio[self.op]
 
     def operand(self, lang, operand_):
-        t = operand_->to_lang(lang)
+        t = operand_.to_lang(lang)
         return operand_.needs_parens(lang, self.prio(lang)) and f"({t})" or t
 
     def to_lang(self, lang):
         return self.to_lang_fmt(lang, self.op) % tuple(
-            self.operand(lang, c) for c in self,children)
+            self.operand(lang, c) for c in self.children())
 
     def needs_parens(self, lang, parent_prio):
         return parent_prio < self.prio(lang)
 
     def run_fmt(self): return self.to_lang_fmt(Lang.Python())
-    def to_lang_fmt: pass
+    def to_lang_fmt(self, *args): pass
 
-    def gather_vars(self, env): return [ c.gather_vars(env) for c in self.children ]
+    def gather_vars(self, env): return [ c.gather_vars(env) for c in self.children() ]
     def _visit_children(self):
-        for c in self.children:
+        for c in self.children():
             yield from c.visit_dfs()
 
-    def polinom_degree(self):
-        raise ValueError(f"Polinom degree is unavaible for expr with operator: '{self.op}'"
+    def polinom_degree(self, *args):
+        raise ValueError(f"Polinom degree is unavaible for expr with operator: '{self.op}'")
 
 
 class BinOp(Op):
 
-    def to_lang_fmt(self, lang):
-        lang.get_fmt('op_fmt', self.op
+    def __init__(self, op, left=None, right=None):
+        super.__init__(op)
+        self.right = right
+        self.left = left
 
-    def children(self): return (self.left, self.right)
+    def to_lang_fmt(self, lang):
+        lang.get_fmt('op_fmt', self.op)
+
+    def children(self): return [self.left, self.right]
 
     def polinom_degree(self, env, mistakes, iter_):
         if self.op == '*':
-            return sum(c.polinom_degree(env, mistakes, iter_) for c in self.children)
+            return sum(c.polinom_degree(env, mistakes, iter_) for c in self.children())
         if self.op == '+':
-            return max(c.polinom_degree(env, mistakes, iter_) for c in self.children)
+            return max(c.polinom_degree(env, mistakes, iter_) for c in self.children())
         if self.op == '**':
             return self.left.polinom_degree(env, mistakes, iter_) * self.right.run({})
         return super.polinom_degree(env, mistakes, iter_)
@@ -271,15 +274,19 @@ class BinOp(Op):
 
 class UnOp(Op):
 
+    def __init__(self, op, arg):
+        super.__init__(op)
+        self.arg = arg
+
     def prio(self, lang): return lang.prio['`' + self.op]
 
     def to_lang_fmt(self, lang):
         return lang.get_fmt('un_op_fmt', self.op)
 
-    def children(self): return (self.arg,)
+    def children(self): return self.arg
 
 
-class Inc(UnOp)
+class Inc(UnOp):
 
     def run(self, env):
         #return eval(self.op}, '${$self->{arg}->get_ref($env)}';
@@ -287,27 +294,34 @@ class Inc(UnOp)
 
 
 class TernaryOp(Op):
+    def __init__(self, op, arg1, arg2, arg3):
+        super.__init__(op)
+        self.arg1 = arg1
+        self.arg2 = arg2
+        self.arg3 = arg3
 
     def to_lang_fmt(self, lang):
         r = lang.get_fmt('op_fmt', self.op)
-        if not isinstance(t, list):
+        if not isinstance(r, list):
             return r
         s = make_expr(r).to_lang(lang)
         #$s =~ s/(\d+)/%$1\$s/g;
         return s
 
-    def children(self): return (self.arg1, self,arg2, self.arg3)
+    def children(self): return self.arg1, self.arg2, self.arg3
 
 
 class Var(SynElement):
+    def __init__(self, name):
+        self.name = name
 
     def to_lang(self, lang):
-        returbn lang.get_fmt('var_fmt') % self.name
+        return lang.get_fmt('var_fmt') % self.name
 
     def run(self, env):
         v = env[self.name]
         if v is None:
-            raise ValueError(f"Undefined variable {n}")
+            raise ValueError(f"Undefined variable {self.name}")
         return v
 
     def assign(self, env, value):
@@ -324,7 +338,9 @@ class Var(SynElement):
         raise ValueError(f"Undefined variable {n}")
 
 
-class Const(SynElement)
+class Const(SynElement):
+    def __init__(self, value):
+        self.value = value
 
     def to_lang(self, lang): return self.value
 
@@ -339,21 +355,24 @@ class RefConst(Const):
         self.value = new_value
 
 class Block(SynElement):
+    def __init__(self, statements, func):
+        self.statements = statements
+        self.func = func
 
     def to_lang(self, lang):
-        return lang->get_fmt('block_stmt_separator').join(
+        return lang.get_fmt('block_stmt_separator').join(
             s.to_lang(lang) for s in  self.statements)
 
     def run(self, env):
         for s in self.statements:
-            s.run($env)
+            s.run(env)
 
     def _visit_children(self):
         for s in self.statements:
             yield from s.visit_dfs()
 
-    def complexity((self, env, mistakes, iter_):
-        items = s.complexity(env, mistakes, iter_) for s in self.statements
+    def complexity(self, env, mistakes, iter_):
+        items = [s.complexity(env, mistakes, iter_) for s in self.statements]
         if mistakes.change_min:
             return min(items)
         if mistakes.change_sum:
@@ -362,13 +381,15 @@ class Block(SynElement):
 
 
 class CompoundStatement(SynElement):
+    def __init__(self, body):
+        self.body = body
 
     def to_lang_fields(self): pass
 
     def to_lang(self, lang):
         body_is_block = len(self.body.statements) > 1
         (fmt_start, fmt_end) = (
-            lang.get_fmt(f, body_is_block or lang.body_is_block) for f in self.get_fmt_names)
+            lang.get_fmt(f, body_is_block or lang.body_is_block) for f in self.get_fmt_names())
 
         if lang.html and lang.html.coloring:
             s = html.style(color=lang.html.coloring[0])
@@ -380,17 +401,22 @@ class CompoundStatement(SynElement):
             fmt_end = sp(fmt_end)
 
         body = self.body.to_lang(lang)
-        if not lanf.unindent and fmt_start.endswith("\n"):
+        if not lang.unindent and fmt_start.endswith("\n"):
             body = re.sub('^', '  ') # отступы
-        return fmt_start + self.to_lang_fmt() + fmt_end % tuple(
-            *getattr(self, f).to_lang(lang) for f in self.to_lang_fields(), body)
+        return fmt_start + self.to_lang_fmt() + fmt_end % tuple([
+            *(getattr(self, f).to_lang(lang) for f in self.to_lang_fields()), body])
 
     def _visit_children(self):
-        for f in (*getattr(self, f) for f in self.to_lang_fields(), self.body):
+        for f in [*(getattr(self, f) for f in self.to_lang_fields()), self.body]:
             f.visit_dfs()
 
 
-class ForLoop(CompoundStatement)
+class ForLoop(CompoundStatement):
+    def __init__(self, var, lb, ub, body):
+        super.__init__(body)
+        self.var = var
+        self.lb = lb
+        self.ub = ub
 
     def get_fmt_names(self): return [ 'for_start_fmt', 'for_end_fmt' ]
     def to_lang_fmt(self): return '%4$s'
@@ -418,10 +444,13 @@ class ForLoop(CompoundStatement)
         cur_complexity = sum(
             float(i) for i in iter_.values() if i.replace('.', '', 1).isdigit())
         del iter_[name]
-        return cur_complexity > body_complexity and cur_complexity or $body_complexity
+        return cur_complexity > body_complexity and cur_complexity or body_complexity
 
 
 class IfThen(CompoundStatement):
+    def __init__(self, cond, body):
+        super.__init__(body)
+        self.cond = cond
 
     def get_fmt_names(self): return [ 'if_start_fmt', 'if_end_fmt' ]
     def to_lang_fmt(self): return '%2$s'
@@ -444,7 +473,6 @@ class IfThen(CompoundStatement):
                     raise ValueError(
                         "IfThen complexity with condition a == b, expected both var as iterator")
 
-                my ($old_val, $new_val, $side);
                 names = [ Utils.last_key(iter_, s) for s in names ]
 
                 side = int(iter_[names[1]] > iter_[names[0]])
@@ -460,7 +488,7 @@ class IfThen(CompoundStatement):
                 not isinstance(cond.right, Const) and cond.left)
             if isno_const and isno_const.op == '%':
                 if mistakes.ignore_if_mod:
-                    return body,complexity(env, mistakes, iter_)
+                    return body, body.complexity(env, mistakes, iter_)
 
                 name = isno_const.left.name
                 if iter_[name]:
@@ -497,20 +525,23 @@ class IfThen(CompoundStatement):
                     "expected b as iterator, {name} is not iterator")
             name = Utils.last_key(iter_, name)
             old_val = iter_[name]
-            new_val = sides[1 - side].polinom_degree(env, mistakes, iter_)
+            new_val = cond[1 - side].polinom_degree(env, mistakes, iter_)
             if mistakes.ignore_if_less or new_val >= old_val:
                 return body.complexity(env, mistakes, iter_)
 
             iter_[name] = new_val
-            ret = $body->complexity(env, mistakes, iter_)
+            ret = body.complexity(env, mistakes, iter_)
             iter_[name] = old_val
             return ret
-        else
+        else:
             raise ValueError(
                 f"IfThen complexity for condition with operator: '{cond.op}' is unavaible")
 
 
 class CondLoop(CompoundStatement):
+    def __init__(self, cond, body):
+        super.__init__(body)
+        self.cond = cond
 
     def get_fmt_names(self): return [ 'while_start_fmt', 'while_end_fmt' ]
     def to_lang_fmt(self): return '%2$s'
@@ -520,8 +551,24 @@ class CondLoop(CompoundStatement):
         while self.cond.run(env):
             self.body.run(env)
 
+class While(CondLoop):
+    def __init__(self, cond, body):
+        super.__init__(body)
+        self.cond = cond
+
+    def get_fmt_names(self): return [ 'while_start_fmt', 'while_end_fmt' ]
+    def to_lang_fmt(self): return '%2$s'
+    def to_lang_fields(self): return [ 'cond' ]
+
+    def run(self, env):
+        while True:
+            self.body.run(env)
+            if self.cond.run(env): break
 
 class Until(CondLoop):
+    def __init__(self, cond, body):
+        super.__init__(body)
+        self.cond = cond
 
     def get_fmt_names(self): return [ 'until_start_fmt', 'until_end_fmt' ]
     def to_lang_fmt(self): return '%2$s'
@@ -534,13 +581,17 @@ class Until(CondLoop):
 
 
 class PlainText(SynElement):
+    def __init__(self, text):
+        self.text = text
 
     def to_lang(self, lang):
         t = self.text
         return isinstance(t, dict) and t[lang].name or t
 
 
-class ExprStmt(SynElement)
+class ExprStmt(SynElement):
+    def __init__(self, expr):
+        self.expr = expr
 
     def to_lang(self, lang):
         lang.get_fmt('expr_fmt') % self.expr.to_lang(lang)
@@ -551,12 +602,16 @@ class ExprStmt(SynElement)
     def complexity(self): return 0
 
 
-class FuncReturnException: pass
+class FuncReturnException:
+    def __init__(self, p_return=None, return_=None):
+        self.p_return = p_return
+        self.return_ = return_
 
 class FuncDef(CompoundStatement):
-
-    def __init__(self, func, name, params):
-        self.head = FuncHead(name, params)
+    def __init__(self, head, body):
+        self.head = head
+        self.body = body
+        self.c_style = False
 
     def get_fmt_names(self):
         return [
@@ -566,78 +621,80 @@ class FuncDef(CompoundStatement):
     def to_lang_fields(self): return [ 'head' ]
 
     def run(self, env):
-        if self.name in env['&']:
-            raise ValueError(f"Redefinition of function {self.name}")
-        env['&'][self.name] = self
+        if self.head.name in env['&']:
+            raise ValueError(f"Redefinition of function {self.head.name}")
+        env['&'][self.head.name] = self
 
     def call(self, args, env):
         act_len = len(args)
-        form_len = len(self.params)
+        form_len = len(self.head.params)
         if act_len > form_len:
-            raise ValueError(f"Too many arguments to function {self.name}")
+            raise ValueError(f"Too many arguments to function {self.head.name}")
         if act_len < form_len:
-            raise ValueError(f"Too few arguments to function {self.name}")
+            raise ValueError(f"Too few arguments to function {self.head.name}")
 
-        new_env = { '&': env['&'], **{ k: v for k, v in zip(args, params) } }
+        new_env = { '&': env['&'], **{ k: v for k, v in zip(args, self.head.params) } }
 
         try: # return реализован с использованием исключений
             self.body.run(new_env)
         except FuncReturnException as e:
             if e.p_return:
-                if self.name not in new_env:
-                    raise ValueError(f"Undefined result of function {self.name}")
-                return new_env[self.name]
+                if self.head.name not in new_env:
+                    raise ValueError(f"Undefined result of function {self.head.name}")
+                return new_env[self.head.name]
             elif e.return_:
                 return e.return_
 
 
 class FuncHead(SynElement):
+    def __init__(self, name, params):
+        self.name = name
+        self.params = params
 
     def to_lang(self, lang):
         params = lang.get_fmt('args_separator').join(tuple(
-            lang->get_fmt('args_fmt') % p for p in self.params))
-        (self.name, *params)
+            lang.get_fmt('args_fmt') % p for p in self.params))
+        return self.name, *params
 
 
 class Return(SynElement):
 
-    def __init__(self, func, expr=None):
-        super.__init__()
+    def __init__(self, func: FuncDef, expr=None):
         self.func = func
         #defined $self.func} or die "return outside a function";
-        t = self.expr is not None
+        self.expr = expr
+        t = expr is not None
         if self.func.c_style is not None and self.func.c_style != t:
-            raise valueError("Use different types of return in the same func")
+            raise ValueError("Use different types of return in the same func")
         self.func.c_style = t
 
     def to_lang(self, lang):
         return (self.func.c_style and
             lang.c_return_fmt % self.expr.to_lang(lang) or
-            lang.p_return_fmt % self.func.name)
+            lang.p_return_fmt % self.func.head.name)
 
     def run(self, env):
         raise (self.func.c_style and
             FuncReturnException(return_=self.expr.run(env)) or
             FuncReturnException(p_return=1))
-    }
 
 
 def make_expr(src):
     if not src:
-        raise ArgumentError('empty argument')
+        raise ValueError('empty argument')
     if isinstance(src, SynElement):
         return src
-    if isinstnce(src, list):
+    if isinstance(src, list):
         if len(src) == 0:
             return None
         op, *rest = src
         if not op:
-            raise ArgumentError(f"bad op: {op}")
+            raise ValueError(f"bad op: {op}")
         if len(rest) == 1 and op == '#':
             return PlainText(text=rest[0])
         if len(rest) and op == '[]':
             array, *indices = map(make_expr, rest)
-            return Index(array=$array, indices=indices);
+            return Index(array=array, indices=indices)
         if len(rest) and op == '()':
             (func, *params) = rest
             name = Utils.aggregate_function(func) and CallFuncAggregate or CallFunc
@@ -646,9 +703,9 @@ def make_expr(src):
             (type_, params) = rest
             for p in params:
                 if isinstance(p, str) and re.match('[\\\n\'"%]', p):
-                    raise ArgumentError(f"Print argument 'p' contains bad symbol")
-            return Printw(type_=type_, args=map(make_expr, params))
-        if len(rest) == 1 and op in [ '++', '--':
+                    raise ValueError(f"Print argument 'p' contains bad symbol")
+            return Print(type_=type_, args=map(make_expr, params))
+        if len(rest) == 1 and op in [ '++', '--']:
             return Inc(op=op, arg=make_expr(rest[0]))
         if len(rest) == 1:
             return UnOp(op=op, arg=make_expr(rest[0]))
@@ -658,16 +715,16 @@ def make_expr(src):
             return TernaryOp(
                 op=op,
                 **{ 'arg' + i: make_expr(rest[i]) for i in range(3) })
-        raise AgumentError(f"make_expr: {src}")
+        raise ValueError(f"make_expr: {src}")
     if callable(src):
-        return BlackBoxw(code=src)
+        return BlackBox(code=src)
     if isinstance(src, str) and re.match('^[[:alpha:]][[:alnum:]_]*$', src):
         return Var(name=src)
     return Const(value=src)
 
 @dataclass
 class StatementDescr:
-    type_: class
+    type_: type
     args: str
 
 def _make_PlainText(args): return PlainText(text=args[0])
@@ -678,10 +735,9 @@ def _make_ForLoop(args):
 def _make_IfThen(args): return IfThen(cond=make_expr(args[0]), body=make_block(args[1]))
 def _make_While(args): return While(cond=make_expr(args[0]), body=make_block(args[1]))
 def _make_Until(args): return Until(cond=make_expr(args[0]), body=make_block(args[1]))
-def _make_FuncDef(args, cur_func):
-    return FuncDef(head=make_func_head, body=)
-def _make_ExprStmt(args): return E_expr)] },
-def _make_Return(args): return E_expr)] },
+def _make_FuncDef(args): return FuncDef(head=make_func_head(args[0]), body=make_block(args[1]))
+def _make_ExprStmt(args): return ExprStmt(expr=make_expr(args[0]))
+def _make_Return(args): return Return(func=args[0], expr=make_expr(args[1]))
 
 statements_descr = {
     '#':      StatementDescr(PlainText, 'C_text'),
@@ -695,8 +751,8 @@ statements_descr = {
     'return': StatementDescr(Return,    'E_expr'),
 }
 
-def make_func_head(src):
-    (name, params) = *src
+def make_func_head(*src):
+    (name, params) = src
     return FuncHead(name=name, params=params)
 
 def make_statement(next, cur_func):
@@ -724,13 +780,8 @@ def _add_statement_helper(block: Block, next):
     block.statements.append(make_statement(next(), block.func))
 
 def add_statement(block: Block, src: list):
-    i = 0
-    def next():
-        i += 1
-        return src[i]
-    _add_statement_helper(block, next)
-    if i < len(src):
-        raise ValueError('Not a single statement')
+    for i in range(len(src)):
+        _add_statement_helper(block, src[i])
     return block
 
 def move_statement(block: Block, from_, to):
@@ -742,15 +793,13 @@ def move_statement(block: Block, from_, to):
     block.statements = (from_ < to and
         s[:from_] + s[from_ + 1:to] + s[from_] + s[to:] or
         s[:to] + s[from_] + s[to:] + s[to + 1:from_] + s[from_ + 1:])
-    return block;
+    return block
 
 def make_block(src: list, cur_func):
-    b = Block(func=cur_func)
-    for (my $i = 0; $i < @$src; ) {
-        add_statement_helper($b, def { $src->[$i++] });
-    }
-    $b;
-}
+    b = Block(func=cur_func, statements=[])
+    for i in range(len(src)):
+        _add_statement_helper(b, src[i])
+    return b
 
 def lang_names():
     return {
