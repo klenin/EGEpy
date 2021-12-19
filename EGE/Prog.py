@@ -237,7 +237,7 @@ class BinOp(Op):
     def to_lang_fmt(self, lang):
         lang.get_fmt('op_fmt', self.op)
 
-    def children(self): return [self.left, self.right]
+    def children(self): return self.left, self.right
 
     def polinom_degree(self, env, mistakes, iter_):
         if self.op == '*':

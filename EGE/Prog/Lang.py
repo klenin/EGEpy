@@ -25,14 +25,14 @@ class Lang:
         return html.escape(s)
 
     def op_fmt(self, op):
-        fmt = self.translate_op([op]) or op
+        fmt = self.translate_op()[op] or op
         return (
             fmt == '%' and '%%' or
             isinstance(fmt, str) and '%' in fmt and fmt or
             f"%s {fmt} %s")
 
     def un_op_fmt(self, op):
-        fmt = self.translate_un_op([op]) or op
+        fmt = self.translate_un_op()[op] or op
         return '%s' in fmt and fmt or fmt + '%s'
 
     #def name {
