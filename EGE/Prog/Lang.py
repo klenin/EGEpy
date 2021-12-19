@@ -1,5 +1,5 @@
-
-from . import Html as html
+from dataclasses import dataclass
+from EGE import Html as html
 
 class ops:
 
@@ -10,27 +10,29 @@ class ops:
     logic = [ '&&', '||', '^', '=>', 'eq' ]
     bitwise = [ '&', '|' ]
     unary = [ '++%s', '--%s', '%s++', '%s--', '!', '+', '-' ]
-    prio_unary = [ f"`{op}" for op in ops.unary ]
+    prio_unary = [ f"`{op}" for op in unary ]
 
     between = { 'between': [ '&&', [ '<=', 2, 1 ], [ '<=', 1, 3 ] ] }
 
 class Lang:
     def __init__(self, params):
         # my $self = { %init };
-        self.make_priorities
+        self.html = params.html
+        self.prio = {}
+        self.make_priorities()
 
-    def to_html(s: str):
+    def to_html(self, s: str):
         return html.escape(s)
 
     def op_fmt(self, op):
-        fmt = self.translate_op[op] or op
+        fmt = self.translate_op()[op] or op
         return (
             fmt == '%' and '%%' or
             isinstance(fmt, str) and '%' in fmt and fmt or
             f"%s {fmt} %s")
 
     def un_op_fmt(self, op):
-        fmt = self.translate_un_op[op] or op
+        fmt = self.translate_un_op()[op] or op
         return '%s' in fmt and fmt or fmt + '%s'
 
     #def name {
@@ -48,16 +50,16 @@ class Lang:
             t.left + t.alt + t.inner + t.right)
 
     def get_fmt(self, name_fmt, *args):
-        #fmt = self.name_fmt(*args)
+        fmt = name_fmt(*args)
         return (
-            isinstance(fmt, dict) and self.print_tag(G(**fmt)) or
-            self.html and to_html(fmt) or
+            isinstance(fmt, dict) and self.print_tag(self.G(**fmt)) or
+            self.html and self.to_html(fmt) or
             fmt)
 
     def var_fmt(self): return '%s'
 
     def make_priorities(self):
-        raw = self.prio_list
+        raw = self.prio_list()
         for prio in range(len(raw)):
             for op in raw[prio]:
                 self.prio[op] = prio + 1
@@ -305,19 +307,19 @@ class Logic(Lang):
             ops.comp, [ '&&' ], [ '||', '^' ], [ '=>', 'eq' ],
         ]
 
-    def index_fmt(self): return { left: '%s', inner: '%s', tag: 'sub', alt: '_' }
+    def index_fmt(self): return { 'left': '%s', 'inner': '%s', 'tag': 'sub', 'alt': '_' }
 
     def translate_op(self):
         return {
-            '**': { left: '%s', inner: '%s', tag: 'sup', alt: ' ^ ' },
+            '**': { 'left': '%s', 'inner': '%s', 'tag': 'sup', 'alt': ' ^ ' },
             '-': '−', '*': '⋅',
             '==': '=', '!=': '≠', '>=': '≥', '<=': '≤',
             '&&': '∧', '||': '∨', '^': '⊕', '=>': '→', 'eq': '≡',
         }
 
-    def var_fmt(self): return { inner: '%s', tag: 'i' }
+    def var_fmt(self): return { 'inner': '%s', 'tag': 'i' }
 
-    def call_func_fmt(self): return { inner: '%s', tag: 'i', right: '(%s)' }
+    def call_func_fmt(self): return { 'inner': '%s', 'tag': 'i', 'right': '(%s)' }
 
     def translate_un_op(self): return { '!': '¬' }
 
@@ -336,4 +338,3 @@ class SQL(Lang):
     def assign_fmt(self): return '%s = %s'
     def block_stmt_separator(self): return ', '
 
-1;
