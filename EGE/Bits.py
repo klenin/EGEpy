@@ -17,7 +17,9 @@ class Bits:
         if i != 0:
             j = len(new_bin)
             while i > 0 and j > 0:
-                self.b[--i] = new_bin[--j]
+                i -= 1
+                j -= 1
+                self.b[i] = new_bin[j]
         else:
             self.b = new_bin
         return self
