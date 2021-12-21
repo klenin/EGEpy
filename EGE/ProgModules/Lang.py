@@ -17,7 +17,7 @@ class ops:
 class Lang:
     def __init__(self, params):
         # my $self = { %init };
-        self.html = params.html
+        self.html = params.html if params else 0
         self.prio = {}
         self.make_priorities()
 
@@ -25,14 +25,14 @@ class Lang:
         return html.escape(s)
 
     def op_fmt(self, op):
-        fmt = self.translate_op()[op] or op
+        fmt = self.translate_op().get(op, op)
         return (
             fmt == '%' and '%%' or
             isinstance(fmt, str) and '%' in fmt and fmt or
             f"%s {fmt} %s")
 
     def un_op_fmt(self, op):
-        fmt = self.translate_un_op()[op] or op
+        fmt = self.translate_un_op().get(op, op)
         return '%s' in fmt and fmt or fmt + '%s'
 
     #def name {
@@ -49,8 +49,8 @@ class Lang:
             t.left + html.tag(t.tag, t.inner) + t.right or
             t.left + t.alt + t.inner + t.right)
 
-    def get_fmt(self, name_fmt, *args):
-        fmt = name_fmt(*args)
+    def get_fmt(self, name_fmt, args):
+        fmt = eval(f"self.{name_fmt}('{args}')")
         return (
             isinstance(fmt, dict) and self.print_tag(self.G(**fmt)) or
             self.html and self.to_html(fmt) or

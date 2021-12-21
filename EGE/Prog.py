@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import re
 
-from .Prog import Lang
+from .ProgModules import Lang
 from . import Html as html
 from . import Utils
 
@@ -76,9 +76,9 @@ class BlackBox(SynElement):
 
 class Assign(SynElement):
 
-    def __init__(self, var, expr):
-        self.var = var
-        self.expr = expr
+    def __init__(self, args, func):
+        self.var = args['var']
+        self.expr = args['expr']
 
     def to_lang(self, lang):
         return lang.get_fmt('assign_fmt') % tuple(
@@ -196,7 +196,7 @@ class Op(SynElement):
         #die "Bad op: $self->{op}" if defined $self->{op} && ref $self->{op} || !$self->{op};
 
     def _children(self): pass
-    def children(self): return [ getattr(self, c) for c in self._children() ]
+    def children(self): return [ self._children() ]
 
     def run(self, env):
         return eval(self.run_fmt() % tuple(c.run(env) for c in self.children()))
@@ -215,7 +215,7 @@ class Op(SynElement):
     def needs_parens(self, lang, parent_prio):
         return parent_prio < self.prio(lang)
 
-    def run_fmt(self): return self.to_lang_fmt(Lang.Python())
+    def run_fmt(self): return self.to_lang_fmt(Lang.Perl(params=None))
     def to_lang_fmt(self, *args): pass
 
     def gather_vars(self, env): return [ c.gather_vars(env) for c in self.children() ]
@@ -230,12 +230,12 @@ class Op(SynElement):
 class BinOp(Op):
 
     def __init__(self, op, left=None, right=None):
-        super.__init__(op)
+        super().__init__(op)
         self.right = right
         self.left = left
 
     def to_lang_fmt(self, lang):
-        lang.get_fmt('op_fmt', self.op)
+        return lang.get_fmt('op_fmt', self.op)
 
     def children(self): return self.left, self.right
 
@@ -246,7 +246,7 @@ class BinOp(Op):
             return max(c.polinom_degree(env, mistakes, iter_) for c in self.children())
         if self.op == '**':
             return self.left.polinom_degree(env, mistakes, iter_) * self.right.run({})
-        return super.polinom_degree(env, mistakes, iter_)
+        return super().polinom_degree(env, mistakes, iter_)
 
     def rotate_left(self):
         right = self.right
@@ -275,7 +275,7 @@ class BinOp(Op):
 class UnOp(Op):
 
     def __init__(self, op, arg):
-        super.__init__(op)
+        super().__init__(op)
         self.arg = arg
 
     def prio(self, lang): return lang.prio['`' + self.op]
@@ -283,7 +283,7 @@ class UnOp(Op):
     def to_lang_fmt(self, lang):
         return lang.get_fmt('un_op_fmt', self.op)
 
-    def children(self): return self.arg
+    def _children(self): return self.arg
 
 
 class Inc(UnOp):
@@ -295,7 +295,7 @@ class Inc(UnOp):
 
 class TernaryOp(Op):
     def __init__(self, op, arg1, arg2, arg3):
-        super.__init__(op)
+        super().__init__(op)
         self.arg1 = arg1
         self.arg2 = arg2
         self.arg3 = arg3
@@ -413,7 +413,7 @@ class CompoundStatement(SynElement):
 
 class ForLoop(CompoundStatement):
     def __init__(self, var, lb, ub, body):
-        super.__init__(body)
+        super().__init__(body)
         self.var = var
         self.lb = lb
         self.ub = ub
@@ -449,7 +449,7 @@ class ForLoop(CompoundStatement):
 
 class IfThen(CompoundStatement):
     def __init__(self, cond, body):
-        super.__init__(body)
+        super().__init__(body)
         self.cond = cond
 
     def get_fmt_names(self): return [ 'if_start_fmt', 'if_end_fmt' ]
@@ -540,7 +540,7 @@ class IfThen(CompoundStatement):
 
 class CondLoop(CompoundStatement):
     def __init__(self, cond, body):
-        super.__init__(body)
+        super().__init__(body)
         self.cond = cond
 
     def get_fmt_names(self): return [ 'while_start_fmt', 'while_end_fmt' ]
@@ -553,7 +553,7 @@ class CondLoop(CompoundStatement):
 
 class While(CondLoop):
     def __init__(self, cond, body):
-        super.__init__(body)
+        super().__init__(body)
         self.cond = cond
 
     def get_fmt_names(self): return [ 'while_start_fmt', 'while_end_fmt' ]
@@ -567,7 +567,7 @@ class While(CondLoop):
 
 class Until(CondLoop):
     def __init__(self, cond, body):
-        super.__init__(body)
+        super().__init__(body)
         self.cond = cond
 
     def get_fmt_names(self): return [ 'until_start_fmt', 'until_end_fmt' ]
@@ -688,6 +688,7 @@ def make_expr(src):
         if len(src) == 0:
             return None
         op, *rest = src
+        rest = list(filter(lambda v: v is not None, rest))
         if not op:
             raise ValueError(f"bad op: {op}")
         if len(rest) == 1 and op == '#':
@@ -718,7 +719,7 @@ def make_expr(src):
         raise ValueError(f"make_expr: {src}")
     if callable(src):
         return BlackBox(code=src)
-    if isinstance(src, str) and re.match('^[[:alpha:]][[:alnum:]_]*$', src):
+    if isinstance(src, str) and re.match('^[a-zA-Z][a-zA-Z0-9_]*$', src):
         return Var(name=src)
     return Const(value=src)
 
@@ -756,7 +757,8 @@ def make_func_head(*src):
     return FuncHead(name=name, params=params)
 
 def make_statement(next, cur_func):
-    name = next()
+    name = next[0]
+    next.pop(0)
     d = statements_descr[name]
     if name == 'func':
         if cur_func:
@@ -772,12 +774,15 @@ def make_statement(next, cur_func):
 
     args = {}
     for a in d.args.split():
-        p, n = re.match('/(\w)_(\w+)/', a).groups()
-        args[n] = arg_processors[p](next())
-    d.type_(args)
+        p, n = re.match('(\w)_(\w+)', a).groups()
+        args[n] = arg_processors[p](next[0])
+        next.pop(0)
+    return d.type_(args, cur_func), next
 
 def _add_statement_helper(block: Block, next):
-    block.statements.append(make_statement(next(), block.func))
+    statement, next = make_statement(next, block.func)
+    block.statements.append(statement)
+    return next
 
 def add_statement(block: Block, src: list):
     for i in range(len(src)):
@@ -797,8 +802,8 @@ def move_statement(block: Block, from_, to):
 
 def make_block(src: list, cur_func):
     b = Block(func=cur_func, statements=[])
-    for i in range(len(src)):
-        _add_statement_helper(b, src[i])
+    while len(src):
+        src = _add_statement_helper(b, src)
     return b
 
 def lang_names():
