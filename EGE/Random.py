@@ -65,8 +65,8 @@ class Random:
     def shuffle(self, array):
         return self.pick_n(len(array), array)
 
-    def indexVar(self, number):
-        return self.pick_n(number if number > 0 else 1, ['i', 'j', 'k', 'a', 'b', 'c'])
+    def index_var(self, number=1):
+        return self.pick_n(number, [ 'i', 'j', 'k', 'a', 'b', 'c' ])
 
 
 if __name__ == '__main__':
