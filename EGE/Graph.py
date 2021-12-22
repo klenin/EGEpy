@@ -10,7 +10,7 @@ class Graph:
     def vertex_names(self):
         return self.vertices.keys()
 
-    def edge1(self, v1, v2, w):
+    def edge1(self, v1: str, v2: str, w: int = None):
         for v in [ v1, v2 ]:
             if v not in self.vertices:
                 raise ValueError(f'Unknown vertex {v}')
@@ -18,7 +18,7 @@ class Graph:
             self.edges[v1] = {}
         self.edges[v1][v2] = w
 
-    def edge2(self, v1, v2, w):
+    def edge2(self, v1: str, v2: str, w: int = None):
         self.edge1(v1, v2, w)
         if v2 not in self.edges:
             self.edges[v2] = {}
@@ -36,7 +36,7 @@ class Graph:
             return True
         visited = {}
 
-        def visit(v):
+        def visit(v: str):
             if v in visited:
                 return
             visited[v] = 1
@@ -49,11 +49,11 @@ class Graph:
         visit(vnames[0])
         return sorted(vnames) == sorted(visited.keys())
 
-    def count_paths(self, src, dest, cache: dict = None):
+    def count_paths(self, src: str, dest: str, cache: dict = None):
         if cache is None:
             cache = {}
 
-        def dfs(v):
+        def dfs(v: str):
             if v == dest:
                 cache[v] = 1
                 return 1
@@ -90,7 +90,7 @@ class Graph:
         return [ xmin, ymin, xmax, ymax ]
 
     def add(self, ar1: list, ar2: list):
-        return [ ar1[i] + ar2[i] for i in range(0, len(ar1)) ]
+        return [ ar1[i] + ar2[i] for i in range(len(ar1)) ]
 
     def size(self, a: list):
         return [ a[0], a[1], a[2] - a[0], a[3] - a[1] ]
@@ -98,7 +98,7 @@ class Graph:
     def xy(self, pt: list, x: str, y: str):
         return { x: pt[0], y: pt[1] }
 
-    def _vertex_children_str(self, src):
+    def _vertex_children_str(self, src: str):
         edges = self.edges.get(src, {})
         b = ','.join([ f'{e}:{edges[e]}' if edges[e] is not None else f'{e}' for e in sorted(edges.keys()) ])
         return '{' + b + '}'

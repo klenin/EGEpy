@@ -48,3 +48,4 @@ def marker(text, **kwargs):
 
 def defs(text, **kwargs):
     return text_tag('defs', text, **kwargs)
+
