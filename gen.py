@@ -3,7 +3,7 @@ import sys
 import EGE.GenBase
 import EGE.Html
 import EGE.Random
-from EGE.Gen.EGE import A01, A02, A03, A04
+from EGE.Gen.EGE import A01, A02, A03, A04, A10
 
 rnd = EGE.Random.Random(2342134)
 
@@ -18,6 +18,8 @@ questions = [q.generate() for q in [
     A03.Ones(rnd),
     A04.SumNumbers(rnd),
     A04.CountZeroOne(rnd),
+    A10.GraphByMatrix(rnd),
+    A10.LightPanel(rnd)
 ]]
 
 if not sys.stdout.isatty():
