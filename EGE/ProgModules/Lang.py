@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 from EGE import Html as html
 
@@ -9,15 +10,15 @@ class ops:
     comp = [ '>', '<', '==', '!=', '>=', '<=' ]
     logic = [ '&&', '||', '^', '=>', 'eq' ]
     bitwise = [ '&', '|' ]
-    unary = [ '++%s', '--%s', '%s++', '%s--', '!', '+', '-' ]
+    unary = [ '++{}', '--{}', '{}++', '{}--', '!', '+', '-' ]
     prio_unary = [ f"`{op}" for op in unary ]
 
-    between = { 'between': [ '&&', [ '<=', 2, 1 ], [ '<=', 1, 3 ] ] }
+    between = { 'between': [ '&&', [ '<=', 1, 0 ], [ '<=', 0, 2 ] ] }
 
 class Lang:
     def __init__(self, params):
         # my $self = { %init };
-        self.html = params.html if params else 0
+        self.html = params['html'] if params else 0
         self.prio = {}
         self.make_priorities()
 
@@ -26,14 +27,15 @@ class Lang:
 
     def op_fmt(self, op):
         fmt = self.translate_op().get(op, op)
+        regexp = re.compile(r'\{\d*\}')
         return (
-            fmt == '%' and '%%' or
-            isinstance(fmt, str) and '%' in fmt and fmt or
-            f"%s {fmt} %s")
+            not isinstance(fmt, str) and fmt or
+            isinstance(fmt, str) and regexp.search(fmt) and fmt or
+            f"{{}} {fmt} {{}}")
 
     def un_op_fmt(self, op):
         fmt = self.translate_un_op().get(op, op)
-        return '%s' in fmt and fmt or fmt + '%s'
+        return '{}' in fmt and fmt or fmt + ' {}'
 
     #def name {
     #    ref($_[0]) =~ /::(\w+)$/;
@@ -42,21 +44,26 @@ class Lang:
 
     @dataclass
     class G:
-        left: str; inner: str; right: str; tag: str; alt: str
+        left: str = ""
+        inner: str = ""
+        right: str = ""
+        tag: str = ""
+        alt: str = ""
 
     def print_tag(self, t: G):
         return (self.html and
             t.left + html.tag(t.tag, t.inner) + t.right or
             t.left + t.alt + t.inner + t.right)
 
-    def get_fmt(self, name_fmt, args):
-        fmt = eval(f"self.{name_fmt}('{args}')")
+    def get_fmt(self, name_fmt, args=None):
+        args = f'"{args}"' if isinstance(args, str) else args
+        fmt = eval(f"self.{name_fmt}" + (f"({args})" if args is not None else "()"))
         return (
             isinstance(fmt, dict) and self.print_tag(self.G(**fmt)) or
-            self.html and self.to_html(fmt) or
+            isinstance(fmt, str) and self.html and self.to_html(fmt) or
             fmt)
 
-    def var_fmt(self): return '%s'
+    def var_fmt(self): return '{}'
 
     def make_priorities(self):
         raw = self.prio_list()
@@ -75,11 +82,11 @@ class Lang:
     def block_stmt_separator(self): return "\n"
 
     def args_separator(self): return ', '
-    def args_fmt(self): return '%s'
+    def args_fmt(self): return '{}'
 
-    def call_func_fmt(self): return '%s(%s)'
+    def call_func_fmt(self): return '{}({})'
 
-    def expr_fmt(self): return '%s'
+    def expr_fmt(self): return '{}'
 
     def p_func_start_fmt(self): return self.c_func_start_fmt()
     def p_func_end_fmt(self): return self.c_func_end_fmt()
@@ -89,8 +96,8 @@ class Lang:
 
 class Basic(Lang):
 
-    def assign_fmt(self): return '%s = %s'
-    def index_fmt(self): return '%s(%s)'
+    def assign_fmt(self): return '{} = {}'
+    def index_fmt(self): return '{}({})'
     def translate_op(self):
         return {
             '**': '^',
@@ -102,76 +109,76 @@ class Basic(Lang):
 
     def translate_un_op(self): return { '!': 'NOT' }
 
-    def for_start_fmt(self): return "FOR %s = %s TO %s\n"
-    def for_end_fmt(self): return "\nNEXT %1\$s"
+    def for_start_fmt(self): return "FOR {} = {} TO {}\n"
+    def for_end_fmt(self): return "\nNEXT {}"
 
     def if_start_fmt(self, multiline: bool):
-        return 'IF %s THEN' + (multiline and "\n" or ' ')
+        return 'IF {} THEN' + (multiline and "\n" or ' ')
 
     def if_end_fmt(self, multiline: bool):
         return multiline and "\nEND IF" or ''
 
-    def while_start_fmt(self): return "DO WHILE %s\n"
+    def while_start_fmt(self): return "DO WHILE {}\n"
     def while_end_fmt(self): return "\nEND DO"
 
-    def until_start_fmt(self): return "DO UNTIL %s\n"
+    def until_start_fmt(self): return "DO UNTIL {}\n"
     def until_end_fmt(self): return "\nEND DO"
 
-    def c_func_start_fmt(self): return "FUNCTION %s(%s)\n"
+    def c_func_start_fmt(self): return "FUNCTION {}({})\n"
     def c_func_end_fmt(self): return "\nEND FUNCTION\n"
 
-    def print_fmt(self): return 'PRINT %s'
-    def print_str_fmt(self): return 'PRINT "%s"'
+    def print_fmt(self): return 'PRINT {}'
+    def print_str_fmt(self): return 'PRINT "{}"'
 
-    def c_return_fmt(self): return 'RETURN %s'
+    def c_return_fmt(self): return 'RETURN {}'
 
 
 class C(Lang):
 
-    def assign_fmt(self): '%s = %s;'
-    def index_fmt(self): '%s[%s]'
+    def assign_fmt(self): '{} = {};'
+    def index_fmt(self): '{}[{}]'
     def translate_op(self):
         return {
-            '**': 'pow(%s, %s)', '//': 'int(%s / %s)', '=>': '<=', 'eq': '==',
+            '**': 'pow({}, {})', '//': 'int({} / {})', '=>': '<=', 'eq': '==',
             **ops.between
         }
 
     def for_start_fmt(self, multiline: bool):
     # !!!!
-        return 'for (%s = %2$s; %1$s <= %3$s; ++%1$s)' + (multiline and '{' or '') + "\n"
+        return 'for ({0} = {1}; {0} <= {2}; ++{0})' + (multiline and '{' or '') + "\n"
 
     def for_end_fmt(self, multiline: bool):
         return multiline and "\n}" or ''
 
     def if_start_fmt(self, multiline: bool):
-        return 'if (%s)' + (multiline and " {\n" or "\n")
+        return 'if ({})' + (multiline and " {\n" or "\n")
     def if_end_fmt(self, multiline: bool):
         return multiline and  "\n}" or ''
 
     def while_start_fmt(self, multiline: bool):
-        return 'while (%s)' + (multiline and " {\n" or "\n")
+        return 'while ({})' + (multiline and " {\n" or "\n")
     def while_end_fmt(self, multiline: bool):
         return multiline and "\n}" or ''
 
     def until_start_fmt(self, multiline: bool):
-        return 'while (!(%s))' + (multiline and " {\n" or "\n")
+        return 'while (!({}))' + (multiline and " {\n" or "\n")
     def until_end_fmt(self, multiline: bool):
         return multiline and "\n}" or ''
 
-    def c_func_start_fmt(self): return "int %s(%s) {\n"
+    def c_func_start_fmt(self): return "int {}({}) {\n"
     def c_func_end_fmt(self): return "\n}\n"
 
-    def p_func_start_fmt(self): return "int %s(%s) {\n  int %1\$s;\n"
-    def p_func_end_fmt(self): return "\n  return %1\$s;\n}\n"
+    def p_func_start_fmt(self): return "int {}({}) {\n  int {};\n"
+    def p_func_end_fmt(self): return "\n  return {}\n}\n"
 
-    def print_fmt(self): return 'print(%s)'
-    def print_str_fmt(self): return 'printf("%s")'
+    def print_fmt(self): return 'print({})'
+    def print_str_fmt(self): return 'printf("{}")'
 
-    def expr_fmt(self): return '%s;'
+    def expr_fmt(self): return '{};'
 
-    def args_fmt(self): return 'int %s'
+    def args_fmt(self): return 'int {}'
 
-    def c_return_fmt(self): return 'return %s;'
+    def c_return_fmt(self): return 'return {};'
 
 
 class Pascal(Lang):
@@ -182,121 +189,121 @@ class Pascal(Lang):
             ops.add + [ '||', '^' ], ops.comp + [ '=>', 'eq' ], [ 'between' ]
         ]
 
-    def assign_fmt(self): return '%s := %s;'
-    def index_fmt(self): return '%s[%s]'
+    def assign_fmt(self): return '{} := {};'
+    def index_fmt(self): return '{}[{}]'
     def translate_op(self):
         return {
             '%': 'mod', '//': 'div',
             '==': '=', '!=': '<>',
             '&&': 'and', '||': 'or', '^': 'xor', '=>': '<=', 'eq': '=',
-            'between:': 'InRange(%s, %s, %s)',
+            'between': 'InRange({}, {}, {})',
         }
 
     def translate_un_op(self): return { '!': 'not' }
 
     def for_start_fmt(self, multiline: bool):
-        return 'for %s := %s to %s do' + (multiline and ' begin' or '') + "\n"
+        return 'for {} := {} to {} do' + (multiline and ' begin' or '') + "\n"
     def for_end_fmt(self, multiline: bool):
         return multiline and "\nend;" or ''
 
     def if_start_fmt(self, multiline: bool):
-        return 'if %s then' + (multiline and " begin\n" or "\n")
+        return 'if {} then' + (multiline and " begin\n" or "\n")
     def if_end_fmt(self, multiline: bool):
         return multiline and "\nend;" or ''
 
     def while_start_fmt(self, multiline: bool):
-        return 'while %s do' + (multiline and " begin\n" or "\n")
+        return 'while {} do' + (multiline and " begin\n" or "\n")
     def while_end_fmt(self, multiline: bool):
         return multiline and "\nend;" or ''
 
     def until_start_fmt(self, multiline: bool):
-        return 'while not (%s) do' + (multiline and " begin\n" or "\n")
+        return 'while not ({}) do' + (multiline and " begin\n" or "\n")
     def until_end_fmt(self, multiline: bool):
         return multiline and "\nend;" or ''
 
-    def c_func_start_fmt(self): return "function %s(%s: integer): integer;\nbegin\n"
+    def c_func_start_fmt(self): return "function {}({}: integer): integer;\nbegin\n"
     def c_func_end_fmt(self): return "\nend;\n"
 
-    def print_fmt(self): return 'write(%s)'
-    def print_str_fmt(self): return "write('%s')"
+    def print_fmt(self): return 'write({})'
+    def print_str_fmt(self): return "write('{}')"
 
-    def expr_fmt(self): return '%s;'
+    def expr_fmt(self): return '{};'
 
-    def c_return_fmt(self): return 'exit(%s);'
+    def c_return_fmt(self): return 'exit({});'
     def p_return_fmt(self): return 'exit;'
 
 
 class Alg(Lang):
 
-    def assign_fmt(self): return '%s := %s'
-    def index_fmt(self): return '%s[%s]'
+    def assign_fmt(self): return '{} := {}'
+    def index_fmt(self): return '{}[{}]'
     def translate_op(self):
         return {
             '==': '=', '!=': '≠',
-            '%': 'mod(%s, %s)', '//': 'div(%s, %s)',
+            '%': 'mod({}, {})', '//': 'div({}, {})',
             '&&': 'и', '||': 'или', '=>': '→', 'eq': '≡',
             **ops.between,
         }
     def translate_un_op(self): return { '!': 'не' }
 
-    def for_start_fmt(self): return "нц для %s от %s до %s\n"
+    def for_start_fmt(self): return "нц для {} от {} до {}\n"
     def for_end_fmt(self): return "\nкц"
 
-    def if_start_fmt(self): return "если %s то\n"
+    def if_start_fmt(self): return "если {} то\n"
     def if_end_fmt(self): return "\nвсе"
 
-    def while_start_fmt(self): return "пока %s нц\n"
+    def while_start_fmt(self): return "пока {} нц\n"
     def while_end_fmt(self): return "\nкц"
 
-    def until_start_fmt(self): return "пока не (%s) нц\n"
+    def until_start_fmt(self): return "пока не ({}) нц\n"
     def until_end_fmt(self): return "\nкц"
 
-    def c_func_start_fmt(self): return "алг цел %s(цел %s)\nнач\n"
+    def c_func_start_fmt(self): return "алг цел {}(цел {})\nнач\n"
     def c_func_end_fmt(self): return "\nкон\n"
 
-    def print_fmt(self): return 'вывод %s'
-    def print_str_fmt(self): return 'вывод "%s"'
+    def print_fmt(self): return 'вывод {}'
+    def print_str_fmt(self): return 'вывод "{}"'
 
     def c_return_fmt(self):
-        return 'выход_алг %s | выход_алг выраж - оператор выхода из алгоритма, с возвращением результата выраж'
+        return 'выход_алг {} | выход_алг выраж - оператор выхода из алгоритма, с возвращением результата выраж'
     def p_return_fmt(self):
         return 'выход_алг | выход_алг - оператор выхода из алгоритма'
 
 
 class Perl(Lang):
 
-    def var_fmt(self): return '$%s'
-    def assign_fmt(self): return '%s = %s;'
-    def index_fmt(self): return '$%s[%s]'
+    def var_fmt(self): return '${}'
+    def assign_fmt(self): return '{} = {};'
+    def index_fmt(self): return '${}[{}]'
     def translate_op(self):
-        return { '//': 'int(%s / %s)', '=>': '<=', 'eq': '==', **ops.between }
+        return { '//': 'int({} / {})', '=>': '<=', 'eq': '==', **ops.between }
 
-    def for_start_fmt(self): return 'for (%s = %2$s; %1$s <= %3$s; ++%1$s) {' + "\n"
+    def for_start_fmt(self): return 'for ({0} = {1}; {0} <= {2}; ++{0}) {' + "\n"
     def for_end_fmt(self): return "\n}"
 
-    def if_start_fmt(self): return "if (%s) {\n"
+    def if_start_fmt(self): return "if ({}) {\n"
     def if_end_fmt(self): return "\n}"
 
-    def while_start_fmt(self): return "while (%s) {\n"
+    def while_start_fmt(self): return "while ({}) {\n"
     def while_end_fmt(self): return "\n}"
 
-    def until_start_fmt(self): return "until (%s) {\n"
+    def until_start_fmt(self): return "until ({}) {\n"
     def until_end_fmt(self): return "\n}"
 
-    def c_func_start_fmt(self): return "sub %s {\n  my (%s) = \@_;\n"
+    def c_func_start_fmt(self): return "sub {} {\n  my ({}) = \@_;\n"
     def c_func_end_fmt(self): return "\n}\n"
 
-    def p_func_start_fmt(self): return "sub %s {\n  my \$%1\$s;\n  my (%s) = \@_;\n"
-    def p_func_end_fmt(self): return "\n  return \$%1\$s;\n}\n"
+    def p_func_start_fmt(self): return "sub {} {\n  my {}\n  my ({}) = \@_;\n"
+    def p_func_end_fmt(self): return "\n  return {};\n}\n"
 
-    def print_fmt(self): return 'print(%s)'
-    def print_str_fmt(self): return "print('%s')"
+    def print_fmt(self): return 'print({})'
+    def print_str_fmt(self): return "print('{}')"
 
-    def expr_fmt(self): return '%s;'
+    def expr_fmt(self): return '{};'
 
-    def args_fmt(self): return '$%s'
+    def args_fmt(self): return '${}'
 
-    def c_return_fmt(self): return 'return %s;'
+    def c_return_fmt(self): return 'return {};'
 
 
 class Logic(Lang):
@@ -307,34 +314,74 @@ class Logic(Lang):
             ops.comp, [ '&&' ], [ '||', '^' ], [ '=>', 'eq' ],
         ]
 
-    def index_fmt(self): return { 'left': '%s', 'inner': '%s', 'tag': 'sub', 'alt': '_' }
+    def index_fmt(self): return { 'left': '{}', 'inner': '{}', 'tag': 'sub', 'alt': '_' }
 
     def translate_op(self):
         return {
-            '**': { 'left': '%s', 'inner': '%s', 'tag': 'sup', 'alt': ' ^ ' },
+            '**': { 'left': '{}', 'inner': '{}', 'tag': 'sup', 'alt': ' ^ ' },
             '-': '−', '*': '⋅',
             '==': '=', '!=': '≠', '>=': '≥', '<=': '≤',
             '&&': '∧', '||': '∨', '^': '⊕', '=>': '→', 'eq': '≡',
         }
 
-    def var_fmt(self): return { 'inner': '%s', 'tag': 'i' }
+    def var_fmt(self): return { 'inner': '{}', 'tag': 'i' }
 
-    def call_func_fmt(self): return { 'inner': '%s', 'tag': 'i', 'right': '(%s)' }
+    def call_func_fmt(self): return { 'inner': '{}', 'tag': 'i', 'right': '({})' }
 
     def translate_un_op(self): return { '!': '¬' }
 
 
 class SQL(Lang):
 
-    def translate_op(sell):
+    def translate_op(self):
         return {
-            '**': 'POWER(%s, %s)',
+            '**': 'POWER({}, {})',
             '==': '=', '!=': '<>','&&': 'AND', '||': 'OR',
-            'between': '%s BETWEEN %s AND %s',
+            'between': '{} BETWEEN {} AND {}',
         }
 
-    def translate_un_op(sell): return { '!': 'NOT' }
+    def translate_un_op(self): return { '!': 'NOT' }
 
-    def assign_fmt(self): return '%s = %s'
+    def assign_fmt(self): return '{} = {}'
     def block_stmt_separator(self): return ', '
 
+class Python(Lang):
+    def var_fmt(self): return '{}'
+    def assign_fmt(self): return '{} = {};'
+    def index_fmt(self): return '{}[{}]'
+
+    def translate_op(self):
+        return {
+            '=>': '<=', 'eq': '==',
+            '&&': '&', '||': '|',
+            'between': '{1} <= {0} <= {2}'
+        }
+
+    def un_op_fmt(self, op):
+        fmt = self.translate_un_op().get(op, op)
+        fmt = 'not ' if fmt == '!' else fmt
+        return '{}' in fmt and fmt or  fmt + '{}'
+
+    def for_start_fmt(self): return 'for {} in range({}; {}; {}):' + "\n"
+    def for_end_fmt(self): return "\n"
+
+    def if_start_fmt(self): return "if ({}): \n"
+    def if_end_fmt(self): return "\n"
+
+    def while_start_fmt(self): return "while ({}): \n"
+    def while_end_fmt(self): return "\n"
+
+    def until_start_fmt(self): return "until ({}):\n"
+    def until_end_fmt(self): return "\n"
+
+    def c_func_start_fmt(self): return "def {}({}):\n"
+    def c_func_end_fmt(self): return "\n\n"
+
+    def print_fmt(self): return 'print({})'
+    def print_str_fmt(self): return "print('{}')"
+
+    def expr_fmt(self): return '{};'
+
+    def args_fmt(self): return '{}'
+
+    def c_return_fmt(self): return 'return {};'

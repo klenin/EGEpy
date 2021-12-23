@@ -7,8 +7,8 @@ from . import Utils
 
 class SynElement:
 
-    def to_lang_named(self, lang_name: str, options):
-        lang = getattr(Lang, 'lang_name')(options)
+    def to_lang_named(self, lang_name: str, options=None):
+        lang = getattr(Lang, lang_name)(options)
         ret = self.to_lang(lang)
         h = lang.html
         if isinstance(h, dict):
@@ -32,8 +32,8 @@ class SynElement:
     def gather_vars(self, *args): pass
 
     def visit_dfs1(self, fn, depth: int = 1):
-        fn(self, depth)
-        self._visit_children(fn, depth + 1)
+        fn(self)
+        self._visit_children()
         return self
 
     def visit_dfs(self, depth: int = 1):
@@ -57,7 +57,7 @@ class SynElement:
 
 class BlackBox(SynElement):
 
-    def __init__(self, code, lang = None, assign = None):
+    def __init__(self, code=None, lang=None, assign=None):
         self.code = code
         self.lang = lang or {}
         self.assign = assign
@@ -71,7 +71,7 @@ class BlackBox(SynElement):
 
     def to_lang(self, lang): return self.to_lang_named(lang.name)
 
-    def run(self, env): self.code(env)
+    def run(self, env): return self.code(env)
 
 
 class Assign(SynElement):
@@ -81,8 +81,8 @@ class Assign(SynElement):
         self.expr = args['expr']
 
     def to_lang(self, lang):
-        return lang.get_fmt('assign_fmt') % tuple(
-            e.to_lang(lang) for e in (self.var, self.expr))
+        return lang.get_fmt('assign_fmt').format(*[
+            e.to_lang(lang) for e in (self.var, self.expr)])
 
     def run(self, env):
         v = self.expr.run(env)
@@ -116,8 +116,8 @@ class Index(SynElement):
         self.indices = indices
 
     def to_lang(self, lang):
-        return lang.get_fmt('index_fmt') % tuple([self.array.to_lang(lang),
-                                                  ', '.join(i.to_lang(lang) for i in self.indices)])
+        return lang.get_fmt('index_fmt').format(*[self.array.to_lang(lang),
+                                                  ', '.join(str(i.to_lang(lang)) for i in self.indices)])
 
     def run(self, env):
         v = self.array.run(env)
@@ -144,7 +144,7 @@ class CallFunc(SynElement):
         self.args = args
 
     def to_lang(self, lang):
-        return lang.get_fmt('call_func_fmt') % tuple([
+        return lang.get_fmt('call_func_fmt').format(*[
             self.func,
             *lang.get_fmt('args_separator').join(a.to_lang(lang) for a in self.args)])
 
@@ -177,8 +177,8 @@ class Print(SynElement):
         self.fmt = fmt_types[self.type_]
 
     def to_lang(self, lang):
-       return lang.get_fmt(self.fmt) % tuple(
-            lang.get_fmt('args_separator').join(a.to_lang(lang) for a in self.args))
+       return lang.get_fmt(self.fmt).format(*[
+            lang.get_fmt('args_separator').join(a.to_lang(lang) for a in self.args)])
 
     def run(self, env):
         line = ' '.join(a.run(env) for a in self.args)
@@ -199,7 +199,7 @@ class Op(SynElement):
     def children(self): return [ self._children() ]
 
     def run(self, env):
-        return eval(self.run_fmt() % tuple(c.run(env) for c in self.children()))
+        return eval(self.run_fmt().format(*[c.run(env) for c in self.children()]))
 
     def prio(self, lang):
         return lang.prio[self.op]
@@ -209,13 +209,13 @@ class Op(SynElement):
         return operand_.needs_parens(lang, self.prio(lang)) and f"({t})" or t
 
     def to_lang(self, lang):
-        return self.to_lang_fmt(lang, self.op) % tuple(
-            self.operand(lang, c) for c in self.children())
+        return self.to_lang_fmt(lang).format(*[
+            self.operand(lang, c) for c in self.children()])
 
     def needs_parens(self, lang, parent_prio):
         return parent_prio < self.prio(lang)
 
-    def run_fmt(self): return self.to_lang_fmt(Lang.Perl(params=None))
+    def run_fmt(self): return self.to_lang_fmt(Lang.Python(params=None))
     def to_lang_fmt(self, *args): pass
 
     def gather_vars(self, env): return [ c.gather_vars(env) for c in self.children() ]
@@ -304,8 +304,7 @@ class TernaryOp(Op):
         r = lang.get_fmt('op_fmt', self.op)
         if not isinstance(r, list):
             return r
-        s = make_expr(r).to_lang(lang)
-        #$s =~ s/(\d+)/%$1\$s/g;
+        s = re.sub(r'(\d+)', r'{\g<1>}', make_expr(r).to_lang(lang))
         return s
 
     def children(self): return self.arg1, self.arg2, self.arg3
@@ -316,10 +315,10 @@ class Var(SynElement):
         self.name = name
 
     def to_lang(self, lang):
-        return lang.get_fmt('var_fmt') % self.name
+        return lang.get_fmt('var_fmt').format(self.name)
 
     def run(self, env):
-        v = env[self.name]
+        v = env[self.name] if env else None
         if v is None:
             raise ValueError(f"Undefined variable {self.name}")
         return v
@@ -361,7 +360,7 @@ class Block(SynElement):
 
     def to_lang(self, lang):
         return lang.get_fmt('block_stmt_separator').join(
-            s.to_lang(lang) for s in  self.statements)
+            s.to_lang(lang) for s in self.statements)
 
     def run(self, env):
         for s in self.statements:
@@ -389,7 +388,7 @@ class CompoundStatement(SynElement):
     def to_lang(self, lang):
         body_is_block = len(self.body.statements) > 1
         (fmt_start, fmt_end) = (
-            lang.get_fmt(f, body_is_block or lang.body_is_block) for f in self.get_fmt_names())
+            lang.get_fmt(f, body_is_block) for f in self.get_fmt_names())
 
         if lang.html and lang.html.coloring:
             s = html.style(color=lang.html.coloring[0])
@@ -401,9 +400,9 @@ class CompoundStatement(SynElement):
             fmt_end = sp(fmt_end)
 
         body = self.body.to_lang(lang)
-        if not lang.unindent and fmt_start.endswith("\n"):
-            body = re.sub('^', '  ') # отступы
-        return fmt_start + self.to_lang_fmt() + fmt_end % tuple([
+        if fmt_start.endswith("\n"):
+            body = re.sub('^', '  ', body) # отступы
+        return (fmt_start + self.to_lang_fmt() + fmt_end).format(*[
             *(getattr(self, f).to_lang(lang) for f in self.to_lang_fields()), body])
 
     def _visit_children(self):
@@ -412,14 +411,14 @@ class CompoundStatement(SynElement):
 
 
 class ForLoop(CompoundStatement):
-    def __init__(self, var, lb, ub, body):
-        super().__init__(body)
-        self.var = var
-        self.lb = lb
-        self.ub = ub
+    def __init__(self, args, cur_func=None):
+        super().__init__(args['body'])
+        self.var = args['var']
+        self.lb = args['lb']
+        self.ub = args['ub']
 
     def get_fmt_names(self): return [ 'for_start_fmt', 'for_end_fmt' ]
-    def to_lang_fmt(self): return '%4$s'
+    def to_lang_fmt(self): return '{}'
     def to_lang_fields(self): return [ 'var', 'lb', 'ub' ]
 
     def run(self, env):
@@ -453,7 +452,7 @@ class IfThen(CompoundStatement):
         self.cond = cond
 
     def get_fmt_names(self): return [ 'if_start_fmt', 'if_end_fmt' ]
-    def to_lang_fmt(self): return '%2$s'
+    def to_lang_fmt(self): return '{}'
     def to_lang_fields(self): return [ 'cond' ]
 
     def run(self, env):
@@ -544,7 +543,7 @@ class CondLoop(CompoundStatement):
         self.cond = cond
 
     def get_fmt_names(self): return [ 'while_start_fmt', 'while_end_fmt' ]
-    def to_lang_fmt(self): return '%2$s'
+    def to_lang_fmt(self): return '{}'
     def to_lang_fields(self): return [ 'cond' ]
 
     def run(self, env):
@@ -557,7 +556,7 @@ class While(CondLoop):
         self.cond = cond
 
     def get_fmt_names(self): return [ 'while_start_fmt', 'while_end_fmt' ]
-    def to_lang_fmt(self): return '%2$s'
+    def to_lang_fmt(self): return '{}'
     def to_lang_fields(self): return [ 'cond' ]
 
     def run(self, env):
@@ -571,7 +570,7 @@ class Until(CondLoop):
         self.cond = cond
 
     def get_fmt_names(self): return [ 'until_start_fmt', 'until_end_fmt' ]
-    def to_lang_fmt(self): return '%2$s'
+    def to_lang_fmt(self): return '{}'
     def to_lang_fields(self): return [ 'cond' ]
 
     def run(self, env):
@@ -581,12 +580,12 @@ class Until(CondLoop):
 
 
 class PlainText(SynElement):
-    def __init__(self, text):
-        self.text = text
+    def __init__(self, text, func=None):
+        self.text = text['text']
 
     def to_lang(self, lang):
         t = self.text
-        return isinstance(t, dict) and t[lang].name or t
+        return isinstance(t, dict) and t.get(type(lang).__name__) or isinstance(t, str) and t or ''
 
 
 class ExprStmt(SynElement):
@@ -594,7 +593,7 @@ class ExprStmt(SynElement):
         self.expr = expr
 
     def to_lang(self, lang):
-        lang.get_fmt('expr_fmt') % self.expr.to_lang(lang)
+        lang.get_fmt('expr_fmt').format(self.expr.to_lang(lang))
 
     def run(self, env):
         self.expr.run(env)
@@ -617,7 +616,7 @@ class FuncDef(CompoundStatement):
         return [
             (self.c_style and 'c' or 'p') + f for f in ('_func_start_fmt', '_func_end_fmt') ]
 
-    def to_lang_fmt(self): return '%3$s'
+    def to_lang_fmt(self): return '{}'
     def to_lang_fields(self): return [ 'head' ]
 
     def run(self, env):
@@ -653,7 +652,7 @@ class FuncHead(SynElement):
 
     def to_lang(self, lang):
         params = lang.get_fmt('args_separator').join(tuple(
-            lang.get_fmt('args_fmt') % p for p in self.params))
+            lang.get_fmt('args_fmt').format(*[p for p in self.params])))
         return self.name, *params
 
 
@@ -670,8 +669,8 @@ class Return(SynElement):
 
     def to_lang(self, lang):
         return (self.func.c_style and
-            lang.c_return_fmt % self.expr.to_lang(lang) or
-            lang.p_return_fmt % self.func.head.name)
+            lang.c_return_fmt.format(self.expr.to_lang(lang)) or
+            lang.p_return_fmt.format(self.func.head.name))
 
     def run(self, env):
         raise (self.func.c_style and
@@ -680,7 +679,7 @@ class Return(SynElement):
 
 
 def make_expr(src):
-    if not src:
+    if src is None:
         raise ValueError('empty argument')
     if isinstance(src, SynElement):
         return src
@@ -715,7 +714,7 @@ def make_expr(src):
         if len(rest) == 3:
             return TernaryOp(
                 op=op,
-                **{ 'arg' + i: make_expr(rest[i]) for i in range(3) })
+                **{ 'arg' + str(i+1): make_expr(rest[i]) for i in range(3) })
         raise ValueError(f"make_expr: {src}")
     if callable(src):
         return BlackBox(code=src)
