@@ -118,11 +118,11 @@ class Basic(Lang):
     def if_end_fmt(self, multiline: bool):
         return multiline and "\nEND IF" or ''
 
-    def while_start_fmt(self): return "DO WHILE {}\n"
-    def while_end_fmt(self): return "\nEND DO"
+    def while_start_fmt(self, multiline: bool): return "DO WHILE {}\n"
+    def while_end_fmt(self, multiline: bool): return "\nEND DO"
 
-    def until_start_fmt(self): return "DO UNTIL {}\n"
-    def until_end_fmt(self): return "\nEND DO"
+    def until_start_fmt(self, multiline: bool): return "DO UNTIL {}\n"
+    def until_end_fmt(self, multiline: bool): return "\nEND DO"
 
     def c_func_start_fmt(self): return "FUNCTION {}({})\n"
     def c_func_end_fmt(self): return "\nEND FUNCTION\n"
@@ -135,8 +135,8 @@ class Basic(Lang):
 
 class C(Lang):
 
-    def assign_fmt(self): '{} = {};'
-    def index_fmt(self): '{}[{}]'
+    def assign_fmt(self): return '{} = {};'
+    def index_fmt(self): return '{}[{}]'
     def translate_op(self):
         return {
             '**': 'pow({}, {})', '//': 'int({} / {})', '=>': '<=', 'eq': '==',
@@ -246,17 +246,17 @@ class Alg(Lang):
         }
     def translate_un_op(self): return { '!': 'не' }
 
-    def for_start_fmt(self): return "нц для {} от {} до {}\n"
-    def for_end_fmt(self): return "\nкц"
+    def for_start_fmt(self, multiline: bool): return "нц для {} от {} до {}\n"
+    def for_end_fmt(self, multiline: bool): return "\nкц"
 
-    def if_start_fmt(self): return "если {} то\n"
-    def if_end_fmt(self): return "\nвсе"
+    def if_start_fmt(self, multiline: bool): return "если {} то\n"
+    def if_end_fmt(self, multiline: bool): return "\nвсе"
 
-    def while_start_fmt(self): return "пока {} нц\n"
-    def while_end_fmt(self): return "\nкц"
+    def while_start_fmt(self, multiline: bool): return "пока {} нц\n"
+    def while_end_fmt(self, multiline: bool): return "\nкц"
 
-    def until_start_fmt(self): return "пока не ({}) нц\n"
-    def until_end_fmt(self): return "\nкц"
+    def until_start_fmt(self, multiline: bool): return "пока не ({}) нц\n"
+    def until_end_fmt(self, multiline: bool): return "\nкц"
 
     def c_func_start_fmt(self): return "алг цел {}(цел {})\nнач\n"
     def c_func_end_fmt(self): return "\nкон\n"
@@ -278,23 +278,23 @@ class Perl(Lang):
     def translate_op(self):
         return { '//': 'int({} / {})', '=>': '<=', 'eq': '==', **ops.between }
 
-    def for_start_fmt(self): return 'for ({0} = {1}; {0} <= {2}; ++{0}) {' + "\n"
-    def for_end_fmt(self): return "\n}"
+    def for_start_fmt(self, multiline: bool): return 'for ({0} = {1}; {0} <= {2}; ++{0}) {{' + "\n"
+    def for_end_fmt(self, multiline: bool): return "\n}"
 
-    def if_start_fmt(self): return "if ({}) {\n"
-    def if_end_fmt(self): return "\n}"
+    def if_start_fmt(self, multiline: bool): return "if ({}) {{\n"
+    def if_end_fmt(self, multiline: bool): return "\n}}"
 
-    def while_start_fmt(self): return "while ({}) {\n"
-    def while_end_fmt(self): return "\n}"
+    def while_start_fmt(self, multiline: bool): return "while ({}) {{\n"
+    def while_end_fmt(self, multiline: bool): return "\n}}"
 
-    def until_start_fmt(self): return "until ({}) {\n"
-    def until_end_fmt(self): return "\n}"
+    def until_start_fmt(self, multiline: bool): return "until ({}) {{\n"
+    def until_end_fmt(self, multiline: bool): return "\n}}"
 
     def c_func_start_fmt(self): return "sub {} {\n  my ({}) = \@_;\n"
-    def c_func_end_fmt(self): return "\n}\n"
+    def c_func_end_fmt(self): return "\n}}\n"
 
     def p_func_start_fmt(self): return "sub {} {\n  my {}\n  my ({}) = \@_;\n"
-    def p_func_end_fmt(self): return "\n  return {};\n}\n"
+    def p_func_end_fmt(self): return "\n  return {};\n}}\n"
 
     def print_fmt(self): return 'print({})'
     def print_str_fmt(self): return "print('{}')"
@@ -362,17 +362,17 @@ class Python(Lang):
         fmt = 'not ' if fmt == '!' else fmt
         return '{}' in fmt and fmt or  fmt + '{}'
 
-    def for_start_fmt(self): return 'for {} in range({}; {}; {}):' + "\n"
-    def for_end_fmt(self): return "\n"
+    def for_start_fmt(self, multiline: bool): return 'for {} in range({}; {}; {}):' + "\n"
+    def for_end_fmt(self, multiline: bool): return "\n"
 
-    def if_start_fmt(self): return "if ({}): \n"
-    def if_end_fmt(self): return "\n"
+    def if_start_fmt(self, multiline: bool): return "if ({}): \n"
+    def if_end_fmt(self, multiline: bool): return "\n"
 
-    def while_start_fmt(self): return "while ({}): \n"
-    def while_end_fmt(self): return "\n"
+    def while_start_fmt(self, multiline: bool): return "while ({}): \n"
+    def while_end_fmt(self, multiline: bool): return "\n"
 
-    def until_start_fmt(self): return "until ({}):\n"
-    def until_end_fmt(self): return "\n"
+    def until_start_fmt(self, multiline: bool): return "until ({}):\n"
+    def until_end_fmt(self, multiline: bool): return "\n"
 
     def c_func_start_fmt(self): return "def {}({}):\n"
     def c_func_end_fmt(self): return "\n\n"

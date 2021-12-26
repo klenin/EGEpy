@@ -27,26 +27,32 @@ class SynElement:
     def run_val(self, name: str, env = None):
         env = env or {}
         self.run(env)
-        return env[name]
+        return env.get(name)
 
     def gather_vars(self, *args): pass
 
-    def visit_dfs1(self, fn, depth: int = 1):
-        fn(self)
-        self._visit_children()
+    def visit_dfs1(self, fn=None, depth: int = 1):
+        if fn:
+            fn(self)
+        self._visit_children1(fn)
         return self
 
-    def visit_dfs(self, depth: int = 1):
+    def visit_dfs(self):
         yield self
-        yield from self._visit_children(depth + 1)
+        yield from self._visit_children()
 
-    def _visit_children(self, *attr): pass
+    def _visit_children1(self, *attr): pass
+    def _visit_children(self, *attr): return []
 
     def count_if(self, cond):
-        return sum(1 for se in self.visit_dfs() if cond(se))
+        return sum(1 if cond(se) else 0 for se in self.visit_dfs())
 
     def gather_if(self, cond):
-        return [ se for se in self.visit_dfs() if cond(se) ]
+        res = []
+        for se in self.visit_dfs():
+            if cond(se):
+                res.append(se)
+        return res
 
     def get_type(self): pass # { (split ':', ref $_[0])[-1] }
 
@@ -89,6 +95,10 @@ class Assign(SynElement):
         self.var.assign(env, v)
         return v
 
+    def _visit_children1(self, fn):
+        self.var.visit_dfs1(fn)
+        self.expr.visit_dfs1(fn)
+
     def _visit_children(self):
         yield from self.var.visit_dfs()
         yield from self.expr.visit_dfs()
@@ -128,9 +138,13 @@ class Index(SynElement):
     def assign(self, env, value):
         v = self.array.run(env)
         for i in self.indices[:-1]:
-            v = v[i.run(env)]
-        v[self.indices[-1]] = value
+            v = v.get(i.run(env))
+        v[self.indices[-1].run(env)] = value
         return value
+
+    def _visit_children1(self, fn):
+        for se in (self.array, *self.indices):
+            se.visit_dfs1(fn)
 
     def _visit_children(self):
         for se in (self.array, *self.indices):
@@ -219,6 +233,11 @@ class Op(SynElement):
     def to_lang_fmt(self, *args): pass
 
     def gather_vars(self, env): return [ c.gather_vars(env) for c in self.children() ]
+
+    def _visit_children1(self, fn):
+        for c in self.children():
+            c.visit_dfs1(fn)
+
     def _visit_children(self):
         for c in self.children():
             yield from c.visit_dfs()
@@ -318,15 +337,15 @@ class Var(SynElement):
         return lang.get_fmt('var_fmt').format(self.name)
 
     def run(self, env):
-        v = env[self.name] if env else None
-        if v is None:
-            raise ValueError(f"Undefined variable {self.name}")
+        if env.get(self.name) is None:
+            env[self.name] = {}
+        v = env.get(self.name)
         return v
 
     def assign(self, env, value):
         env[self.name] = value
 
-    def gather_vars(self, vars_): vars_.add(self.name)
+    def gather_vars(self, vars_): vars_[self.name] = 1
 
     def polinom_degree(self, env, mistakes, iter_):
         n = self.name
@@ -366,6 +385,10 @@ class Block(SynElement):
         for s in self.statements:
             s.run(env)
 
+    def _visit_children1(self, fn):
+        for s in self.statements:
+            s.visit_dfs1(fn)
+
     def _visit_children(self):
         for s in self.statements:
             yield from s.visit_dfs()
@@ -402,12 +425,17 @@ class CompoundStatement(SynElement):
         body = self.body.to_lang(lang)
         if fmt_start.endswith("\n"):
             body = re.sub('^', '  ', body) # отступы
+            body = re.sub('\n', '\n  ', body)
         return (fmt_start + self.to_lang_fmt() + fmt_end).format(*[
             *(getattr(self, f).to_lang(lang) for f in self.to_lang_fields()), body])
 
+    def _visit_children1(self, fn):
+        for f in [*(getattr(self, f) for f in self.to_lang_fields()), self.body]:
+            f.visit_dfs1(fn)
+
     def _visit_children(self):
         for f in [*(getattr(self, f) for f in self.to_lang_fields()), self.body]:
-            f.visit_dfs()
+            yield from f.visit_dfs()
 
 
 class ForLoop(CompoundStatement):
@@ -422,7 +450,6 @@ class ForLoop(CompoundStatement):
     def to_lang_fields(self): return [ 'var', 'lb', 'ub' ]
 
     def run(self, env):
-        i = self.var.get(env)
         for i in range(self.lb.run(env), self.ub.run(env) + 1):
             self.var.assign(env, i)
             self.body.run(env)
@@ -447,9 +474,9 @@ class ForLoop(CompoundStatement):
 
 
 class IfThen(CompoundStatement):
-    def __init__(self, cond, body):
-        super().__init__(body)
-        self.cond = cond
+    def __init__(self, args, cur_func):
+        self.cond = args['cond']
+        self.body = args['body']
 
     def get_fmt_names(self): return [ 'if_start_fmt', 'if_end_fmt' ]
     def to_lang_fmt(self): return '{}'
@@ -551,9 +578,9 @@ class CondLoop(CompoundStatement):
             self.body.run(env)
 
 class While(CondLoop):
-    def __init__(self, cond, body):
-        super().__init__(body)
-        self.cond = cond
+    def __init__(self, args, cur_func):
+        self.cond = args['cond']
+        self.body = args['body']
 
     def get_fmt_names(self): return [ 'while_start_fmt', 'while_end_fmt' ]
     def to_lang_fmt(self): return '{}'
@@ -562,12 +589,12 @@ class While(CondLoop):
     def run(self, env):
         while True:
             self.body.run(env)
-            if self.cond.run(env): break
+            if not self.cond.run(env): break
 
 class Until(CondLoop):
-    def __init__(self, cond, body):
-        super().__init__(body)
-        self.cond = cond
+    def __init__(self, args, cur_func):
+        self.cond = args['cond']
+        self.body = args['body']
 
     def get_fmt_names(self): return [ 'until_start_fmt', 'until_end_fmt' ]
     def to_lang_fmt(self): return '{}'

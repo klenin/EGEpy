@@ -78,14 +78,13 @@ class Test_Prog(unittest.TestCase):
     def test_dfs(self):
         eq = self.assertEqual
         def plus2minus(t):
-            t.op = '+' if t.op == '-' else t.op
+            if hasattr(t, 'op') and t.op == '-':
+                t.op = '+'
         e = make_expr(['-', ['-', 3, ['-', 2, 1]]])
         eq(e.run(None), -2, 'visit_dfs before')
-        #eq(e.visit_dfs1(plus2minus).run(None), 6, 'visit_dfs after')
-        #eq(e.count_if(lambda x: 1), 6, 'visit_dfs count all')
-        #eq(e.count_if(lambda x: isinstance(x, Const)), 3, 'count_if')
-        #eq([ e.gather_if(lambda x: isinstance(x, BinOp))],
-        #[ e.arg, e.arg.right ], 'gather_if');
+        eq(e.visit_dfs1(plus2minus).run(None), 6, 'visit_dfs after')
+        eq(e.count_if(lambda x: 1), 6, 'visit_dfs count all')
+        eq(e.count_if(lambda x: isinstance(x, Const)), 3, 'count_if')
 
     def check_lang(self, lang, expr, str, name):
         eq = self.assertEqual
@@ -150,7 +149,7 @@ class Test_Prog(unittest.TestCase):
         eq = self.assertEqual
         b = make_block(['=', ['[]', 'A', 2], 5], None)
         eq(b.to_lang_named('Pascal'), 'A[2] := 5;')
-        #eq(b.run_val('A'), [None, None, 5])
+        eq(b.run_val('A'), {2: 5})
 
     def test_loops(self):
         eq = self.assertEqual
@@ -159,7 +158,87 @@ class Test_Prog(unittest.TestCase):
         ], None)
         p = "for i := 0 to 4 do\n  M[i] := i;"
         eq(b.to_lang_named('Pascal'), p, 'loop in Pascal')
-        #eq(b.run_val('M'), [0, 1, 2, 3, 4], 'loop run')
+        eq(b.run_val('M'), {0: 0, 1: 1, 2: 2, 3: 3, 4: 4}, 'loop run')
+
+    def test_Pascal_loop(self):
+        eq = self.assertEqual
+        b = make_block([
+            'for', 'i', 0, 4, [
+                '=', ['[]', 'M', 'i'], 'i',
+                '=', ['[]', 'M', 'i'], 'i',
+        ]], None)
+        p = """for i := 0 to 4 do begin
+  M[i] := i;
+  M[i] := i;
+end;"""
+        eq(b.to_lang_named('Pascal'), p, 'loop in Pascal with begin-end')
+
+    def test_Alg_loop(self):
+        eq = self.assertEqual
+        b = make_block([
+            '=', 'a', 1,
+            'for', 'i', 1, 3, ['=', 'a', ['*', 'a', '2']]
+        ], None)
+        p = """a := 1
+нц для i от 1 до 3
+  a := a * 2
+кц"""
+        eq(b.to_lang_named('Alg'), p, 'loop in Alg')
+        eq(b.run_val('a'), 8, 'loop run')
+
+    def test_ifs(self):
+        eq = self.assertEqual
+        b = make_block([
+            'if', 'a', ['=', 'x', 7],
+        ], None)
+        eq(b.to_lang_named('Basic'), 'IF a THEN x = 7', 'if in Basic')
+        eq(b.to_lang_named('Perl'), "if ($a) {\n  $x = 7;\n}", 'if in Perl')
+        eq(b.run_val('x', {'a': 0}), None, 'if (false) run')
+        eq(b.run_val('x', {'a': 1}), 7, 'if (true) run')
+
+    def test_while(self):
+        eq = self.assertEqual
+        b = make_block([
+            'while', ['>', 'a', 0], ['=', 'a', ['-', 'a', 1]]
+        ], None)
+        eq(b.to_lang_named('Basic'), "DO WHILE a > 0\n  a = a - 1\nEND DO",
+           'while in Basic')
+
+        eq(b.to_lang_named('C'), "while (a > 0)\n  a = a - 1;", 'while in C')
+        eq(b.run_val('a', {'a': 5}), 0, 'while run')
+
+    def test_while_with_assign(self):
+        eq = self.assertEqual
+        b = make_block([
+            '=', 'x', '64',
+            'while', ['>', 'x', 7], [
+                '=', 'x', ['/', 'x', 2]
+            ]
+        ], None)
+        eq(b.run_val('x'), 4, 'while run 2')
+
+    def test_until(self):
+        eq = self.assertEqual
+        b = make_block([
+            'until', ['==', 'a', 0], ['=', 'a', ['-', 'a', 1]]
+        ], None)
+        eq(b.to_lang_named('Basic'), "DO UNTIL a = 0\n  a = a - 1\nEND DO",
+           'until in Basic')
+
+        eq(b.to_lang_named('C'), "while (!(a == 0))\n  a = a - 1;",
+           'until in C')
+        eq(b.run_val('a', {'a': 5}), 0, 'until run')
+
+    def test_gather(self):
+        eq = self.assertEqual
+        e = make_expr(['+', 'x', ['-', 'y']])
+        v = {}
+        e.gather_vars(v)
+        eq(v, {'x': 1, 'y': 1}, 'gather_vars')
+
+    def check_sub(self, lang, block, code, name, opts):
+        eq = self.assertEqual
+        eq(block.to_lang_named(lang, opts), "\n".join(i for i in code), name)
 
 if __name__ == '__main__':
     unittest.main(verbosity=1)
