@@ -10,9 +10,9 @@ def attrs_str(**kwargs):
 def open_tag(tag: str, attrs: dict = {}, rest: str = '>'):
     return '<' + tag + attrs_str(**attrs) + rest
 
-def tag(tag: str, body = None, **attrs):
+def tag(tag: str, body=None, **attrs):
     if hasattr(body, '__iter__'):
-        body = ''.join(body)
+        body = ''.join(body.splitlines())
     return open_tag(tag, attrs, f">{body}</{tag}>" if body else '/>')
 
 def close_tag(tag: str):

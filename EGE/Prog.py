@@ -12,10 +12,10 @@ class SynElement:
         ret = self.to_lang(lang)
         h = lang.html
         if isinstance(h, dict):
-            if h['lang_marking']:
+            if h.get('lang_marking'):
                 ret = "\n".join(
                     html.tag('pre', line, class_=lang_name) for line in ret.split("\n"))
-            if h['pre']:
+            if h.get('pre'):
                 ret = html.tag('pre', ret)
         return ret
 
@@ -24,7 +24,7 @@ class SynElement:
 
     def assign(self, env, value): pass
 
-    def run_val(self, name: str, env = None):
+    def run_val(self, name: str, env=None):
         env = env or {}
         self.run(env)
         return env.get(name)
@@ -160,7 +160,7 @@ class CallFunc(SynElement):
     def to_lang(self, lang):
         return lang.get_fmt('call_func_fmt').format(*[
             self.func,
-            *lang.get_fmt('args_separator').join(a.to_lang(lang) for a in self.args)])
+            lang.get_fmt('args_separator').join(a.to_lang(lang) for a in self.args)])
 
     def run(self, env):
         arg_val = [ a.run(env) for a in self.args ]
@@ -191,11 +191,11 @@ class Print(SynElement):
         self.fmt = fmt_types[self.type_]
 
     def to_lang(self, lang):
-       return lang.get_fmt(self.fmt).format(*[
-            lang.get_fmt('args_separator').join(a.to_lang(lang) for a in self.args)])
+        return lang.get_fmt(self.fmt).format(
+            lang.get_fmt('args_separator').join(a.to_lang(lang) for a in self.args))
 
     def run(self, env):
-        line = ' '.join(a.run(env) for a in self.args)
+        line = ' '.join(str(a.run(env)) for a in self.args)
         o = '<out>'
         if o in env:
             env[o] += "\n" + line
@@ -308,8 +308,11 @@ class UnOp(Op):
 class Inc(UnOp):
 
     def run(self, env):
-        #return eval(self.op}, '${$self->{arg}->get_ref($env)}';
-        pass
+        if self.op[:2] == '++':
+            env[self.arg.name] += 1
+        elif self.op[:2] == '--':
+            env[self.arg.name] -= 1
+        return env[self.arg.name]
 
 
 class TernaryOp(Op):
@@ -360,7 +363,7 @@ class Const(SynElement):
     def __init__(self, value):
         self.value = value
 
-    def to_lang(self, lang): return self.value
+    def to_lang(self, lang): return str(self.value)
 
     def run(self, env): return self.value
 
@@ -413,21 +416,37 @@ class CompoundStatement(SynElement):
         (fmt_start, fmt_end) = (
             lang.get_fmt(f, body_is_block) for f in self.get_fmt_names())
 
-        if lang.html and lang.html.coloring:
-            s = html.style(color=lang.html.coloring[0])
+        if lang.html and lang.html.get('coloring'):
+            s = html.style(color=lang.html['coloring'][0])
 
             def sp(t):
-                return re.sub('([^\n]+)', lambda m: html.tag('span', m, s), t)
+                return re.sub('([^\n]+)', html.tag('span', t, **s), t)
 
             fmt_start = sp(fmt_start)
             fmt_end = sp(fmt_end)
+            if len(lang.html['coloring']) > 1:
+                lang.html['coloring'].pop(0)
 
         body = self.body.to_lang(lang)
         if fmt_start.endswith("\n"):
-            body = re.sub('^', '  ', body) # отступы
-            body = re.sub('\n', '\n  ', body)
-        return (fmt_start + self.to_lang_fmt() + fmt_end).format(*[
-            *(getattr(self, f).to_lang(lang) for f in self.to_lang_fields()), body])
+            if not lang.unindent:
+                body = re.sub('^', '  ', body)  # отступы
+                body = re.sub('\n', '\n  ', body)
+        t = [getattr(self, f).to_lang(lang) for f in self.to_lang_fields()]
+        if isinstance(t[0], tuple):
+            t = [x for i in t for x in i]
+        ret = []
+        if isinstance(self, FuncDef) and not self.c_style and (isinstance(lang, Lang.C) or
+                                                               isinstance(lang, Lang.Perl) or
+                                                               isinstance(lang, Lang.Python)):
+            if isinstance(lang, Lang.C):
+                t.append(t[0])
+            elif isinstance(lang, Lang.Perl):
+                t.insert(1, t[0])
+            ret.append(t[0])
+        if isinstance(self, ForLoop) and isinstance(lang, Lang.Basic):
+            ret.append(t[0])
+        return fmt_start.format(*t) + self.to_lang_fmt().format(body) + fmt_end.format(*ret)
 
     def _visit_children1(self, fn):
         for f in [*(getattr(self, f) for f in self.to_lang_fields()), self.body]:
@@ -519,7 +538,7 @@ class IfThen(CompoundStatement):
                 name = isno_const.left.name
                 if iter_[name]:
                     raise ValueError(
-                        f"IfThen complexity with condition a % b == 0, " + 
+                        f"IfThen complexity with condition a % b == 0, " +
                         "expected a as iterator, given: '{isno_const.left}'")
                 name = Utils.last_key(iter_, name)
                 n = isno_const.right.polinom_degree(env, mistakes, iter_)
@@ -616,28 +635,28 @@ class PlainText(SynElement):
 
 
 class ExprStmt(SynElement):
-    def __init__(self, expr):
-        self.expr = expr
+    def __init__(self, args, cur_func):
+        self.expr = args['expr']
 
     def to_lang(self, lang):
-        lang.get_fmt('expr_fmt').format(self.expr.to_lang(lang))
+        return lang.get_fmt('expr_fmt').format(self.expr.to_lang(lang))
 
     def run(self, env):
-        self.expr.run(env)
+        return self.expr.run(env)
 
     def complexity(self): return 0
 
 
-class FuncReturnException:
+class FuncReturnException(BaseException):
     def __init__(self, p_return=None, return_=None):
         self.p_return = p_return
         self.return_ = return_
 
 class FuncDef(CompoundStatement):
-    def __init__(self, head, body):
-        self.head = head
-        self.body = body
-        self.c_style = False
+    def __init__(self, args, cur_func):
+        self.head = args['head']
+        self.body = args['body']
+        self.c_style = cur_func.c_style if cur_func is not None and hasattr(cur_func, 'c_style') else False
 
     def get_fmt_names(self):
         return [
@@ -647,8 +666,9 @@ class FuncDef(CompoundStatement):
     def to_lang_fields(self): return [ 'head' ]
 
     def run(self, env):
-        if self.head.name in env['&']:
+        if env.get('&') and self.head.name in env.get('&'):
             raise ValueError(f"Redefinition of function {self.head.name}")
+        env['&'] = {}
         env['&'][self.head.name] = self
 
     def call(self, args, env):
@@ -659,16 +679,17 @@ class FuncDef(CompoundStatement):
         if act_len < form_len:
             raise ValueError(f"Too few arguments to function {self.head.name}")
 
-        new_env = { '&': env['&'], **{ k: v for k, v in zip(args, self.head.params) } }
+        new_env = { '&': env['&'], **{v: k for k, v in zip(args, self.head.params) }}
 
         try: # return реализован с использованием исключений
             self.body.run(new_env)
+            return new_env.get(self.head.name)
         except FuncReturnException as e:
-            if e.p_return:
+            if e.p_return is not None:
                 if self.head.name not in new_env:
                     raise ValueError(f"Undefined result of function {self.head.name}")
                 return new_env[self.head.name]
-            elif e.return_:
+            elif e.return_ is not None:
                 return e.return_
 
 
@@ -678,26 +699,25 @@ class FuncHead(SynElement):
         self.params = params
 
     def to_lang(self, lang):
-        params = lang.get_fmt('args_separator').join(tuple(
-            lang.get_fmt('args_fmt').format(*[p for p in self.params])))
-        return self.name, *params
+        params = lang.get_fmt('args_separator').join(
+            lang.get_fmt('args_fmt').format(p) for p in self.params)
+        return self.name, params
 
 
 class Return(SynElement):
 
-    def __init__(self, func: FuncDef, expr=None):
-        self.func = func
-        #defined $self.func} or die "return outside a function";
-        self.expr = expr
-        t = expr is not None
-        if self.func.c_style is not None and self.func.c_style != t:
+    def __init__(self, args, cur_func):
+        self.func = cur_func
+        self.expr = args.get('expr')
+        t = self.expr is not None
+        if hasattr(self.func, 'c_style') and self.func.c_style is not None and self.func.c_style != t:
             raise ValueError("Use different types of return in the same func")
         self.func.c_style = t
 
     def to_lang(self, lang):
         return (self.func.c_style and
-            lang.c_return_fmt.format(self.expr.to_lang(lang)) or
-            lang.p_return_fmt.format(self.func.head.name))
+            lang.c_return_fmt().format(self.expr.to_lang(lang)) or
+            lang.p_return_fmt().format(self.func.head.name))
 
     def run(self, env):
         raise (self.func.c_style and
@@ -718,21 +738,21 @@ def make_expr(src):
         if not op:
             raise ValueError(f"bad op: {op}")
         if len(rest) == 1 and op == '#':
-            return PlainText(text=rest[0])
+            return PlainText({'text': rest[0]})
         if len(rest) and op == '[]':
             array, *indices = map(make_expr, rest)
             return Index(array=array, indices=indices)
         if len(rest) and op == '()':
             (func, *params) = rest
             name = Utils.aggregate_function(func) and CallFuncAggregate or CallFunc
-            return name(func=func, args=map(make_expr, params))
+            return name(func=func, args=[ make_expr(i) for i in params ])
         if len(rest) and op == 'print':
-            (type_, params) = rest
+            type_, *params = rest
             for p in params:
                 if isinstance(p, str) and re.match('[\\\n\'"%]', p):
                     raise ValueError(f"Print argument 'p' contains bad symbol")
-            return Print(type_=type_, args=map(make_expr, params))
-        if len(rest) == 1 and op in [ '++', '--']:
+            return Print(type_=type_, args=[ make_expr(param) for param in params ])
+        if len(rest) == 1 and ('++' in op or '--' in op):
             return Inc(op=op, arg=make_expr(rest[0]))
         if len(rest) == 1:
             return UnOp(op=op, arg=make_expr(rest[0]))
@@ -778,8 +798,8 @@ statements_descr = {
     'return': StatementDescr(Return,    'E_expr'),
 }
 
-def make_func_head(*src):
-    (name, params) = src
+def make_func_head(src):
+    name, *params = src
     return FuncHead(name=name, params=params)
 
 def make_statement(next, cur_func):
@@ -789,7 +809,6 @@ def make_statement(next, cur_func):
     if name == 'func':
         if cur_func:
             raise ValueError("Local function definition")
-        cur_func = {}
 
     arg_processors = {
         'C': lambda x: x,
@@ -802,6 +821,9 @@ def make_statement(next, cur_func):
     for a in d.args.split():
         p, n = re.match('(\w)_(\w+)', a).groups()
         args[n] = arg_processors[p](next[0])
+        if name == 'func':
+            cur_func = args[n]
+            name = ''
         next.pop(0)
     return d.type_(args, cur_func), next
 
@@ -811,8 +833,7 @@ def _add_statement_helper(block: Block, next):
     return next
 
 def add_statement(block: Block, src: list):
-    for i in range(len(src)):
-        _add_statement_helper(block, src[i])
+    _add_statement_helper(block, src)
     return block
 
 def move_statement(block: Block, from_, to):
@@ -821,9 +842,9 @@ def move_statement(block: Block, from_, to):
         raise ValueError("Bad from: {from}")
     if not (0 <= to <= len(s)):
         raise ValueError("Bad to: {from}")
-    block.statements = (from_ < to and
-        s[:from_] + s[from_ + 1:to] + s[from_] + s[to:] or
-        s[:to] + s[from_] + s[to:] + s[to + 1:from_] + s[from_ + 1:])
+
+    s.insert(to, s[from_])
+    s.pop(from_ + 1 if from_ > to else 0)
     return block
 
 def make_block(src: list, cur_func):

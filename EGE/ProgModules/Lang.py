@@ -18,7 +18,8 @@ class ops:
 class Lang:
     def __init__(self, params):
         # my $self = { %init };
-        self.html = params['html'] if params else 0
+        self.html = params.get('html') if params else 0
+        self.unindent = params.get('unindent') if params else 0
         self.prio = {}
         self.make_priorities()
 
@@ -88,8 +89,8 @@ class Lang:
 
     def expr_fmt(self): return '{}'
 
-    def p_func_start_fmt(self): return self.c_func_start_fmt()
-    def p_func_end_fmt(self): return self.c_func_end_fmt()
+    def p_func_start_fmt(self, multiline: bool): return self.c_func_start_fmt(multiline)
+    def p_func_end_fmt(self, multiline: bool): return self.c_func_end_fmt(multiline)
 
     def p_return_fmt(self): return self.c_return_fmt()
 
@@ -109,8 +110,8 @@ class Basic(Lang):
 
     def translate_un_op(self): return { '!': 'NOT' }
 
-    def for_start_fmt(self): return "FOR {} = {} TO {}\n"
-    def for_end_fmt(self): return "\nNEXT {}"
+    def for_start_fmt(self, multiline: bool): return "FOR {} = {} TO {}\n"
+    def for_end_fmt(self, multiline: bool): return "\nNEXT {}"
 
     def if_start_fmt(self, multiline: bool):
         return 'IF {} THEN' + (multiline and "\n" or ' ')
@@ -124,8 +125,8 @@ class Basic(Lang):
     def until_start_fmt(self, multiline: bool): return "DO UNTIL {}\n"
     def until_end_fmt(self, multiline: bool): return "\nEND DO"
 
-    def c_func_start_fmt(self): return "FUNCTION {}({})\n"
-    def c_func_end_fmt(self): return "\nEND FUNCTION\n"
+    def c_func_start_fmt(self, multiline: bool): return "FUNCTION {}({})\n"
+    def c_func_end_fmt(self, multiline: bool): return "\nEND FUNCTION\n"
 
     def print_fmt(self): return 'PRINT {}'
     def print_str_fmt(self): return 'PRINT "{}"'
@@ -145,31 +146,31 @@ class C(Lang):
 
     def for_start_fmt(self, multiline: bool):
     # !!!!
-        return 'for ({0} = {1}; {0} <= {2}; ++{0})' + (multiline and '{' or '') + "\n"
+        return 'for ({0} = {1}; {0} <= {2}; ++{0})' + (multiline and '{{' or '') + "\n"
 
     def for_end_fmt(self, multiline: bool):
-        return multiline and "\n}" or ''
+        return multiline and "\n}}" or ''
 
     def if_start_fmt(self, multiline: bool):
-        return 'if ({})' + (multiline and " {\n" or "\n")
+        return 'if ({})' + (multiline and " {{\n" or "\n")
     def if_end_fmt(self, multiline: bool):
-        return multiline and  "\n}" or ''
+        return multiline and "\n}}" or ''
 
     def while_start_fmt(self, multiline: bool):
-        return 'while ({})' + (multiline and " {\n" or "\n")
+        return 'while ({})' + (multiline and " {{\n" or "\n")
     def while_end_fmt(self, multiline: bool):
-        return multiline and "\n}" or ''
+        return multiline and "\n}}" or ''
 
     def until_start_fmt(self, multiline: bool):
-        return 'while (!({}))' + (multiline and " {\n" or "\n")
+        return 'while (!({}))' + (multiline and " {{\n" or "\n")
     def until_end_fmt(self, multiline: bool):
-        return multiline and "\n}" or ''
+        return multiline and "\n}}" or ''
 
-    def c_func_start_fmt(self): return "int {}({}) {\n"
-    def c_func_end_fmt(self): return "\n}\n"
+    def c_func_start_fmt(self, multiline: bool): return "int {}({}) {{\n"
+    def c_func_end_fmt(self, multiline: bool): return "\n}}\n"
 
-    def p_func_start_fmt(self): return "int {}({}) {\n  int {};\n"
-    def p_func_end_fmt(self): return "\n  return {}\n}\n"
+    def p_func_start_fmt(self, multiline: bool): return "int {}({}) {{\n  int {};\n"
+    def p_func_end_fmt(self, multiline: bool): return "\n  return {};\n}}\n"
 
     def print_fmt(self): return 'print({})'
     def print_str_fmt(self): return 'printf("{}")'
@@ -221,8 +222,8 @@ class Pascal(Lang):
     def until_end_fmt(self, multiline: bool):
         return multiline and "\nend;" or ''
 
-    def c_func_start_fmt(self): return "function {}({}: integer): integer;\nbegin\n"
-    def c_func_end_fmt(self): return "\nend;\n"
+    def c_func_start_fmt(self, multiline: bool): return "function {}({}: integer): integer;\nbegin\n"
+    def c_func_end_fmt(self, multiline: bool): return "\nend;\n"
 
     def print_fmt(self): return 'write({})'
     def print_str_fmt(self): return "write('{}')"
@@ -258,8 +259,8 @@ class Alg(Lang):
     def until_start_fmt(self, multiline: bool): return "пока не ({}) нц\n"
     def until_end_fmt(self, multiline: bool): return "\nкц"
 
-    def c_func_start_fmt(self): return "алг цел {}(цел {})\nнач\n"
-    def c_func_end_fmt(self): return "\nкон\n"
+    def c_func_start_fmt(self, multiline: bool): return "алг цел {}(цел {})\nнач\n"
+    def c_func_end_fmt(self, multiline: bool): return "\nкон\n"
 
     def print_fmt(self): return 'вывод {}'
     def print_str_fmt(self): return 'вывод "{}"'
@@ -279,7 +280,7 @@ class Perl(Lang):
         return { '//': 'int({} / {})', '=>': '<=', 'eq': '==', **ops.between }
 
     def for_start_fmt(self, multiline: bool): return 'for ({0} = {1}; {0} <= {2}; ++{0}) {{' + "\n"
-    def for_end_fmt(self, multiline: bool): return "\n}"
+    def for_end_fmt(self, multiline: bool): return "\n}}"
 
     def if_start_fmt(self, multiline: bool): return "if ({}) {{\n"
     def if_end_fmt(self, multiline: bool): return "\n}}"
@@ -290,11 +291,11 @@ class Perl(Lang):
     def until_start_fmt(self, multiline: bool): return "until ({}) {{\n"
     def until_end_fmt(self, multiline: bool): return "\n}}"
 
-    def c_func_start_fmt(self): return "sub {} {\n  my ({}) = \@_;\n"
-    def c_func_end_fmt(self): return "\n}}\n"
+    def c_func_start_fmt(self, multiline: bool): return "sub {} {{\n  my ({}) = @_;\n"
+    def c_func_end_fmt(self, multiline: bool): return "\n}}\n"
 
-    def p_func_start_fmt(self): return "sub {} {\n  my {}\n  my ({}) = \@_;\n"
-    def p_func_end_fmt(self): return "\n  return {};\n}}\n"
+    def p_func_start_fmt(self, multiline: bool): return "sub {} {{\n  my ${};\n  my ({}) = @_;\n"
+    def p_func_end_fmt(self, multiline: bool): return "\n  return ${};\n}}\n"
 
     def print_fmt(self): return 'print({})'
     def print_str_fmt(self): return "print('{}')"
@@ -347,7 +348,7 @@ class SQL(Lang):
 
 class Python(Lang):
     def var_fmt(self): return '{}'
-    def assign_fmt(self): return '{} = {};'
+    def assign_fmt(self): return '{} = {}'
     def index_fmt(self): return '{}[{}]'
 
     def translate_op(self):
@@ -360,7 +361,7 @@ class Python(Lang):
     def un_op_fmt(self, op):
         fmt = self.translate_un_op().get(op, op)
         fmt = 'not ' if fmt == '!' else fmt
-        return '{}' in fmt and fmt or  fmt + '{}'
+        return '{}' in fmt and fmt or fmt + '{}'
 
     def for_start_fmt(self, multiline: bool): return 'for {} in range({}; {}; {}):' + "\n"
     def for_end_fmt(self, multiline: bool): return "\n"
@@ -374,14 +375,17 @@ class Python(Lang):
     def until_start_fmt(self, multiline: bool): return "until ({}):\n"
     def until_end_fmt(self, multiline: bool): return "\n"
 
-    def c_func_start_fmt(self): return "def {}({}):\n"
-    def c_func_end_fmt(self): return "\n\n"
+    def c_func_start_fmt(self, multiline: bool): return "def {}({}):\n"
+    def c_func_end_fmt(self, multiline: bool): return "\n\n"
+
+    def p_func_start_fmt(self, multiline: bool): return "def {}({}):\n"
+    def p_func_end_fmt(self, multiline: bool): return "\n  return {}\n"
 
     def print_fmt(self): return 'print({})'
     def print_str_fmt(self): return "print('{}')"
 
-    def expr_fmt(self): return '{};'
+    def expr_fmt(self): return '{}'
 
     def args_fmt(self): return '{}'
 
-    def c_return_fmt(self): return 'return {};'
+    def c_return_fmt(self): return 'return {}'

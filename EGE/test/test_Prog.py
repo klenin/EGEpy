@@ -236,9 +236,351 @@ end;"""
         e.gather_vars(v)
         eq(v, {'x': 1, 'y': 1}, 'gather_vars')
 
-    def check_sub(self, lang, block, code, name, opts):
+    def check_sub(self, lang, block, code, name, opts=None):
         eq = self.assertEqual
         eq(block.to_lang_named(lang, opts), "\n".join(i for i in code), name)
+
+    def test_funcs_p_style(self):
+        eq = self.assertEqual
+        b = make_block([
+            'func', ['g', 'a', 'b'],
+            ['=', 'g', ['-', 'a', 'b']],
+            '=', 'a', ['()', 'g', 3, 2]
+        ], None)
+        c = {'Basic': [
+                      'FUNCTION g(a, b)',
+                      '  g = a - b',
+                      'END FUNCTION',
+                      '',
+                      'a = g(3, 2)',
+                      ],
+            "Alg": [
+                        'алг цел g(цел a, b)',
+                        'нач',
+                        '  g := a - b',
+                        'кон',
+                        '',
+                        'a := g(3, 2)',
+                    ],
+            'Pascal': [
+                        'function g(a, b: integer): integer;',
+                        'begin',
+                        '  g := a - b;',
+                        'end;',
+                        '',
+                        'a := g(3, 2);',
+                     ],
+            "C": [
+                        'int g(int a, int b) {',
+                        '  int g;',
+                        '  g = a - b;',
+                        '  return g;',
+                        '}',
+                        '',
+                        'a = g(3, 2);',
+                   ],
+            'Perl': [
+                        'sub g {',
+                        '  my $g;',
+                        '  my ($a, $b) = @_;',
+                        '  $g = $a - $b;',
+                        '  return $g;',
+                        '}',
+                        '',
+                        '$a = g(3, 2);',
+                    ]
+        }
+        for lang in c.keys():
+            self.check_sub(lang, b, c[lang], f"function calling, definition in {lang}")
+        eq(b.run_val('a'), 1, 'run call function')
+
+    def test_funcs_c_style(self):
+        eq = self.assertEqual
+        b = make_block([
+            'func', ['g', 'a', 'b'],
+            ['return', ['-', 'a', 'b']],
+            '=', 'a', ['()', 'g', 3, 2]
+        ], None)
+        c = {
+            'Basic': [
+                      'FUNCTION g(a, b)',
+                      '  RETURN a - b',
+                      'END FUNCTION',
+                      '',
+                      'a = g(3, 2)',
+                      ],
+            'Alg': [
+                      'алг цел g(цел a, b)',
+                      'нач',
+                      '  выход_алг a - b | выход_алг выраж - оператор выхода из алгоритма, с возвращением результата выраж',
+                      'кон',
+                      '',
+                      'a := g(3, 2)',
+                    ],
+            'Pascal': [
+                     'function g(a, b: integer): integer;',
+                     'begin',
+                     '  exit(a - b);',
+                     'end;',
+                     '',
+                     'a := g(3, 2);',
+                    ],
+            'C': [
+                       'int g(int a, int b) {',
+                       '  return a - b;',
+                       '}',
+                       '',
+                       'a = g(3, 2);',
+                    ],
+            'Perl': [
+                        'sub g {',
+                        '  my ($a, $b) = @_;',
+                        '  return $a - $b;',
+                        '}',
+                        '',
+                        '$a = g(3, 2);',
+                    ],
+        }
+        for lang in c.keys():
+            self.check_sub(lang, b, c[lang], "c style function calling, definition in $_")
+        eq(b.run_val('a'), 1, 'run call c style function')
+
+    def test_logic_func(self):
+        eq = self.assertEqual
+        b = make_expr(['()', 'f', ['()', 'g', 1]])
+        eq(b.to_lang_named('Logic'), 'f(g(1))', 'Logic func text')
+        eq(b.to_lang_named('Logic', {'html': 1}), '<i>f</i>(<i>g</i>(1))', 'Logic func html')
+
+    def test_print(self):
+        eq = self.assertEqual
+        b = make_block([
+            'for', 'i', 0, 9, [
+                'expr', ['print', 'num', 'i', 0]
+            ]
+        ], None)
+        c = {
+            'Basic': [
+                        'FOR i = 0 TO 9',
+                        '  PRINT i, 0',
+                        'NEXT i',
+                    ],
+            'Alg': [
+                        'нц для i от 0 до 9',
+                        '  вывод i, 0',
+                        'кц',
+                    ],
+            'Pascal': [
+                         'for i := 0 to 9 do',
+                         '  write(i, 0);',
+                    ],
+            'C': [
+                        'for (i = 0; i <= 9; ++i)',
+                        '  print(i, 0);',
+                    ],
+            'Perl': [
+                        'for ($i = 0; $i <= 9; ++$i) {',
+                        '  print($i, 0);',
+                        '}',
+                    ],
+        }
+        for lang in c:
+            self.check_sub(lang, b, c[lang], f"print in {lang}")
+        eq(b.run_val('<out>'), "\n".join(str(i) + ' 0' for i in range(10)), 'run print')
+
+    def test_inc(self):
+        eq = self.assertEqual
+        eq(make_expr(['++{}', 'i']).run({'i': 2}), 3, 'run prefix increment')
+        eq(make_expr(['{}--', 'i']).run({'i': 4}), 4, 'run postfix decrement')
+
+        e = make_expr(['+', ['++{}', 'i'], ['++{}', 'i']])
+        eq(e.to_lang_named('C'), '++i + ++i', 'to lang increment')
+
+        env = {'i': 5}
+        eq(e.run(env), 13, 'run increment return value')
+        eq(env['i'], 7, 'run increment side effect')
+
+    def test_plain_text(self):
+        eq = self.assertEqual
+        b = make_expr(['#', 'BUMP'])
+        eq(b.to_lang_named('C'), 'BUMP', 'to lang expr with plain text')
+
+    def test_return_funcs_c_style(self):
+        eq = self.assertEqual
+        b = make_block([
+            'func', ['f', 'x', 'y'], [
+                'if', ['==', 'x', 'y'], ['return', 1],
+                'return', 0
+            ],
+            '=', 'a', ['()', 'f', 1, 2],
+            '=', 'b', ['()', 'f', 3, 3]
+        ], None)
+        eq(b.run_val('a'), 0, 'return c_style func 0')
+        eq(b.run_val('b'), 1, 'return c_style func 1')
+
+    def test_return_funcs_p_style(self):
+        eq = self.assertEqual
+        b = make_block([
+            'func', ['f', 'x', 'y'], [
+                 '=', 'f', 1,
+                 'if', ['==', 'x', 'y'], ['return', []],
+                 '=', 'f', 0,
+             ],
+             '=', 'a', ['()', 'f', 1, 2],
+             '=', 'b', ['()', 'f', 3, 3]
+        ], None)
+        eq(b.run_val('a'), 0, 'return p_style func 0')
+        eq(b.run_val('b'), 1, 'return p_style func 1')
+
+    def test_html(self):
+        b = make_block([
+            'while', ['>', 'a', 0], [
+                '=', 'a', ['-', 'a', 1],
+                'expr', ['*', 2, 2]
+            ]
+        ], None)
+        c1 = [
+            '<span style="color: blue;">DO WHILE a &gt; 0</span>',
+            '  a = a - 1',
+            '  2 * 2',
+            '<span style="color: blue;">END DO</span>',
+        ]
+        self.check_sub('Basic', b, c1, 'Basic html with coloring',
+                                {'html': {'coloring': ['blue']}})
+
+        c2 = [
+            '<pre class="C"><span style="color: blue;">while (a &gt; 0) {</span></pre>',
+            '<pre class="C">  a = a - 1;</pre>',
+            '<pre class="C">  2 * 2;</pre>',
+            '<pre class="C"><span style="color: blue;">}</span></pre>',
+        ]
+        self.check_sub('C', b, c2, 'C html with coloring+lang_marking',
+                            {'html': {'coloring': ['blue'], 'lang_marking': 1}});
+
+        c3 = [
+            'while a > 0 do begin',
+            'a := a - 1;',
+            '2 * 2;',
+            'end;',
+        ]
+        self.check_sub('Pascal', b, c3, 'Pascal unindent', {'unindent': 1})
+
+        b1 = make_block([
+            'while', ['>', 'a', 0], [
+                'if', ['%', 'a', 10], [
+                    '=', 'a', 20
+                ],
+                '=', 'a', ['-', 'a', 1],
+            ]
+        ], None)
+        c4 = [
+            '<span style="color: blue;">while (a &gt; 0) {</span>',
+            '  <span style="color: fuchsia;">if (a % 10)</span>',
+            '    a = 20;',
+            '  a = a - 1;',
+            '<span style="color: blue;">}</span>',
+        ]
+        self.check_sub('C', b1, c4, 'C html with multicoloring',
+                             {'html': {'coloring': ['blue', 'fuchsia']}, 'body_is_block': 1})
+
+    def test_sql(self):
+        eq = self.assertEqual
+
+        html = 0
+        def check_sql(expr, ans, test_name):
+            eq(make_expr(expr).to_lang_named('SQL', {'html': html}), ans, f"SQL {test_name}")
+        check_sql(
+            ['&&', ['<=', 1, 'a'], ['<=', 'a', 'n']],
+            '1 <= a AND a <= n', 'AND')
+        check_sql(
+            ['||', ['!=', 1, 'a'], ['!', 'a']],
+            '1 <> a OR NOT a', 'OR NOT')
+        check_sql(
+            ['&&', ['||', 'x', 'y'], ['==', 'a', 1]],
+            '(x OR y) AND a = 1', 'priorities')
+        html = 1
+        check_sql(
+            ['&&', ['<=', 1, 'a'], ['<=', 'a', 'n']],
+            '1 &lt;= a AND a &lt;= n', 'AND html')
+        check_sql(
+            ['||', ['!=', 1, 'a'], ['!', 'a']],
+            '1 &lt;&gt; a OR NOT a', 'OR NOT html')
+
+    def test_add_statement(self):
+        eq = self.assertEqual
+        b = make_block([
+            '=', 'M', 3
+        ], None)
+        add_statement(b, ['=', 'M', 4])
+        c = {
+            'Basic': [
+                        'M = 3',
+                        'M = 4',
+                    ],
+            'Alg': [
+                        'M := 3',
+                        'M := 4',
+                    ],
+            'Pascal': [
+                        'M := 3;',
+                        'M := 4;',
+                    ],
+            'C': [
+                        'M = 3;',
+                        'M = 4;',
+                    ],
+            'Perl': [
+                        '$M = 3;',
+                        '$M = 4;',
+                    ],
+        }
+        for lang in c.keys():
+            self.check_sub(lang, b, c[lang], 'add_statement')
+        eq(b.run_val('M'), 4, 'add_statement run')
+
+    def test_move_statement(self):
+        eq = self.assertEqual
+        b = make_block([
+            '=', 'M', 3,
+            '=', 'M', 4,
+        ], None)
+        move_statement(b, 1, 0)
+        c = {
+            'Basic': [
+                        'M = 4',
+                        'M = 3',
+                    ],
+            'Alg': [
+                        'M := 4',
+                        'M := 3',
+                    ],
+            'Pascal': [
+                        'M := 4;',
+                        'M := 3;',
+                    ],
+            'C': [
+                        'M = 4;',
+                        'M = 3;',
+                    ],
+            'Perl': [
+                        '$M = 4;',
+                        '$M = 3;',
+                    ],
+        }
+        for lang in c.keys():
+            self.check_sub(lang, b, c[lang], 'move_statement')
+        eq(b.run_val('M'), 3, 'move_statement run')
+
+    def test_print_star(self):
+        b = make_block(['expr', ['print', 'str', '*']], None)
+        c = {
+            'Basic': ['PRINT "*"'],
+            'Alg': ['вывод "*"'],
+            'Pascal': ["write('*');"],
+            'C': ['printf("*");'],
+            'Perl': ["print('*');"],
+        }
+        for lang in c.keys():
+            self.check_sub(lang, b, c[lang], f"print str in {lang}")
 
 if __name__ == '__main__':
     unittest.main(verbosity=1)
