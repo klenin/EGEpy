@@ -207,7 +207,6 @@ class Op(SynElement):
 
     def __init__(self, op):
         self.op = op
-        #die "Bad op: $self->{op}" if defined $self->{op} && ref $self->{op} || !$self->{op};
 
     def _children(self): pass
     def children(self): return [ self._children() ]
@@ -436,15 +435,9 @@ class CompoundStatement(SynElement):
         if isinstance(t[0], tuple):
             t = [x for i in t for x in i]
         ret = []
-        if isinstance(self, FuncDef) and not self.c_style and (isinstance(lang, Lang.C) or
-                                                               isinstance(lang, Lang.Perl) or
-                                                               isinstance(lang, Lang.Python)):
-            if isinstance(lang, Lang.C):
-                t.append(t[0])
-            elif isinstance(lang, Lang.Perl):
-                t.insert(1, t[0])
-            ret.append(t[0])
-        if isinstance(self, ForLoop) and isinstance(lang, Lang.Basic):
+        if (isinstance(self, ForLoop) and isinstance(lang, Lang.Basic)) or (
+                isinstance(self, FuncDef) and not self.c_style and (
+                isinstance(lang, Lang.C) or isinstance(lang, Lang.Perl) or isinstance(lang, Lang.Python))):
             ret.append(t[0])
         return fmt_start.format(*t) + self.to_lang_fmt().format(body) + fmt_end.format(*ret)
 
@@ -481,11 +474,6 @@ class ForLoop(CompoundStatement):
         body_complexity = self.body.complexity(env, mistakes, iter_)
         env[name] = degree
 
-        def maybe_float(s):
-            try:
-                return float(s)
-            except:
-                return 0
         cur_complexity = sum(
             float(i) for i in iter_.values() if i.replace('.', '', 1).isdigit())
         del iter_[name]
@@ -494,8 +482,8 @@ class ForLoop(CompoundStatement):
 
 class IfThen(CompoundStatement):
     def __init__(self, args, cur_func):
+        super().__init__(args['body'])
         self.cond = args['cond']
-        self.body = args['body']
 
     def get_fmt_names(self): return [ 'if_start_fmt', 'if_end_fmt' ]
     def to_lang_fmt(self): return '{}'
@@ -507,7 +495,6 @@ class IfThen(CompoundStatement):
 
     def complexity(self, env, mistakes, iter_):
         (cond, body) = (self.cond, self.body)
-        sides = ['left', 'right']
         names = [ cond.left.name, cond.right.name ]
 
         if cond.op == '==':
@@ -598,8 +585,7 @@ class CondLoop(CompoundStatement):
 
 class While(CondLoop):
     def __init__(self, args, cur_func):
-        self.cond = args['cond']
-        self.body = args['body']
+        super().__init__(args['cond'], args['body'])
 
     def get_fmt_names(self): return [ 'while_start_fmt', 'while_end_fmt' ]
     def to_lang_fmt(self): return '{}'
@@ -612,8 +598,7 @@ class While(CondLoop):
 
 class Until(CondLoop):
     def __init__(self, args, cur_func):
-        self.cond = args['cond']
-        self.body = args['body']
+        super().__init__(args['cond'], args['body'])
 
     def get_fmt_names(self): return [ 'until_start_fmt', 'until_end_fmt' ]
     def to_lang_fmt(self): return '{}'
@@ -847,7 +832,7 @@ def move_statement(block: Block, from_, to):
     s.pop(from_ + 1 if from_ > to else 0)
     return block
 
-def make_block(src: list, cur_func):
+def make_block(src: list, cur_func=None):
     b = Block(func=cur_func, statements=[])
     while len(src):
         src = _add_statement_helper(b, src)

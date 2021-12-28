@@ -169,7 +169,7 @@ class C(Lang):
     def c_func_start_fmt(self, multiline: bool): return "int {}({}) {{\n"
     def c_func_end_fmt(self, multiline: bool): return "\n}}\n"
 
-    def p_func_start_fmt(self, multiline: bool): return "int {}({}) {{\n  int {};\n"
+    def p_func_start_fmt(self, multiline: bool): return "int {0}({1}) {{\n  int {0};\n"
     def p_func_end_fmt(self, multiline: bool): return "\n  return {};\n}}\n"
 
     def print_fmt(self): return 'print({})'
@@ -294,7 +294,7 @@ class Perl(Lang):
     def c_func_start_fmt(self, multiline: bool): return "sub {} {{\n  my ({}) = @_;\n"
     def c_func_end_fmt(self, multiline: bool): return "\n}}\n"
 
-    def p_func_start_fmt(self, multiline: bool): return "sub {} {{\n  my ${};\n  my ({}) = @_;\n"
+    def p_func_start_fmt(self, multiline: bool): return "sub {0} {{\n  my ${0};\n  my ({1}) = @_;\n"
     def p_func_end_fmt(self, multiline: bool): return "\n  return ${};\n}}\n"
 
     def print_fmt(self): return 'print({})'
