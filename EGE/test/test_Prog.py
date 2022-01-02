@@ -31,6 +31,9 @@ class Test_Prog(unittest.TestCase):
         ]
         for idx, test in enumerate(t):
             eq(make_expr(test[0]).run({}), test[1], 'op ' + str(idx + 1))
+        env = { 'a': 2, 'b': 3 }
+        eq(make_expr('b').run(env), 3, 'basic env 1')
+        eq(make_expr([ '*', 'a', [ '+', 'b', 7 ] ]).run(env), 20, 'basic env 2')
 
     def test_black_box(self):
         eq = self.assertEqual
@@ -82,7 +85,7 @@ class Test_Prog(unittest.TestCase):
                 t.op = '+'
         e = make_expr(['-', ['-', 3, ['-', 2, 1]]])
         eq(e.run(None), -2, 'visit_dfs before')
-        eq(e.visit_dfs1(plus2minus).run(None), 6, 'visit_dfs after')
+        eq(e.visit_dfs(plus2minus).run(None), 6, 'visit_dfs after')
         eq(e.count_if(lambda x: 1), 6, 'visit_dfs count all')
         eq(e.count_if(lambda x: isinstance(x, Const)), 3, 'count_if')
 
@@ -474,8 +477,9 @@ end;"""
         ])
         c4 = [
             '<span style="color: blue;">while (a &gt; 0) {</span>',
-            '  <span style="color: fuchsia;">if (a % 10)</span>',
+            '  <span style="color: fuchsia;">if (a % 10) {</span>',
             '    a = 20;',
+            '  <span style="color: fuchsia;">}</span>',
             '  a = a - 1;',
             '<span style="color: blue;">}</span>',
         ]

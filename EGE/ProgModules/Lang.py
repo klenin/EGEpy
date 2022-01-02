@@ -20,6 +20,7 @@ class Lang:
         # my $self = { %init };
         self.html = params.get('html') if params else 0
         self.unindent = params.get('unindent') if params else 0
+        self.body_is_block = params.get('body_is_block') if params else 0
         self.prio = {}
         self.make_priorities()
 

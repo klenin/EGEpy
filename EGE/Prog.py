@@ -31,30 +31,30 @@ class SynElement:
 
     def gather_vars(self, *args): pass
 
-    def visit_dfs1(self, fn=None, depth: int = 1):
+    def visit_dfs(self, fn=None, depth: int = 1):
         if fn:
             fn(self)
-        self._visit_children1(fn)
+        self._visit_children(fn)
         return self
 
-    def visit_dfs(self):
+    def get_children_dfs(self):
         yield self
-        yield from self._visit_children()
+        yield from self._get_children()
 
-    def _visit_children1(self, *attr): pass
-    def _visit_children(self, *attr): return []
+    def _visit_children(self, *attr): pass
+    def _get_children(self, *attr): return []
 
     def count_if(self, cond):
-        return sum(1 if cond(se) else 0 for se in self.visit_dfs())
+        return sum(1 if cond(se) else 0 for se in self.get_children_dfs())
 
     def gather_if(self, cond):
         res = []
-        for se in self.visit_dfs():
+        for se in self.get_children_dfs():
             if cond(se):
                 res.append(se)
         return res
 
-    def get_type(self): pass # { (split ':', ref $_[0])[-1] }
+    def get_type(self, x): return x.split(':')[-1]
 
     def complexity(self, *attr): raise ValueError()
 
@@ -82,9 +82,9 @@ class BlackBox(SynElement):
 
 class Assign(SynElement):
 
-    def __init__(self, args, func):
-        self.var = args['var']
-        self.expr = args['expr']
+    def __init__(self, params, *args):
+        self.var = params['var']
+        self.expr = params['expr']
 
     def to_lang(self, lang):
         return lang.get_fmt('assign_fmt').format(*[
@@ -95,13 +95,13 @@ class Assign(SynElement):
         self.var.assign(env, v)
         return v
 
-    def _visit_children1(self, fn):
-        self.var.visit_dfs1(fn)
-        self.expr.visit_dfs1(fn)
+    def _visit_children(self, fn):
+        self.var.visit_dfs(fn)
+        self.expr.visit_dfs(fn)
 
-    def _visit_children(self):
-        yield from self.var.visit_dfs()
-        yield from self.expr.visit_dfs()
+    def _get_children(self):
+        yield from self.var.get_children_dfs()
+        yield from self.expr.get_children_dfs()
 
     def complexity(self, env, mistakes, iter_):
         name = self.var.name
@@ -142,13 +142,13 @@ class Index(SynElement):
         v[self.indices[-1].run(env)] = value
         return value
 
-    def _visit_children1(self, fn):
+    def _visit_children(self, fn):
         for se in (self.array, *self.indices):
-            se.visit_dfs1(fn)
+            se.visit_dfs(fn)
 
-    def _visit_children(self):
+    def _get_children(self):
         for se in (self.array, *self.indices):
-            yield from se.visit_dfs()
+            yield from se.get_children_dfs()
 
 
 @dataclass
@@ -233,13 +233,13 @@ class Op(SynElement):
 
     def gather_vars(self, env): return [ c.gather_vars(env) for c in self.children() ]
 
-    def _visit_children1(self, fn):
+    def _visit_children(self, fn):
         for c in self.children():
-            c.visit_dfs1(fn)
+            c.visit_dfs(fn)
 
-    def _visit_children(self):
+    def _get_children(self):
         for c in self.children():
-            yield from c.visit_dfs()
+            yield from c.get_children_dfs()
 
     def polinom_degree(self, *args):
         raise ValueError(f"Polinom degree is unavaible for expr with operator: '{self.op}'")
@@ -341,8 +341,7 @@ class Var(SynElement):
     def run(self, env):
         if env.get(self.name) is None:
             env[self.name] = {}
-        v = env.get(self.name)
-        return v
+        return env.get(self.name)
 
     def assign(self, env, value):
         env[self.name] = value
@@ -387,13 +386,13 @@ class Block(SynElement):
         for s in self.statements:
             s.run(env)
 
-    def _visit_children1(self, fn):
+    def _visit_children(self, fn):
         for s in self.statements:
-            s.visit_dfs1(fn)
+            s.visit_dfs(fn)
 
-    def _visit_children(self):
+    def _get_children(self):
         for s in self.statements:
-            yield from s.visit_dfs()
+            yield from s.get_children_dfs()
 
     def complexity(self, env, mistakes, iter_):
         items = [s.complexity(env, mistakes, iter_) for s in self.statements]
@@ -413,7 +412,7 @@ class CompoundStatement(SynElement):
     def to_lang(self, lang):
         body_is_block = len(self.body.statements) > 1
         (fmt_start, fmt_end) = (
-            lang.get_fmt(f, body_is_block) for f in self.get_fmt_names())
+            lang.get_fmt(f, body_is_block or lang.body_is_block) for f in self.get_fmt_names())
 
         if lang.html and lang.html.get('coloring'):
             s = html.style(color=lang.html['coloring'][0])
@@ -441,21 +440,21 @@ class CompoundStatement(SynElement):
             ret.append(t[0])
         return fmt_start.format(*t) + self.to_lang_fmt().format(body) + fmt_end.format(*ret)
 
-    def _visit_children1(self, fn):
+    def _visit_children(self, fn):
         for f in [*(getattr(self, f) for f in self.to_lang_fields()), self.body]:
-            f.visit_dfs1(fn)
+            f.visit_dfs(fn)
 
-    def _visit_children(self):
+    def _get_children(self):
         for f in [*(getattr(self, f) for f in self.to_lang_fields()), self.body]:
-            yield from f.visit_dfs()
+            yield from f.get_children_dfs()
 
 
 class ForLoop(CompoundStatement):
-    def __init__(self, args, cur_func=None):
-        super().__init__(args['body'])
-        self.var = args['var']
-        self.lb = args['lb']
-        self.ub = args['ub']
+    def __init__(self, param, *args):
+        super().__init__(param['body'])
+        self.var = param['var']
+        self.lb = param['lb']
+        self.ub = param['ub']
 
     def get_fmt_names(self): return [ 'for_start_fmt', 'for_end_fmt' ]
     def to_lang_fmt(self): return '{}'
@@ -481,9 +480,9 @@ class ForLoop(CompoundStatement):
 
 
 class IfThen(CompoundStatement):
-    def __init__(self, args, cur_func):
-        super().__init__(args['body'])
-        self.cond = args['cond']
+    def __init__(self, param, *args):
+        super().__init__(param['body'])
+        self.cond = param['cond']
 
     def get_fmt_names(self): return [ 'if_start_fmt', 'if_end_fmt' ]
     def to_lang_fmt(self): return '{}'
@@ -584,8 +583,8 @@ class CondLoop(CompoundStatement):
             self.body.run(env)
 
 class While(CondLoop):
-    def __init__(self, args, cur_func):
-        super().__init__(args['cond'], args['body'])
+    def __init__(self, param, *args):
+        super().__init__(param['cond'], param['body'])
 
     def get_fmt_names(self): return [ 'while_start_fmt', 'while_end_fmt' ]
     def to_lang_fmt(self): return '{}'
@@ -597,8 +596,8 @@ class While(CondLoop):
             if not self.cond.run(env): break
 
 class Until(CondLoop):
-    def __init__(self, args, cur_func):
-        super().__init__(args['cond'], args['body'])
+    def __init__(self, param, *args):
+        super().__init__(param['cond'], param['body'])
 
     def get_fmt_names(self): return [ 'until_start_fmt', 'until_end_fmt' ]
     def to_lang_fmt(self): return '{}'
@@ -611,7 +610,7 @@ class Until(CondLoop):
 
 
 class PlainText(SynElement):
-    def __init__(self, text, func=None):
+    def __init__(self, text, *args):
         self.text = text['text']
 
     def to_lang(self, lang):
@@ -620,8 +619,8 @@ class PlainText(SynElement):
 
 
 class ExprStmt(SynElement):
-    def __init__(self, args, cur_func):
-        self.expr = args['expr']
+    def __init__(self, param, *args):
+        self.expr = param['expr']
 
     def to_lang(self, lang):
         return lang.get_fmt('expr_fmt').format(self.expr.to_lang(lang))
@@ -638,9 +637,9 @@ class FuncReturnException(BaseException):
         self.return_ = return_
 
 class FuncDef(CompoundStatement):
-    def __init__(self, args, cur_func):
-        self.head = args['head']
-        self.body = args['body']
+    def __init__(self, param, cur_func):
+        self.head = param['head']
+        self.body = param['body']
         self.c_style = cur_func.c_style if cur_func is not None and hasattr(cur_func, 'c_style') else False
 
     def get_fmt_names(self):
@@ -691,9 +690,9 @@ class FuncHead(SynElement):
 
 class Return(SynElement):
 
-    def __init__(self, args, cur_func):
+    def __init__(self, param, cur_func):
         self.func = cur_func
-        self.expr = args.get('expr')
+        self.expr = param.get('expr')
         t = self.expr is not None
         if hasattr(self.func, 'c_style') and self.func.c_style is not None and self.func.c_style != t:
             raise ValueError("Use different types of return in the same func")
