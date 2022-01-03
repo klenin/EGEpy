@@ -418,7 +418,7 @@ class CompoundStatement(SynElement):
             s = html.style(color=lang.html['coloring'][0])
 
             def sp(t):
-                return re.sub('([^\n]+)', html.tag('span', t, **s), t)
+                return re.sub('([^\n]+)', lambda m: html.tag('span', m[0], **s), t)
 
             fmt_start = sp(fmt_start)
             fmt_end = sp(fmt_end)
