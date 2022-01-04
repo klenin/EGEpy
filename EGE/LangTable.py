@@ -1,11 +1,11 @@
-import Html
+from . import Html
 
-from Prog import SynElement, lang_names
-from Html import row_n, cdata
+from .Prog import SynElement, lang_names
+from .Html import row_n, cdata
 
 def lang_row(prog: SynElement, row: list):
     wrap_in_pre_tag = lambda lang_name: '<pre>' + cdata(prog.to_lang_named(lang_name)) + '</pre>'
-    return row_n('th', [ lang_names(x) for x in row ]) + row_n('td', [ wrap_in_pre_tag(x) for x in row ])
+    return row_n('th', [ lang_names()[x] for x in row ]) + row_n('td', [ wrap_in_pre_tag(x) for x in row ])
 
 def unpre(string: str):
     return f']]></pre>{string}<pre><![CDATA['

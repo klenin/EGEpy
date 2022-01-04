@@ -1,6 +1,8 @@
 from ... import Html as html
 from ...Graph import Graph
 from ...GenBase import SingleChoice
+from ...RussianModules.NumText import num_by_words
+from math import ceil
 
 class GraphByMatrix(SingleChoice):
     def generate(self):
@@ -61,5 +63,20 @@ class LightPanel(SingleChoice):
             first**3 * last**2,
             first**3 + last**2
         ])
+        return self
+
+class MinAlphabet(SingleChoice):
+    def generate(self):
+        word_length = self.rnd.in_range(3, 5)
+        min_distinct_messages = self.rnd.in_range(5, 100)
+        self.text = f'''Какое наименьшее число символов должно быть в алфавите, чтобы при помощи всевозможных 
+                        {num_by_words(word_length, 1, 'genitive')}буквенных слов, 
+                        состоящих из символов данного алфавита, можно было передать не менее 
+                        {min_distinct_messages} различных сообщений?'''
+
+        answer = int(ceil(min_distinct_messages ** (1 / word_length)))
+        min_variant = max(2, answer - self.rnd.in_range(1, 3))
+        self.set_variants(list(range(min_variant, min_variant + 4)))
+        self.correct = answer - min_variant
         return self
 

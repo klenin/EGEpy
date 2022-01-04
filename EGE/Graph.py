@@ -89,10 +89,12 @@ class Graph:
                 ymax = y
         return [ xmin, ymin, xmax, ymax ]
 
-    def add(self, ar1: list, ar2: list):
+    @staticmethod
+    def add(ar1: list, ar2: list):
         return [ ar1[i] + ar2[i] for i in range(len(ar1)) ]
 
-    def size(self, a: list):
+    @staticmethod
+    def size(a: list):
         return [ a[0], a[1], a[2] - a[0], a[3] - a[1] ]
 
     def xy(self, pt: list, x: str, y: str):
