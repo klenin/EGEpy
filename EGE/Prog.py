@@ -211,6 +211,13 @@ class Op(SynElement):
     def _children(self): pass
     def children(self): return [ self._children() ]
 
+    def rename_vars(self, dct: dict):
+        for child in self.children():
+            if isinstance(child, Const):
+                child.value = dct[child.value]
+            else:
+                child.rename_vars(dct)
+
     def run(self, env):
         return eval(self.run_fmt().format(*[c.run(env) for c in self.children()]))
 
@@ -302,7 +309,6 @@ class UnOp(Op):
         return lang.get_fmt('un_op_fmt', self.op)
 
     def _children(self): return self.arg
-
 
 class Inc(UnOp):
 
