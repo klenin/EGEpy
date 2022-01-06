@@ -1,3 +1,4 @@
+"""Генератор B01"""
 import math
 from dataclasses import dataclass
 
@@ -8,7 +9,12 @@ from ...Random import Random
 from ...RussianModules.NumText import num_bits, num_bytes, num_by_words, num_by_words_text
 
 class Recode2(DirectInput):
-
+    """
+    Recode2 - посчитать изменение размера перекодированного сообщения.
+    Задание похоже на А01 recode, используется общий код
+    Источник: Демонстрационные варианты ЕГЭ по информатике 2012,
+    официальный информационный портал ЕГЭ. Задание B1.
+    """
     def generate(self):
         delta = self.rnd.pick([8, 16, 32] + [i * 10 for i in range(1, 11)])
         dir_ = recode_get_encodings(self.rnd, self.rnd.coin(), ['увеличилось', 'уменьшилось'])
@@ -23,7 +29,9 @@ class Recode2(DirectInput):
         self.accept_number()
 
 class Direct(DirectInput):
-
+    """
+    Direct - посчитать количество различных сообщений некоторой длины, которые можно передать.
+    """
     def generate(self):
         sig_n = self.rnd.in_range(2, 5)
         sig_text = num_by_words(sig_n, 0, "genitive")
