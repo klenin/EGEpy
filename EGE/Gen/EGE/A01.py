@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from ...GenBase import SingleChoice
 from ...Random import Random
-from ...Russian.NumText import num_bits, num_bytes
+from ...RussianModules.NumText import num_bits, num_bytes
 
 def bits_or_bytes(rnd: Random, n: int):
     return num_bytes(n) if rnd.coin() else num_bits(n * 8)
