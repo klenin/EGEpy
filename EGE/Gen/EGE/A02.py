@@ -4,7 +4,7 @@ from math import ceil, log
 
 from ...GenBase import EGEError, SingleChoice
 from ...Random import Random
-from ...Russian.NumText import bits_and_bytes, num_bits, num_bytes, num_text
+from ...RussianModules.NumText import bits_and_bytes, num_bits, num_bytes, num_text
 from ... import Html as html
 
 def bits_or_bytes(rnd: Random, n: int):

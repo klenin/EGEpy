@@ -1,7 +1,7 @@
 from ...GenBase import SingleChoice
 from ...Bin import Bin
 from ...Bits import Bits
-from ...Russian.NumText import num_text
+from ...RussianModules.NumText import num_text
 
 
 class SumNumbers(SingleChoice):

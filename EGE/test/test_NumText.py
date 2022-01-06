@@ -5,7 +5,7 @@ if __name__ == '__main__':
     sys.path.append('..')
     from Russian.NumText import *
 else:
-    from ..Russian.NumText import *
+    from ..RussianModules.NumText import *
 
 class Test_NumText(unittest.TestCase):
 
