@@ -1,3 +1,4 @@
+import string
 
 # Permuted congruential generator, http://www.pcg-random.org/
 class Random:
@@ -67,6 +68,9 @@ class Random:
 
     def index_var(self, number=1):
         return self.pick_n(number, [ 'i', 'j', 'k', 'a', 'b', 'c' ])
+
+    def english_letter(self):
+        return self.pick(list(string.ascii_lowercase))
 
 
 if __name__ == '__main__':
