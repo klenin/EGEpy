@@ -44,7 +44,7 @@ class Random:
 
     def pick(self, array: list, exclude=None):
         if len(array) == 0:
-            raise ValueError('pick from empty array');
+            raise ValueError('pick from empty array')
         if exclude:
             if len(array) <= 1:
                 raise ValueError('exclude nothing')
@@ -71,6 +71,12 @@ class Random:
 
     def english_letter(self):
         return self.pick(list(string.ascii_lowercase))
+
+    def pretty_russian_letter(self):
+        return self.get_letter_from_string('абвгдежзиклмнопрстуфхэя')
+
+    def get_letter_from_string(self, string):
+        return string[self.in_range(0, len(string) - 1)]
 
 
 if __name__ == '__main__':
