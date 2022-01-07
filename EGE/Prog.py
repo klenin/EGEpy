@@ -1,9 +1,12 @@
 from dataclasses import dataclass
 import re
 
+import EGE.Svg as svg
+import EGE.Html as html
 from .ProgModules import Lang
 from . import Html as html
 from . import Utils
+from .ProgModules.Flowchart import Flowchart, Jump
 
 class SynElement:
 
@@ -410,6 +413,45 @@ class Block(SynElement):
             return sum(items)
         return max(items)
 
+    def to_svg(self, f: Flowchart, enter: Jump, exit_: Jump):
+        r = ''
+        elements = []
+        linear = []
+        for st in self.statements + [None]:
+            if st and isinstance(st, Assign):
+                linear.append(st.to_lang_named('Alg'))
+            else:
+                if linear:
+                    elements.append(linear)
+                linear = []
+                if st:
+                    elements.append(st)
+        j = None
+        for el in elements:
+            j = exit_ if el == elements[-1] else f.make_jump()
+            if isinstance(el, list):
+                r += f.add_box(el, enter, j)
+                f.down()
+            else:
+                r += el.to_svg(f, enter, j)
+            enter = j
+        return r
+
+    def to_svg_main(self):
+        f = Flowchart(x=0, y=0)
+        exit_ = f.make_jump()
+        r = self.to_svg(f, None, exit_)
+        exit_.dest = f.point()
+        r = svg.g(f"\n{r}" + f.jumps(),
+                  stroke='black',
+                  fill='none'
+                  ) + f.texts()
+        f.y2 += 1
+        f.x2 += 1
+        wh = [ f.x2 - f.x1, f.y2 - f.y1 ]
+        return html.div_xy(
+            "\n" + svg.start(list(map(str, [ f.x1, f.y1, *wh ]))) + r + svg.end(), *wh
+        )
 
 class CompoundStatement(SynElement):
     def __init__(self, body):
@@ -590,6 +632,28 @@ class CondLoop(CompoundStatement):
         while self.cond.run(env):
             self.body.run(env)
 
+    def to_svg(self, f: Flowchart, enter: Jump, exit_: Jump):
+        top = f.make_jump(Jump(dest=f.point(), dir='left'))
+        f.down(20)
+        middle = f.make_jump(Jump(label=self.continue_label()))
+        exit_.label = self.exit_label()
+        r = f.add_rhomb(
+            self.cond.to_lang_named('Alg'),
+            enter, { 'right': exit_, 'middle': middle }
+        )
+        f.down()
+        r += self.body.to_svg(f, middle, top)
+        f.down(10)
+        return r
+
+    @staticmethod
+    def continue_label():
+        return 'Да'
+
+    @staticmethod
+    def exit_label():
+        return 'Нет'
+
 class While(CondLoop):
     def __init__(self, param, *args):
         super().__init__(param['cond'], param['body'])
@@ -602,6 +666,14 @@ class While(CondLoop):
         while True:
             self.body.run(env)
             if not self.cond.run(env): break
+
+    @staticmethod
+    def continue_label():
+        return 'Да'
+
+    @staticmethod
+    def exit_label():
+        return 'Нет'
 
 class Until(CondLoop):
     def __init__(self, param, *args):
@@ -616,6 +688,13 @@ class Until(CondLoop):
             self.body.run(env)
             if self.cond.run(env): break
 
+    @staticmethod
+    def continue_label():
+        return 'Нет'
+
+    @staticmethod
+    def exit_label():
+        return 'Да'
 
 class PlainText(SynElement):
     def __init__(self, text, *args):
