@@ -50,7 +50,6 @@ class NumberType:
     long_: str; short: str; forms: list
 
 class CarNumbers(SingleChoice):
-
     def _make_alphabet(self):
         char_cnt = self.rnd.in_range(2, 33)
         base, base_name = self.rnd.pick([
@@ -71,11 +70,11 @@ class CarNumbers(SingleChoice):
     def _gen_task(self):
         bits_per_item = ceil(log(self.alph_length) / log(2)) * self.sym_cnt
         answer = (bits_per_item + 7) // 8
-        variants = { answer, answer - 1, bits_per_item }
+        variants = [ answer, answer - 1, bits_per_item ]
         len_ = self.alph_length
         while len_ in variants:
-            len += 1
-        self.result = [ num_bytes(v * self.items_cnt) for v in variants | { len_ } ]
+            len_ += 1
+        self.result = [ num_bytes(v * self.items_cnt) for v in variants ] + [len_]
 
     def _gen_text(self):
         number = dict(short='номер', forms=[ 'номерa', 'номеров', 'номеров' ])
