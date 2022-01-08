@@ -32,7 +32,8 @@ def bits_to_vars(bits, names: list):
     return { name: bits.get_bit(i) for i, name in enumerate(names) }
 
 def truth_table_string(expr):
-    expr_vars = expr.gather_vars({})
+    expr_vars = {}
+    expr.gather_vars(expr_vars)
     if expr_vars is None:
         return expr.run({})
     names = sorted(expr_vars.keys())

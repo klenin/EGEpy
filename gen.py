@@ -3,7 +3,7 @@ import sys
 import EGE.GenBase
 import EGE.Html
 import EGE.Random
-from EGE.Gen.EGE import A01, A02, A03, A04, A05, A10, A11, A12, A13, A15
+from EGE.Gen.EGE import A01, A02, A03, A04, A05, A08, A10, A11, A12, A13, A15
 
 rnd = EGE.Random.Random(2342134)
 
@@ -23,6 +23,10 @@ questions = [q.generate() for q in [
     A05.DivModRotate(rnd),
     A05.DigitByDigit(rnd),
     A05.CRC(rnd),
+    A08.Equiv3(rnd),
+    A08.Equiv4(rnd),
+    A08.AudioSize(rnd),
+    A08.AudioTime(rnd),
     A10.GraphByMatrix(rnd),
     A10.LightPanel(rnd),
     A10.MinAlphabet(rnd),
