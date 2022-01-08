@@ -83,6 +83,7 @@ class Test_Prog(unittest.TestCase):
         def plus2minus(t):
             if hasattr(t, 'op') and t.op == '-':
                 t.op = '+'
+            return t
         e = make_expr(['-', ['-', 3, ['-', 2, 1]]])
         eq(e.run(None), -2, 'visit_dfs before')
         eq(e.visit_dfs(plus2minus).run(None), 6, 'visit_dfs after')

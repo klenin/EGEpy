@@ -31,10 +31,10 @@ class SynElement:
 
     def gather_vars(self, *args): pass
 
-    def visit_dfs(self, fn=None, depth: int = 1):
+    def visit_dfs(self, fn=None, *args):
         if fn:
-            fn(self)
-        self._visit_children(fn)
+            self = fn(self, *args)
+        self._visit_children(fn, *args)
         return self
 
     def get_children_dfs(self):
@@ -95,9 +95,9 @@ class Assign(SynElement):
         self.var.assign(env, v)
         return v
 
-    def _visit_children(self, fn):
-        self.var.visit_dfs(fn)
-        self.expr.visit_dfs(fn)
+    def _visit_children(self, fn, *args):
+        self.var = self.var.visit_dfs(fn, *args)
+        self.expr = self.expr.visit_dfs(fn, *args)
 
     def _get_children(self):
         yield from self.var.get_children_dfs()
@@ -142,9 +142,9 @@ class Index(SynElement):
         v[self.indices[-1].run(env)] = value
         return value
 
-    def _visit_children(self, fn):
+    def _visit_children(self, fn, *args):
         for se in (self.array, *self.indices):
-            se.visit_dfs(fn)
+            se.visit_dfs(fn, *args)
 
     def _get_children(self):
         for se in (self.array, *self.indices):
@@ -240,9 +240,9 @@ class Op(SynElement):
 
     def gather_vars(self, env): return [ c.gather_vars(env) for c in self.children() ]
 
-    def _visit_children(self, fn):
+    def _visit_children(self, fn, *args):
         for c in self.children():
-            c.visit_dfs(fn)
+            c.visit_dfs(fn, *args)
 
     def _get_children(self):
         for c in self.children():
@@ -392,9 +392,9 @@ class Block(SynElement):
         for s in self.statements:
             s.run(env)
 
-    def _visit_children(self, fn):
-        for s in self.statements:
-            s.visit_dfs(fn)
+    def _visit_children(self, fn, *args):
+        for idx, s in enumerate(self.statements):
+            self.statements[idx] = s.visit_dfs(fn, *args)
 
     def _get_children(self):
         for s in self.statements:
@@ -446,9 +446,9 @@ class CompoundStatement(SynElement):
             ret.append(t[0])
         return fmt_start.format(*t) + self.to_lang_fmt().format(body) + fmt_end.format(*ret)
 
-    def _visit_children(self, fn):
+    def _visit_children(self, fn, *args):
         for f in [*(getattr(self, f) for f in self.to_lang_fields()), self.body]:
-            f.visit_dfs(fn)
+            f.visit_dfs(fn, *args)
 
     def _get_children(self):
         for f in [*(getattr(self, f) for f in self.to_lang_fields()), self.body]:
