@@ -238,7 +238,9 @@ class Op(SynElement):
     def run_fmt(self): return self.to_lang_fmt(Lang.Python(params=None))
     def to_lang_fmt(self, *args): pass
 
-    def gather_vars(self, env): return [ c.gather_vars(env) for c in self.children() ]
+    def gather_vars(self, env):
+        for c in self.children():
+            c.gather_vars(env)
 
     def _visit_children(self, fn, *args):
         for c in self.children():
