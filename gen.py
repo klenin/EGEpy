@@ -3,7 +3,7 @@ import sys
 import EGE.GenBase
 import EGE.Html
 import EGE.Random
-from EGE.Gen.EGE import A01, A02, A03, A04, A05, A07, A08, A10, A11, A12, A13, A15, A16
+from EGE.Gen.EGE import A01, A02, A03, A04, A05, A07, A08, A10, A11, A12, A13, A15, A16, B01
 
 rnd = EGE.Random.Random(2342134)
 
@@ -45,6 +45,8 @@ questions = [q.generate() for q in [
     A13.GetMaskByTwoFileNames(rnd),
     A15.RGB(rnd),
     A16.Spreadsheet(rnd),
+    B01.Recode2(rnd),
+    B01.Direct(rnd),
 ]]
 
 if not sys.stdout.isatty():

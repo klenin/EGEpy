@@ -1,4 +1,4 @@
-
+import re
 from collections import Counter
 
 class EGEError(Exception):
@@ -54,3 +54,20 @@ class SingleChoice(Question):
         self.check_distinct_variants()
         self.shuffle_variants()
 
+class DirectInput(Question):
+
+    def __init__(self, rnd, text: str = None, correct: int = 0):
+        super().__init__(rnd, text, correct)
+        self.accept = r".+"
+        self.variants = []
+        pass
+
+    def accept_number(self):
+        self.accept = r"^\d+$"
+        pass
+
+    def post_process(self):
+        if re.search(self.accept, self.correct):
+            return
+        # TODO: ask ask if message is correct
+        raise EGEError(f"Correct answer is not acceptable in {self}: {self.correct}")
