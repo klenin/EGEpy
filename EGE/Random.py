@@ -78,6 +78,11 @@ class Random:
     def get_letter_from_string(self, string):
         return string[self.in_range(0, len(string) - 1)]
 
+    def split_number(self, number: int, parts: int):
+        if parts > number:
+            raise ValueError('too much parts')
+        p = sorted(self.pick_n(parts - 1, [ i for i in range(1, number) ]))
+        return [p[0], *[ p[i] - p[i-1] for i in range(1, len(p)) ], number - p[-1]]
 
 if __name__ == '__main__':
     import unittest
