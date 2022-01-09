@@ -59,6 +59,7 @@ class DirectInput(Question):
     def __init__(self, rnd, text: str = None, correct: int = 0):
         super().__init__(rnd, text, correct)
         self.accept = r".+"
+        self.variants = []
         pass
 
     def accept_number(self):

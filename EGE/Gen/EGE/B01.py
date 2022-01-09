@@ -22,11 +22,13 @@ class Recode2(DirectInput):
         delta_text = bits_or_bytes(self.rnd, delta)
         self.text = f"""
 Автоматическое устройство осуществило перекодировку информационного
-сообщения на русском языке длиной в $delta символов, первоначально
+сообщения на русском языке длиной в {delta} символов, первоначально
 записанного в {dir_.from_}, в {dir_.to}. На сколько {delta_text}.
 {dir_.change} длина сообщения? В ответе запишите только число."""
         self.correct = delta if ans_in_bytes else delta * 8
+        self.variants = [self.correct]
         self.accept_number()
+        return self
 
 class Direct(DirectInput):
     """
@@ -45,5 +47,7 @@ class Direct(DirectInput):
 {sig_text} сигналов. Сколько различных сообщений длиной в {sec_text} 
 можно передать при помощи этого устройства?"""
         self.correct = math.pow(sig_n, sec_n)
+        self.variants = [self.correct]
         self.accept_number()
+        return self
 
