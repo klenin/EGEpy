@@ -75,8 +75,11 @@ def global_head():
 """
 
 def make_question_html(q):
-    result = ''.join(
-        (li(v, class_='correct') if q.correct == i else li(v)) + "\n" for i, v in enumerate(q.variants))
+    if q.export_type() == 'sc':
+        result = ''.join((li(v, class_='correct') if q.correct == i else li(v))
+                         + "\n" for i, v in enumerate(q.variants))
+    if q.export_type() == 'di':
+        result = li(q.correct) + "\n"
     return div(f"{q.text}\n" + ol("\n" + result) + "\n", class_='q') + "\n"
 
 def make_html(questions):
