@@ -4,7 +4,7 @@ def start(viewBox: list):
     return html.open_tag('svg', {
         'xmlns': 'http://www.w3.org/2000/svg',
         'version': '1.1',
-        'viewBox': ' '.join(viewBox),
+        'viewBox': ' '.join(str(i) for i in viewBox),
         'preserveAspectRatio': 'none meet'
     }) + '\n'
 
