@@ -3,7 +3,7 @@ import sys
 import EGE.GenBase
 import EGE.Html
 import EGE.Random
-from EGE.Gen.EGE import A01, A02, A03, A04, A05, A07, A08, A10, A11, A12, A13, A15, A16, A17, A18, B01
+from EGE.Gen.EGE import A01, A02, A03, A04, A05, A07, A08, A10, A11, A12, A13, A15, A16, A17, A18, B01, B03
 
 rnd = EGE.Random.Random(2342134)
 
@@ -49,6 +49,19 @@ questions = [q.generate() for q in [
     A18.RobotLoop(rnd),
     B01.Recode2(rnd),
     B01.Direct(rnd),
+    B03.Q1234(rnd),
+    B03.LastDigit(rnd),
+    B03.LastDigitBase(rnd),
+    B03.CountDigits(rnd),
+    B03.SimpleEquation(rnd),
+    B03.CountOnes(rnd),
+    B03.MusicTimeToTime(rnd),
+    B03.MusicSizeToSize(rnd),
+    B03.MusicFormatTimeToTime(rnd),
+    B03.SelectBase(rnd),
+    B03.MoveNumber(rnd),
+    B03.RangeCount(rnd),
+    B03.MinRequiredBase(rnd),
 ]]
 
 if not sys.stdout.isatty():

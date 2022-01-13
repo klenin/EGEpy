@@ -62,6 +62,9 @@ class DirectInput(Question):
         self.variants = []
         pass
 
+    def export_type(self):
+        return 'di'
+
     def accept_number(self):
         self.accept = r"^\d+$"
         pass
