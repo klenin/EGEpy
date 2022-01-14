@@ -55,7 +55,7 @@ class Flowchart:
         if jump_data is None:
             jump_data = Jump()
         self.jumps_.append(jump_data)
-        return self.jumps_[len(self.jumps_) - 1]
+        return jump_data
 
     def down(self, step=30):
         self.y2 += step
