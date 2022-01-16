@@ -161,7 +161,43 @@ class CountOddEven(SingleChoice):
 
 class AlgMinMax(SingleChoice):
     def generate(self):
-        return super().generate()
+        i, j = self.rnd.pick_n(2, [ 'i', 'j', 'k', 'm' ])
+        minmax = self.rnd.pick([
+            { 'text': 'максимальн', 'comp': '>' },
+            { 'text': 'минимальн', 'comp': '<' },
+        ])
+        eq = self.rnd.pick([
+            { 'answer': 1, 'comp': '' },
+            { 'answer': 2, 'comp': '=' },
+        ])
+        idx = self.rnd.pick([
+            { 'answer': 0, 'res': [ '[]', 'A', j ] },
+            { 'answer': eq['answer'], 'res': j },
+        ])
+        minmax_statement = [
+            f"{minmax['comp']}{eq['comp']}",
+            [ '[]', 'A', i ],
+            [ '[]', 'A', j ],
+        ]
+        condition_statement = [ 'if', minmax_statement, [ '=', j, i ], ]
+        loop_block = [ 'for', i, 1, 'N', condition_statement ]
+        code_block = make_block(
+            [ '=', j, 1, ] + loop_block + [ '=', 's', idx['res'] ]
+        )
+        lang_table = table(code_block, [ [ 'Basic', 'Pascal', 'Alg' ] ])
+        self.text = f'''Дан фрагмент программы, обрабатывающей массив A из N элементов: {lang_table}
+            Чему будет равно значение переменной s после выполнения
+            данного алгоритма, при любых значениях элементов массива A?'''
+        if_many = f" из них, если {minmax['text']}ых элементов несколько)"
+        variants = [
+            f"{minmax['text'].capitalize()}ому эдементу в массиве A",
+            f"Индексу {minmax['text']}ого элемента в массиве A (первому{if_many}",
+            f"Индексу {minmax['text']}ого элемента в массиве A (последнему{if_many}",
+            f"Количеству элементов, равных {minmax['text']}ому в массиве A",
+        ]
+        self.set_variants(variants)
+        self.correct = idx['answer']
+        return self
 
 class AlgAvg(SingleChoice):
     def generate(self):

@@ -27,6 +27,7 @@ questions = [q.generate() for q in [
     A05.CRC(rnd),
     A06.CountBySign(rnd),
     A06.FindMinMax(rnd),
+    A06.AlgMinMax(rnd),
     A07.Names(rnd),
     A07.Animals(rnd),
     A07.RandomSequences(rnd),
