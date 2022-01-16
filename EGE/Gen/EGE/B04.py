@@ -184,3 +184,40 @@ class LetterCombinatorics(DirectInput):
         self.correct = word_length * vowels_count * consonants_count ** (word_length - 1)
         self.accept_number()
         return self
+
+class SignalRockets(DirectInput):
+    """
+    Задача заключается в проверке базовых комбинаторных знаний, а также умении определить вид комбинаторной задачи из описания на естественном языке. В зависимости от ГПСЧ в задаче могут использоваться: размещения без повторений, размещения с повторениями, сочетания без повторений. (Сочетания с повторениями отключены, поскольку возможно школьники не знают формулы)  За основу взята задача 2168cF из базы заданий ЕГЭ fipi.ru
+    """
+    def generate(self):
+        answer, sequence_length, colors_count, repeats_allowed = (0, 0, 0, 0)
+        order_matters = self.rnd.coin()
+        if order_matters:
+            repeats_allowed = self.rnd.coin()
+            sequence_length = self.rnd.in_range(4, 6)
+            colors_count = self.rnd.in_range(4, 6)
+            if repeats_allowed:
+                answer = colors_count ** sequence_length
+            else:
+                colors_count = max(colors_count, sequence_length)
+                answer = product(nrange(colors_count - sequence_length + 1, colors_count))
+        else:
+            repeats_allowed = 0
+            sequence_length = self.rnd.in_range(2, 4)
+            colors_count = self.rnd.in_range(sequence_length + 1, 6)
+            s, t = minmax(sequence_length, colors_count - sequence_length)
+            answer = product(*nrange(s + 1, colors_count)) / product(*nrange(1, t))
+
+        order_condition_text = 'существенно' if order_matters else 'не существенно'
+        repeats_condition_text = 'может повторяться' if repeats_allowed else 'не может повторяться'
+        self.text = f"""
+ля передачи аварийных сигналов договорились использовать специальные цветные сигнальные ракеты, 
+запускаемые последовательно. Одна последовательность ракет – один сигнал; в каком порядке идут 
+цвета – {order_condition_text}. Какое количество различных сигналов можно передать при помощи запуска ровно 
+{num_by_words(sequence_length, 1, 'genitive')} таких сигнальных ракет, если в 
+запасе имеются ракеты {num_by_words(colors_count, 1, 'genitive')} различных цветов 
+(ракет каждого вида неограниченное количество, цвет ракет в последовательности {repeats_condition_text})?"""
+
+        self.correct = answer
+        self.accept_number()
+        return self
