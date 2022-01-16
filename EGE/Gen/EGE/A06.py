@@ -297,4 +297,19 @@ class CrcMessage(SingleChoice):
 
 class InfSize(SingleChoice):
     def generate(self):
-        return super().generate()
+        pow = self.rnd.in_range(4, 7)
+        value = 2 ** pow
+        time = self.rnd.in_range(2, 11)
+        self.text = f'''Известно, что длительность непрерывного подключения к сети Интернет с помощью модема
+            для некоторых АТС не превышает {time} минут.
+            Определите максимальный размер файла (в Килобайтах),
+            который может быть передан за время такого подключения,
+            если модем передает информацию в среднем со скоростью {value} Килобит/с?'''
+        time *= 60
+        self.set_variants([
+            2 ** (pow - 3) * time,
+            2 ** pow * time,
+            2 ** (pow - 3) * time / 60,
+            2 ** (pow + 3) * time,
+        ])
+        return self
