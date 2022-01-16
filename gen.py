@@ -69,6 +69,7 @@ questions = [q.generate() for q in [
     B03.RangeCount(rnd),
     B03.MinRequiredBase(rnd),
     B04.ImplBorder(rnd),
+    B04.LexOrder(rnd),
     B06.Solve(rnd),
     B06.RecursiveFunction(rnd),
     B06.PasswordMeta(rnd),
