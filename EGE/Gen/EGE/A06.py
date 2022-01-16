@@ -109,7 +109,55 @@ class FindMinMax(SingleChoice):
 
 class CountOddEven(SingleChoice):
     def generate(self):
-        return super().generate()
+        array_length = self.rnd.in_range(7, 10)
+        outer_iteration_variable, inner_iteration_variable = self.rnd.index_var(2)
+        get_by_index_operation = [
+            '[]', 'A', outer_iteration_variable, inner_iteration_variable
+        ]
+        add_operation = [
+            '+', outer_iteration_variable, [
+                self.rnd.pick([ '+', '-' ])[0], inner_iteration_variable, 1
+            ]
+        ]
+        assignment_operation = [ '=', get_by_index_operation, add_operation ]
+        inner_loop_block = [
+            'for', inner_iteration_variable, 1, array_length, assignment_operation
+        ]
+        outer_loop_block = [
+            'for', outer_iteration_variable, 1, array_length, inner_loop_block
+        ]
+        
+        code_block = make_block(outer_loop_block)
+        lang_table = table(code_block, [ [ 'Basic', 'Pascal', 'Alg' ] ])
+        case = self.rnd.pick([
+            { 'name': 'чётное', 'test': 0 },
+            { 'name': 'нечётное', 'test': 1 },
+        ])
+        self.text = f'''Значения двумерного массива A размера {array_length} × {array_length} "
+            задаются с помощью вложенного оператора цикла
+            в представленном фрагменте программы: {lang_table}
+            Сколько элементов массива A будут принимать {case['name']} значение?'''
+        
+        array_A = code_block.run_val('A')
+        correct = 0
+        for i in range(1, array_length + 1):
+            for j in range(1, array_length + 1):
+                if (array_A[i][j] % 2 == case['test']):
+                    correct += 1
+        
+        errors = [ _ for _ in range(-5, 0) ] + [ _ for _ in range(1, 6) ]
+        errors = [ correct + error for error in errors ]
+        seen = { correct: True }
+
+        def filter_function(value):
+            if (value in seen and seen[value]):
+                return False
+            seen[value] = True
+            return True
+
+        errors = list(filter(filter_function, errors))
+        self.set_variants([ correct ] + self.rnd.pick_n(3, errors))
+        return self 
 
 class AlgMinMax(SingleChoice):
     def generate(self):
