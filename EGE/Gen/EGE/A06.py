@@ -201,7 +201,39 @@ class AlgMinMax(SingleChoice):
 
 class AlgAvg(SingleChoice):
     def generate(self):
-        return super().generate()
+        i, j = self.rnd.pick_n(2, [ 'i', 'j', 'k', 'm' ])
+        case = self.rnd.pick([
+            { 'text': 'положительн', 'comp': '>' },
+            { 'text': 'отрицательн', 'comp': '<' },
+        ])
+        correct = self.correct = self.rnd.in_range(1, 3)
+        index_statement = [ '[]', 'A', i, ]
+        condition_body = [
+            '=', 's', index_statement if correct == 3 else [ '+', 's', index_statement],
+            '=', j, [ '+', j, 1 ],
+        ]
+        condition_block = [
+            'if', [ case['comp'], index_statement, 0 ], condition_body,
+        ]
+        loop_block = [ 'for', i, 1, 'N', condition_block, ]
+        after_loop_block = [] if correct == 3 else [
+            '=', 's', [ '/', 's', j ] if correct == 1 else j
+        ]
+        code_block_parts = [ '=', 's', 0, '=', j, 0, ] + loop_block + after_loop_block
+        code_block = make_block(code_block_parts)
+        lang_table = table(code_block, [ [ 'Basic', 'Pascal' ], [ 'C', 'Alg' ], ])
+        self.text = f'''Дан фрагмент программы, обрабатывающей массив A из N элементов
+            (известно, что в массиве имеются {case['text']}ые элементы): {lang_table}
+            Чему будет равно значение переменной s после выполнения
+            данного алгоритма, при любых значениях элементов массива A?'''
+        variants = [
+            "Среднему арифметическому всех элементов массива A",
+            f"Среднему арифметическому всех {case['text']}ых элементов массива A",
+            f"Количеству {case['text']}ых элементов массива A",
+            f"Значению последнего {case['text']}ого элемента массива A",
+        ]
+        self.set_variants(variants)
+        return self
 
 class BusStation(SingleChoice):
     def generate(self):
