@@ -159,3 +159,28 @@ class PlusMinus(DirectInput):
         self.correct = 2 ** num
         self.accept_number()
         return self
+
+class LetterCombinatorics(DirectInput):
+    """
+    Задача заключается в использовании базовых знаний из комбинаторики о вычислении размещений. За основу задачи взята задача из базы заданий ЕГЭ c сайта fipi.ru: 830B20
+    """
+    def generate(self):
+        word_length = self.rnd.in_range(5, 7)
+        vowels_count = self.rnd.in_range(1, 3)
+        consonants_count = word_length - vowels_count
+        vowels = self.rnd.pick_n(vowels_count, EGE.Russian.vowels)
+        consonants = self.rnd.pick_n(consonants_count, EGE.Russian.consonants)
+
+        letters = self.rnd.shuffle([ *vowels, *consonants ])
+
+        letters = ', '.join(letters)
+        self.text = f"""
+Вася составляет {word_length}-буквенные слова, в которых встречаются только буквы {letters}, 
+причём в каждом слове есть ровно одна гласная буква. Каждая из допустимых согласных букв может встречаться 
+в кодовом слове любое количество раз или не встречаться совсем. Словом считается любая допустимая 
+последовательность букв, не обязательно осмысленная. 
+Сколько существует таких слов, которые может написать Вася?"""
+
+        self.correct = word_length * vowels_count * consonants_count ** (word_length - 1)
+        self.accept_number()
+        return self
