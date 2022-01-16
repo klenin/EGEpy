@@ -295,7 +295,7 @@ def different_names(rnd, count):
             cache[i[0]].append({'name': i, 'gender': 1})
         else:
             cache[i[0]] = [{'name': i, 'gender': 1}]
-    return [rnd.pick(cache[i]) for i in rnd.pick_n(count, cache.keys())]
+    return [rnd.pick(cache[i]) for i in rnd.pick_n(count, list(cache.keys()))]
 
 def genitive(name):
     if re.search('[йь]$', name):
