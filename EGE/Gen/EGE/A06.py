@@ -1,5 +1,3 @@
-import math
-
 from EGE.Bits import Bits
 from ...GenBase import SingleChoice
 from ...LangTable import unpre, table
@@ -239,16 +237,123 @@ class AlgAvg(SingleChoice):
 
 class BusStation(SingleChoice):
     def generate(self):
-        return super().generate()
+        towns_count = 4
+        towns = self.rnd.pick_n(towns_count, [
+            "ЛИСЬЕ", "СОБОЛЕВО", "ЕЖОВО", "ЗАЙЦЕВО", "МЕДВЕЖЬЕ", "ПЧЕЛИННОЕ",
+        ])
+        init_vertices = self._random_routes(self.rnd.in_range(6, 10), towns_count)
+        graph = [ [ None for _ in range(towns_count + 1) ] for _ in range(towns_count + 1) ]
+        for vertex in init_vertices:
+            graph[vertex['from']][vertex['to']] = vertex
+        
+        graph = self._find_all_routes(graph, towns_count)
 
-    def _gen_schedule_text(self):
-        pass
+        can_go = []
+        for row in graph:
+            for vertex in row:
+                if vertex is None:
+                    continue
+                if 'fin' in vertex:
+                    can_go.append(vertex)
+        
+        way = self.rnd.pick(can_go)
 
-    def _random_routes(self):
-        pass
+        # Добавляется верный ответ. Затем, если такой существует, предыдущий, затёртый алгоритмом
+        # нахождения кратчайших путей вариант. Далее выбираются маршруты, которые ведут в пункт назначения.
+        # Если не набралось 4 варианта выбираются случайные ответы.
+        # При добавлении проверяется уникальность ответов.
+        answer = [ way['fin'] ]
+        if 'last_time' in way:
+            answer.append(way['pred_res'])
+        for i in range(len(answer), towns_count):
+            elem = graph[i][way['to']]
+            if elem is None:
+                continue
+            if 'fin' in elem:
+                if len(list(filter(lambda a: a == elem['fin'], answer))) == 0:
+                    answer.append(elem['fin'])
+        for i in range(len(answer), towns_count):
+            elem = None
+            while (True):
+                elem = self.rnd.pick(can_go)
+                if len(list(filter(lambda a: a == elem['fin'], answer))) == 0:
+                    break
+            answer.append(elem['fin'])
 
-    def _stime(self):
-        pass
+        self.text = self._gen_schedule_text(way, towns, init_vertices)
+        self.set_variants([ self._stime(v) for v in answer ])
+        return self
+
+    def _gen_schedule_text(self, way, towns, init_vertices):
+        start_time = self._stime(5 * self.rnd.in_range(0, int(way['start'] / 5)))
+        text = f'''<p>
+            Путешественник пришел в {start_time} на автостанцию населенного пункта
+            <strong>{towns[way['from']]}</strong> и обнаружил следующее расписание автобусов для всей районной
+            сети маршрутов:
+            </p>
+            <table border="1">
+            <tr>
+            <th>Пункт отправления</th>
+            <th>Пункт прибытия</th>
+            <th>Время отправления</th>
+            <th>Время прибытия</th>
+            </tr>'''
+        for vertex in init_vertices:
+            text += "<tr>"
+            text += f"<td>{towns[vertex['from']]}</td>"
+            text += f"<td>{towns[vertex['to']]}</td>"
+            text += f"<td>{self._stime(vertex['start'])}</td>"
+            text += f"<td>{self._stime(vertex['fin'])}</td>"
+            text += "</tr>\n"
+        text += "</table>\n"
+        text += f'''<p>Определите самое раннее время, когда путешественник сможет оказаться в
+            пункте <strong>{towns[way['to']]}</strong> согласно этому расписанию.</p>'''
+        return text
+
+    def _random_routes(self, path_count, n):
+        # Генерация случайных маршрутов без петель
+        # |~|1|2|3| каждому целому числу от 0 до $n * ($n - 1) можно
+        # |4|~|5|6| однозначно сопоставить позицию в матрице смежности
+        # |7|8|~|9|
+        # ...
+        positions = self.rnd.pick_n(path_count, [ x for x in range(n * (n - 1)) ])
+        vertices = []
+        for pos in positions:
+            x = pos % (n - 1)
+            y = int(pos / (n - 1))
+            if (x >= y):
+                x += 1
+            vertices.append({ 'from': x, 'to': y })
+        
+        time = 0
+        for vertex in vertices:
+            time += 5 * self.rnd.in_range(2, 20)
+            vertex['start'] = time
+            vertex['fin'] = time + 5 * self.rnd.in_range(1, 10)
+
+        return vertices
+
+    def _find_all_routes(self, graph, towns_count):
+        # Для нахождения кратчайших расстояний используется Алгоритм Флойда — Уоршелла
+        for k in range(towns_count + 1):
+            for i in range(towns_count + 1):
+                for j in range(towns_count + 1):
+                    v, u, w = graph[i][j], graph[i][k], graph[k][j]
+                    if v is None or u is None or w is None:
+                        continue
+                    if (not 'fin' in u) or (not 'start' in w) or (u['fin'] > w['start']):
+                        continue
+                    if (not 'start' in v) or ('fin' in v and 'fin' in w and v['fin'] > w['fin']):
+                        if ('fin' in v):
+                            v['pred_res'] = v['fin']
+                        v['fin'] = w['fin']
+                        v['start'] = u['start']
+                        v['from'] = u['from']
+                        v['to'] = w['to']
+        return graph
+
+    def _stime(self, value):
+        return str(int(value / 60 + 7)) + ":" + "{:02d}".format(value % 60)
 
 class CrcMessage(SingleChoice):
     def generate(self):
