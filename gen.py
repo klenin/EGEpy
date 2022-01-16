@@ -75,6 +75,8 @@ questions = [q.generate() for q in [
     B04.PlusMinus(rnd),
     B04.LetterCombinatorics(rnd),
     B04.SignalRockets(rnd),
+    B04.HowManySequences1(rnd),
+    B04.HowManySequences2(rnd),
     B06.Solve(rnd),
     B06.RecursiveFunction(rnd),
     B06.PasswordMeta(rnd),

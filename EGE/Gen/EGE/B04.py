@@ -221,3 +221,32 @@ class SignalRockets(DirectInput):
         self.correct = answer
         self.accept_number()
         return self
+
+class HowManySequences1(DirectInput):
+    def generate(self):
+        first_num = self.rnd.in_range(1, 3)
+        second_num = self.rnd.in_range(first_num + 1, 6)
+        num_of_letters = self.rnd.in_range(2, 5)
+        alphabet = EGE.Russian.alphabet[0:num_of_letters]
+
+        self.text = f"""
+Сколь­ко есть раз­лич­ных сим­воль­ных по­сле­до­ва­тель­но­стей длины 
+от {num_by_words(first_num, 0, 'genitive')} до {num_by_words(second_num, 0, 'genitive')} 
+в {num_by_words(num_of_letters, 0, 'prepositional')}бук­вен­ном ал­фа­ви­те {{{', '.join(alphabet)}}}"""
+        self.correct = sum(num_of_letters ** i for i in nrange(first_num, second_num))
+        self.accept_number()
+        return self
+
+class HowManySequences2(DirectInput):
+    def generate(self):
+        word = list(self.rnd.pick(EGE.RussianModules.Animals.distinct_letters).upper())
+        num = self.rnd.in_range(3, 7)
+
+        self.text = f"""
+Рас­смат­ри­ва­ют­ся сим­воль­ные по­сле­до­ва­тель­но­сти длины {num} в {num_by_words(len(word), 0, 'prepositional')}бук­вен­ном ал­фа­ви­те {{{', '.join(word)}}}. 
+Сколь­ко су­ще­ству­ет таких по­сле­до­ва­тель­но­стей, 
+ко­то­рые на­чи­на­ют­ся с буквы {word[0]} и за­кан­чи­ва­ют­ся бук­вой {word[-1]}"""
+
+        self.correct = len(word) ** (num - 2)
+        self.accept_number()
+        return self
