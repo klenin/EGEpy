@@ -146,3 +146,16 @@ class Bulbs(DirectInput):
         self.correct = math.ceil(math.log(count) / math.log(3))
         self.accept_number()
         return self
+
+class PlusMinus(DirectInput):
+    def generate(self):
+        num = self.rnd.in_range(5, 10)
+        text_num = num_by_words(num, 0, 'nominative')
+
+        self.text = f"""
+Сколь­ко су­ще­ству­ет раз­лич­ных по­сле­до­ва­тель­но­стей из сим­во­лов «плюс» и «минус», 
+дли­ной ровно в {text_num} сим­во­лов? """
+
+        self.correct = 2 ** num
+        self.accept_number()
+        return self
