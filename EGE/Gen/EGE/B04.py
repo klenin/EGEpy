@@ -130,3 +130,19 @@ class Morse(DirectInput):
         self.correct = answer
         self.accept_number()
         return self
+
+class Bulbs(DirectInput):
+    """
+    Найти количество сигналов
+    """
+    def generate(self):
+        count = self.rnd.in_range(3, 100)
+
+        self.text = f"""
+Световое табло состоит из лампочек. Каждая лампочка может находиться в одном из трех состояний 
+(«включено», «выключено» или «мигает»). Какое наименьшее количество лампочек должно находиться 
+на табло, чтобы с его помощью можно было передать {count} различных сигналов?"""
+
+        self.correct = math.ceil(math.log(count) / math.log(3))
+        self.accept_number()
+        return self
