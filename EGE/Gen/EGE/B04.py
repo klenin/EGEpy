@@ -112,3 +112,21 @@ class LexOrder(DirectInput):
  в алфавитном порядке.<br/>Вот начало списка: {''.join(ptrn_list)} Запишите слово,
  которое стоит на <strong>{pos}-м месте</strong> от начала списка."""
         return self
+
+class Morse(DirectInput):
+    """
+    Описание задания: сколько различных символов можно закодировать,используя код азбуки Морзе.
+    """
+    def generate(self):
+        first = self.rnd.in_range(2, 6)
+        second = self.rnd.in_range(first + 1, 10)
+
+        self.text = f"""
+Азбука Морзе позволяет кодировать символы для сообщений по радиосвязи, задавая комбинацию точек и тире.
+Сколько различных символов (цифр, букв, знаков пунктуации и т.д.) можно закодировать,
+используя код азбуки Морзе длиной не менее {first} и не более {second} сигналов (точек и тире)?"""
+
+        answer = sum([ 2 ** i for i in range(first, second + 1) ])
+        self.correct = answer
+        self.accept_number()
+        return self
