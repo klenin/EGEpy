@@ -61,8 +61,8 @@ class Flowchart:
         self.y2 += step
 
     def point(self, x: float = None, y: float = None):
-        return {'x': 0 if x is None else x,
-                'y': self.y2 if y is None else y}
+        return { 'x': 0 if x is None else x,
+                 'y': self.y2 if y is None else y }
 
     def add_box(self, statements: list, enter: Jump, exit_: Jump):
         w = max(map(len, statements)) * FONT_SZ
@@ -145,8 +145,8 @@ class Flowchart:
                     'start' if right else 'end', label,
                     { 'x': sx, 'y': sy - FONT_SZ / 2 }
                 )
-            ah = arrow_head('down' if dy > sy else
-                                 'left' if right else 'right')
+            direction = 'down' if dy > sy else 'left' if right else 'right'
+            ah = arrow_head(direction)
             if dy > sy:
                 dy -= 20
                 ah = f"v20 {ah}"

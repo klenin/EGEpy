@@ -2,7 +2,6 @@ from dataclasses import dataclass
 import re
 
 import EGE.Svg as svg
-import EGE.Html as html
 from .ProgModules import Lang
 from . import Html as html
 from . import Utils
@@ -417,7 +416,7 @@ class Block(SynElement):
         r = ''
         elements = []
         linear = []
-        for st in self.statements + [None]:
+        for st in self.statements + [ None ]:
             if st and isinstance(st, Assign):
                 linear.append(st.to_lang_named('Alg'))
             else:
@@ -444,8 +443,7 @@ class Block(SynElement):
         exit_.dest = f.point()
         r = svg.g(f"\n{r}" + f.jumps(),
                   stroke='black',
-                  fill='none'
-                  ) + f.texts()
+                  fill='none') + f.texts()
         f.y2 += 1
         f.x2 += 1
         wh = [ f.x2 - f.x1, f.y2 - f.y1 ]
@@ -637,10 +635,9 @@ class CondLoop(CompoundStatement):
         f.down(20)
         middle = f.make_jump(Jump(label=self.continue_label()))
         exit_.label = self.exit_label()
-        r = f.add_rhomb(
-            self.cond.to_lang_named('Alg'),
-            enter, { 'right': exit_, 'middle': middle }
-        )
+        r = f.add_rhomb(self.cond.to_lang_named('Alg'),
+                        enter,
+                        { 'right': exit_, 'middle': middle })
         f.down()
         r += self.body.to_svg(f, middle, top)
         f.down(10)
