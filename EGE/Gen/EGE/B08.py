@@ -2,11 +2,14 @@
 # Copyright © 2011 V. Kevroletin
 # Copytight © 2022 Vladimir K. Glushkov, glushkov.vk@students.dvfu.ru
 # Licensed under GPL version 2 or later.
-import string
 import math
+import string
 
-from EGE.GenBase import DirectInput
+import EGE.LangTable
+import EGE.Prog
+from EGE.GenBase import DirectInput, EGEError
 from EGE.RussianModules.NumText import num_text
+
 
 class IdentifyLetter(DirectInput):
     """
@@ -48,34 +51,94 @@ class FindCalcSystem(DirectInput):
     Перебором проверяется, есть ли другие системы исчисления, в которых результат имеет столько же цифр
     и такую же последнюю цифру. Если друга система счисления есть - параметры генерируются заново.
     """
-    def __len_last(self, num: int, base: int) -> tuple[int, int]:
+    @staticmethod
+    def _len_last(num: int, base: int) -> tuple[int, int]:
         if num != 0:
             return math.ceil(math.log(num) / math.log(base)), num % base
         return 0, 0
 
-    def __check_uniq(self, num: int, base: int) -> bool:
-        len, last = self.__len_last(num, base)
+    def _check_uniq(self, num: int, base: int) -> bool:
+        len, last = self._len_last(num, base)
         len2, base2 = len - 1, 1
         while len2 < len:
             base2 += 1
             if base2 == base:
                 continue
-            len2, last2 = self.__len_last(num, base2)
+            len2, last2 = self._len_last(num, base2)
             if len2 == len and last2 == last:
                 return False
         return True
 
     def generate(self):
         num, base = self.rnd.in_range(10, 99), self.rnd.in_range(2, 9)
-        while not self.__check_uniq(num, base):
+        while not self._check_uniq(num, base):
             num, base = self.rnd.in_range(10, 99), self.rnd.in_range(2, 9)
 
-        len, last = self.__len_last(num, base)
+        len, last = self._len_last(num, base)
         len_text = num_text(len, [ 'цифру', 'цифры', 'цифр' ])
         self.text = f"""
 Запись числа {num}<sub>10</sub> в системе счисления с 
 основанием <em>N</em> оканчивается на {last} и содержит {len_text}. 
 Чему равно основание этой системы счисления <em>N</em>?'"""
         self.correct = base
+        self.accept_number()
+        return self
+
+class FirstSumDigits(DirectInput):
+    """
+    Вариант задания B8  Описание задания: алгоритм, дающий на выход несколько чисел.
+    """
+    def generate(self):
+        a = self.rnd.pick([ 2, 4 ])
+        b = self.rnd.in_range(1, a * 9)
+        maximal = bool(self.rnd.coin())
+
+        sum_digits = b
+        answer = []
+        if maximal:
+            while sum_digits > 9:
+                sum_digits -= 9
+                answer.append(9)
+            answer.append(sum_digits)
+            answer += [ 0 ] * (a - len(answer))
+        else:
+            while sum_digits > 10:
+                sum_digits -= 9
+                answer.insert(0, 9)
+            if a > len(answer) + 1:
+                answer.insert(0, sum_digits - 1)
+                answer = [ 0 ] * (a - len(answer) - 1) + answer
+                answer.insert(0, 1)
+            else:
+                answer.insert(0, sum_digits)
+
+        x = int(''.join(list(map(str, answer))))
+
+        block = EGE.Prog.make_block([
+            '=', 'a', 0,
+            '=', 'b', 0,
+            'while', [ '>', 'x', 0 ], [
+                '=', 'a', [ '+', 'a', 1 ],
+                '=', 'b', [ '+', 'b', [ '%', 'x', 10 ] ],
+                '=', 'x', [ '//', 'x', 10 ],
+            ],
+        ])
+
+        d = { 'x': x }
+        block.run(d)
+        if d['a'] != a or d['b'] != b:
+            raise EGEError(f"wrong {maximal} x={x} a={a}, b={b}")
+        d = { 'x': x + (9 if maximal else -9) }
+        block.run(d)
+
+        if d['a'] == a and d['b'] == b:
+            raise EGEError(f"not last {maximal} x={x} a={a}, b={b}")
+
+        lt = EGE.LangTable.table(block, [ [ 'Basic', 'Alg' ], [ 'Pascal', 'C' ] ])
+        self.text = f"""
+Ниже на 4-х языках записан алгоритм. Получив на вход число x, этот алгоритм печатает 
+два числа a и b.  Укажите {'наибольшее' if maximal else 'наименьшее'} из таких чисел x, при вводе которых алгоритм 
+печатает сначала {a}, а потом {b}. {lt}"""
+        self.correct = x
         self.accept_number()
         return self
