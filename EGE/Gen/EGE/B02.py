@@ -11,17 +11,17 @@ class Flowchart(DirectInput):
         va, vb = self.rnd.shuffle([ 'a', 'b' ])
         loop = self.rnd.pick([ 'while', 'until' ])
         va_init, va_end, va_op, va_arg, va_cmp = self.rnd.pick([
-            lambda: [ 0, self.rnd.in_range(5, 7), '+', 1, '<' ],
-            lambda: [ self.rnd.in_range(5, 7), 0, '-', 1, '>' ],
-            lambda: [ 1, 2 ** self.rnd.in_range(3, 5), '*', 2, '<' ],
-            lambda: [ 2 ** self.rnd.in_range(3, 5), 1, '/', 2, '>' ],
-        ])()
+            [ 0, self.rnd.in_range(5, 7), '+', 1, '<' ],
+            [ self.rnd.in_range(5, 7), 0, '-', 1, '>' ],
+            [ 1, 2 ** self.rnd.in_range(3, 5), '*', 2, '<' ],
+            [ 2 ** self.rnd.in_range(3, 5), 1, '/', 2, '>' ],
+        ])
         vb_init, vb_op, vb_arg = self.rnd.pick([
-            lambda: [ self.rnd.in_range(0, 3), '+', self.rnd.in_range(1, 3) ],
-            lambda: [ self.rnd.in_range(15, 20), '-', self.rnd.in_range(1, 3) ],
-            lambda: [ self.rnd.in_range(1, 4), '*', self.rnd.in_range(2, 4) ],
-            lambda: [ 2 ** self.rnd.in_range(8, 10), '/', 2 ]
-        ])()
+            [ self.rnd.in_range(0, 3), '+', self.rnd.in_range(1, 3) ],
+            [ self.rnd.in_range(15, 20), '-', self.rnd.in_range(1, 3) ],
+            [ self.rnd.in_range(1, 4), '*', self.rnd.in_range(2, 4) ],
+            [ 2 ** self.rnd.in_range(8, 10), '/', 2 ]
+        ])
         b = EGE.Prog.make_block([
             '=', va, va_init,
             '=', vb, vb_init,
