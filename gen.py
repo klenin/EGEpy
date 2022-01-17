@@ -85,6 +85,7 @@ questions = [q.generate() for q in [
     B06.PasswordMeta(rnd),
     B07.WhoIsRight(rnd),
     B08.IdentifyLetter(rnd),
+    B08.FindCalcSystem(rnd),
     B10.TransRate(rnd),
     B10.TransTime(rnd),
     B10.TransLatency(rnd),
