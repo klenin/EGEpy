@@ -140,7 +140,10 @@ class Index(SynElement):
     def assign(self, env, value):
         v = self.array.run(env)
         for i in self.indices[:-1]:
-            v = v.get(i.run(env))
+            index = i.run(env)
+            elem = v.get(index)
+            v[index] = {} if elem is None else elem
+            v = v[index]
         v[self.indices[-1].run(env)] = value
         return value
 
