@@ -4,7 +4,7 @@ vowels = list('АЕЁИОУЫЭЮЯ')
 
 def join_comma_and(arr: list):
     if len(arr) > 1:
-        return ', '.join(arr[0: -2]) + ' и ' + arr[-1]
+        return ', '.join(arr[0: -1]) + ' и ' + arr[-1]
     else:
         return arr[0]
 
@@ -15,4 +15,4 @@ def different(rnd, items, count):
             cache[i[0]].append(i)
         else:
             cache[i[0]] = [i]
-    return [rnd.pick(cache[i]) for i in rnd.pick_n(count, cache.keys())]
+    return [rnd.pick(cache[i]) for i in rnd.pick_n(count, list(cache.keys()))]

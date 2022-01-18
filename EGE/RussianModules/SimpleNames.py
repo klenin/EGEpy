@@ -42,9 +42,8 @@ simple_names = ['Александр',
                 ]
 
 def genitive(name):
-    for i in range(len(name)):
-        if re.search('й$', name[i]):
-            name[i] = re.sub('й$', 'я', name[i])
-        else:
-            name[i] += 'а'
+    if re.search('й$', name):
+        name = re.sub('й$', 'я', name)
+    else:
+        name = name + 'а'
     return name
