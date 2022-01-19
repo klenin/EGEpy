@@ -6,7 +6,7 @@ from EGE.Utils import nrange, ucfirst
 from EGE.RussianModules.NumText import num_by_words
 
 class WhoIsRight(DirectInput):
-    def __positive_stmt(self, p: list, me: int, rest: list):
+    def __positive_stmt(self, p: list[dict], me: int, rest: list):
         if not rest:
             return 'никто не разбил'
         stmt = self.rnd.pick([
@@ -18,7 +18,7 @@ class WhoIsRight(DirectInput):
         s = stmt[2 if len(rest) > 1 else p[rest[0]]['gender']]
         return f"{ucfirst(s)} {' или '.join([ 'я' if i == me else p[i]['name'] for i in rest ])}"
 
-    def __negative_stmt(self, p: list, me: int, rest: list):
+    def __negative_stmt(self, p: list[dict], me: int, rest: list):
         if not rest:
             return 'никто не разбил'
         neg = self.rnd.pick([
@@ -35,8 +35,8 @@ class WhoIsRight(DirectInput):
     def __make_powers(self, n: int):
         ans_pow = self.rnd.in_range(1, n - 1)
         ans_index = self.rnd.in_range(0, n - 1)
-        powers = [self.rnd.in_range(0, n - 3) for _ in range(0, n)]
-        powers = [p + 2 if p >= ans_pow else p + 1 for p in powers]
+        powers = [ self.rnd.in_range(0, n - 3) for _ in range(n) ]
+        powers = [ p + 2 if p >= ans_pow else p + 1 for p in powers ]
         powers[ans_index] = ans_pow
         return powers
 
@@ -44,15 +44,15 @@ class WhoIsRight(DirectInput):
         row_powers = self.__make_powers(n)
 
         ans = {}
-        for i in range(0, n):
-            ans[i] = {s: 1 for s in self.rnd.pick_n(row_powers[i], nrange(0, n - 1))}
+        for i in range(n):
+            ans[i] = { s: 1 for s in self.rnd.pick_n(row_powers[i], nrange(0, n - 1)) }
         col_powers = [ 0 ] * n
-        for i in range(0, n):
-            for j in range(0, n):
+        for i in range(n):
+            for j in range(n):
                 if i in ans and j in ans[i]:
                     col_powers[j] += 1
         pow_col = {}
-        for i in range(0, n):
+        for i in range(n):
             if col_powers[i] not in pow_col:
                 pow_col[col_powers[i]] = []
             pow_col[col_powers[i]].append(i)
@@ -76,12 +76,12 @@ class WhoIsRight(DirectInput):
 
         n, ans_pow, ans_index, stmts = self.__make_stmts(n)
         self.text = ''
-        for i in range(0, n):
+        for i in range(n):
             h = stmts[i]
             if len(h) <= math.ceil(5 / 2):
                 s = self.__positive_stmt(people, i, list(h.keys()))
             else:
-                s = self.__negative_stmt(people, i, [ i for i in range(0, n) if i not in h ])
+                s = self.__negative_stmt(people, i, [ i for i in range(n) if i not in h ])
             self.text += f"{people[i]['name']}:  «{s}»<br/>"
 
         action = self.rnd.pick([
