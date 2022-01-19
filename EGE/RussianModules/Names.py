@@ -298,60 +298,57 @@ def different_names(rnd, count):
     return [rnd.pick(cache[i]) for i in rnd.pick_n(count, cache.keys())]
 
 def genitive(name):
-    for i in range(len(name)):
-        if re.search('[йь]$', name[i]):
-            name[i] = re.sub('[йь]$', 'я', name[i])
-        elif re.search('([егк])а$', name[i]):
-            name[i] = re.sub('([егк])а$', lambda m: m[0] + 'и', name[i])
-        elif re.search('а$', name[i]):
-            name[i] = re.sub('а$', 'ы', name[i])
-        elif re.search('я$', name[i]):
-            name[i] = re.sub('я$', 'и', name[i])
-        elif re.search('ев$', name[i]):
-            name[i] = re.sub('ев$', 'ьва', name[i])
-        elif re.search('Павел$', name[i]):
-            name[i] = re.sub('Павел$', 'Павла', name[i])
-        else:
-            name[i] += 'a'
+    if re.search('[йь]$', name):
+        name = re.sub('[йь]$', 'я', name)
+    elif re.search('([егк])а$', name):
+        name = re.sub('([егк])а$', r'\1и', name)
+    elif re.search('а$', name):
+        name = re.sub('а$', 'ы', name)
+    elif re.search('я$', name):
+        name = re.sub('я$', 'и', name)
+    elif re.search('ев$', name):
+        name = re.sub('ев$', 'ьва', name)
+    elif re.search('Павел$', name):
+        name = re.sub('Павел$', 'Павла', name)
+    else:
+        name = name + 'a'
 
     return name
 
 def ablative(name):
-    for i in range(len(name)):
-        if re.search('[йь]$', name[i]):
-            name[i] = re.sub('[йь]$', 'ем', name[i])
-        elif re.search('еа$', name[i]):
-            name[i] = re.sub('еа$', 'еей', name[i])
-        elif re.search('а$', name[i]):
-            name[i] = re.sub('а$', 'ой', name[i])
-        elif re.search('Илья$', name[i]):
-            name[i] = re.sub('Илья$', 'Ильёй', name[i])
-        elif re.search('я$', name[i]):
-            name[i] = re.sub('я$', 'ей', name[i])
-        elif re.search('ев$', name[i]):
-            name[i] = re.sub('ев$', 'ьвом', name[i])
-        elif re.search('Павел$', name[i]):
-            name[i] = re.sub('Павел$', 'Павлом', name[i])
-        else:
-            name[i] += 'ом'
+    if re.search('[йь]$', name):
+        name = re.sub('[йь]$', 'ем', name)
+    elif re.search('еа$', name):
+        name = re.sub('еа$', 'еей', name)
+    elif re.search('а$', name):
+        name = re.sub('а$', 'ой', name)
+    elif re.search('Илья$', name):
+        name = re.sub('Илья$', 'Ильёй', name)
+    elif re.search('я$', name):
+        name = re.sub('я$', 'ей', name)
+    elif re.search('ев$', name):
+        name = re.sub('ев$', 'ьвом', name)
+    elif re.search('Павел$', name):
+        name = re.sub('Павел$', 'Павлом', name)
+    else:
+        name = name + 'ом'
 
     return name
 
 def dative(name):
-    for i in range(len(name)):
-        if re.search('[йь]$', name[i]):
-            name[i] = re.sub('[йь]$', 'ю', name[i])
-        elif re.search('а$', name[i]):
-            name[i] = re.sub('а$', 'е', name[i])
-        elif re.search('ия$', name[i]):
-            name[i] = re.sub('ия$', 'ии', name[i])
-        elif re.search('я$', name[i]):
-            name[i] = re.sub('я$', 'е', name[i])
-        elif re.search('ев$', name[i]):
-            name[i] = re.sub('ев$', 'ьву', name[i])
-        elif re.search('Павел$', name[i]):
-            name[i] = re.sub('Павел$', 'Павлу', name[i])
-        else:
-            name[i] += 'у'
+    if re.search('[йь]$', name):
+        name = re.sub('[йь]$', 'ю', name)
+    elif re.search('а$', name):
+        name = re.sub('а$', 'е', name)
+    elif re.search('ия$', name):
+        name = re.sub('ия$', 'ии', name)
+    elif re.search('я$', name):
+        name = re.sub('я$', 'е', name)
+    elif re.search('ев$', name):
+        name = re.sub('ев$', 'ьву', name)
+    elif re.search('Павел$', name):
+        name = re.sub('Павел$', 'Павлу', name)
+    else:
+        name = name + 'у'
 
     return name
