@@ -12,7 +12,7 @@ def open_tag(tag: str, attrs: dict = {}, rest: str = '>'):
 
 def tag(tag: str, body=None, **attrs):
     if hasattr(body, '__iter__'):
-        body = ''.join(body)
+        body = ''.join(list(map(str, body)))
     return open_tag(tag, attrs, f">{body}</{tag}>" if body is not None else '/>')
 
 def close_tag(tag: str):
