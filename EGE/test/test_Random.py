@@ -13,6 +13,7 @@ class Test_Random(unittest.TestCase):
     def setUp(self):
         self.rnd = Random(123)
 
+    @staticmethod
     def char_range(a, b):
         for c in range(ord(a), ord(b) + 1):
             yield c
