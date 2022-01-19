@@ -142,4 +142,4 @@ animals = ['Акула',
            'Ящерица',
            ]
 
-distinct_letters = [i for i in animals if len(set(list(i.upper()))) == len(i)]
+distinct_letters = [ i for i in animals if len(set(list(i.upper()))) == len(i) ]
