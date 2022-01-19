@@ -217,8 +217,6 @@ class SignalRockets(DirectInput):
 {num_by_words(sequence_length, 1, 'genitive')} таких сигнальных ракет, если в 
 запасе имеются ракеты {num_by_words(colors_count, 1, 'genitive')} различных цветов 
 (ракет каждого вида неограниченное количество, цвет ракет в последовательности {repeats_condition_text})?"""
-        if isinstance(answer, list):
-            answer = list(map(str, answer))
         self.correct = answer
         self.accept_number()
         return self
