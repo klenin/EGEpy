@@ -158,11 +158,45 @@ class Test_Prog(unittest.TestCase):
     def test_loops(self):
         eq = self.assertEqual
         b = make_block([
-                'for', 'i', 0, 4, [ '=', [ '[]', 'M', 'i' ], 'i' ]
+            'for', 'i', 0, 4, [ '=', [ '[]', 'M', 'i' ], 'i' ]
         ])
         p = "for i := 0 to 4 do\n  M[i] := i;"
         eq(b.to_lang_named('Pascal'), p, 'loop in Pascal')
         eq(b.run_val('M'), {0: 0, 1: 1, 2: 2, 3: 3, 4: 4}, 'loop run')
+
+    def test_double_array(self):
+        eq = self.assertEqual
+        b = make_block([
+            'for', 'i', 0, 4, [
+                'for', 'j', 0, 4, [
+                    '=',
+                    [ '[]', 'A', 'i', 'j' ],
+                    [ '*', 'i', 'j' ]
+                ]
+            ]
+        ])
+        p = "for i := 0 to 4 do\n  for j := 0 to 4 do\n    A[i, j] := i * j;"
+        eq(b.to_lang_named('Pascal'), p, 'double array in Pascal')
+        w = { i: { j: i * j for j in range(5) } for i in range(5) }
+        eq(b.run_val('A'), w, 'double array run')
+
+    def test_triple_array(self):
+        eq = self.assertEqual
+        b = make_block([
+            'for', 'i', 0, 2, [
+                'for', 'j', 0, 2, [
+                    'for', 'k', 0, 2, [
+                        '=',
+                        [ '[]', 'A', 'i', 'j', 'k' ],
+                        [ '*', 'i', ['*', 'j', 'k' ]]
+                    ]
+                ]
+            ]
+        ])
+        p = "for i := 0 to 2 do\n  for j := 0 to 2 do\n    for k := 0 to 2 do\n      A[i, j, k] := i * j * k;"
+        eq(b.to_lang_named('Pascal'), p, 'triple array in Pascal')
+        w = { i: { j: { k : i * j * k for k in range(3) } for j in range(3) } for i in range(3) }
+        eq(b.run_val('A'), w, 'triple array run')
 
     def test_Pascal_loop(self):
         eq = self.assertEqual
