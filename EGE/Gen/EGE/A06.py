@@ -1,3 +1,4 @@
+from statistics import variance
 from EGE.Bits import Bits
 from ...GenBase import SingleChoice
 from ...LangTable import unpre, table
@@ -361,7 +362,8 @@ class CrcMessage(SingleChoice):
         words = 3
         
         def create_bits():
-            new_bin = [ self.rnd.coin() for x in range(1, lenght + 1) ].append(0)
+            new_bin = [ self.rnd.coin() for x in range(1, lenght + 1) ]
+            new_bin.append(0)
             bits = Bits().set_bin(new_bin, True)
             bits.set_bit(0, bits.xor_bits())
             return bits
@@ -371,18 +373,19 @@ class CrcMessage(SingleChoice):
         def modificate_bit(bit):
             new_bit = bit.dup()
             flipped_bits = new_bit.flip(self.rnd.pick_n(self.rnd.in_range(1, 4), [ _ for _ in range(0, lenght + 1) ]))
-            return flipped_bits.set_bit(self.rnd.in_range(0, lenght - 1), True)
+            return flipped_bits.set_bit(self.rnd.in_range(0, lenght - 1), 1)
         
         received_msg = [ modificate_bit(bit) for bit in original_msg ]
         correct_idx = Bits().set_bin([ bit.xor_bits() for bit in received_msg ], True).get_dec()
         wrong_idx = self.rnd.pick_n(3, list(filter(lambda x: x != correct_idx, [ x for x in range(2 ** (words - 1) + 1) ])))
-
+        
         original_text = [ ' '.join([ bit.get_bin() for bit in original_msg ]) ]
         received_text = [ ' '.join([ bit.get_bin() for bit in received_msg ]) ]
 
         zeroes = '0' * (lenght + 1)
+
         def idx_to_msg(arg):
-            bits = Bits().set_size(words).set_dec(arg[0]).get_bits()
+            bits = Bits().set_size(words).set_dec(arg).get_bits()
             return ' '.join([ zeroes if bits[x] else received_msg[x].get_bin() for x in range(words) ])
 
         self.text = f'''В некоторой информационной системе информация кодируется двоичными шестиразрядными словами.
@@ -396,7 +399,9 @@ class CrcMessage(SingleChoice):
             Исходное сообщение: <b>{original_text}</b> было принято в виде: <b>{received_text}</b>.
             Как будет выглядеть принятое сообщение после обработки?'''
 
-        variants = wrong_idx.insert(0, correct_idx)
+        variants = wrong_idx
+        variants.insert(0, correct_idx)
+
         self.set_variants([ idx_to_msg(v) for v in variants ])
         return self
 
