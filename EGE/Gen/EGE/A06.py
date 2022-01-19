@@ -133,7 +133,7 @@ class CountOddEven(SingleChoice):
             { 'name': 'чётное', 'test': 0 },
             { 'name': 'нечётное', 'test': 1 },
         ])
-        self.text = f'''Значения двумерного массива A размера {array_length} × {array_length} "
+        self.text = f'''Значения двумерного массива A размера {array_length} × {array_length}
             задаются с помощью вложенного оператора цикла
             в представленном фрагменте программы: {lang_table}
             Сколько элементов массива A будут принимать {case['name']} значение?'''
