@@ -23,3 +23,7 @@ def minmax(*args):
 
 def nrange(f, t):
     return list(range(f, t + 1))
+    
+def ucfirst(s: str) -> str:
+    return s[0].upper() + s[1:]
+

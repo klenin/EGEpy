@@ -286,16 +286,15 @@ def different_females(rnd, count):
 def different_names(rnd, count):
     cache = {}
     for i in male:
-        if i in cache:
-            cache[i[0]].append({'name': i, 'gender': 0})
-        else:
-            cache[i[0]] = [{'name': i, 'gender': 0}]
+        if i not in cache:
+            cache[i[0]] = []
+        cache[i[0]].append( {'name': i, 'gender': 0} )
     for i in female:
-        if i in cache:
-            cache[i[0]].append({'name': i, 'gender': 1})
-        else:
-            cache[i[0]] = [{'name': i, 'gender': 1}]
-    return [rnd.pick(cache[i]) for i in rnd.pick_n(count, cache.keys())]
+        if i not in cache:
+            cache[i[0]] = []
+        cache[i[0]].append({ 'name': i, 'gender': 1 })
+
+    return [ rnd.pick(cache[i]) for i in rnd.pick_n(count, list(cache.keys())) ]
 
 def genitive(name):
     if re.search('[йь]$', name):
