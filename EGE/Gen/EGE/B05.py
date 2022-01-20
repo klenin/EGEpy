@@ -76,7 +76,7 @@ class Calculator(DirectInput):
             for key in results.keys():
                 if 50 < key and key < 1000 and results[key] == 1:
                     r.append(key)
-            result = self.rnd.pick(r) or 0
+            result = r and self.rnd.pick(r)
             if result:
                 break
         prg = [ 0 for i in range(num) ]
