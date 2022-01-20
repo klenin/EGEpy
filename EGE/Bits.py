@@ -96,9 +96,7 @@ class Bits:
         self.b.reverse()
         return self
 
-    def shift_(self, d: int, idx_from, idx_to, fill_value: int = 0):
-        if idx_from is None:
-            idx_from = 0
+    def shift_(self, d: int, idx_from: int = 0, idx_to = None, fill_value: int = 0):
         if idx_to is None:
             idx_to = len(self.b)
         if d > 0:  # вправо
