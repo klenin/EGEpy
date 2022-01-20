@@ -3,7 +3,7 @@ import sys
 import EGE.GenBase
 import EGE.Html
 import EGE.Random
-from EGE.Gen.EGE import A01, A02, A03, A04, A05, A07, A08, A09, A10, A11, A12, A13, A15, A16, A17, A18, B01, B02, B03, B04, B05, B06, B07, B10, B13
+from EGE.Gen.EGE import A01, A02, A03, A04, A05, A07, A08, A09, A10, A11, A12, A13, A15, A16, A17, A18, B01, B02, B03, B04, B05, B06, B07, B08, B10, B13
 
 rnd = EGE.Random.Random(2342134)
 
@@ -84,6 +84,9 @@ questions = [q.generate() for q in [
     B06.RecursiveFunction(rnd),
     B06.PasswordMeta(rnd),
     B07.WhoIsRight(rnd),
+    B08.IdentifyLetter(rnd),
+    B08.FindCalcSystem(rnd),
+    B08.FirstSumDigits(rnd),
     B10.TransRate(rnd),
     B10.TransTime(rnd),
     B10.TransLatency(rnd),
