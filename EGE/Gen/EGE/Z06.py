@@ -2,7 +2,7 @@ from math import log
 
 from ...Bits import Bits
 from ...GenBase import DirectInput
-
+from ...RussianModules.NumText import num_text
 
 class FindNumber(DirectInput):
     def generate(self):
@@ -51,4 +51,29 @@ class MinAddDigits(DirectInput):
 
 class Grasshopper(DirectInput):
     def generate(self):
+        gcd = self.rnd.in_range(2, 5)
+        forward = self.rnd.pick([ 3, 5, 7, 11, 13, 17, 19, ])
+        backward = self.rnd.in_range(2, 20, forward)
+        back_cnt = self.rnd.in_range(2, forward - 1)
+
+        offset = ((forward - backward) * back_cnt) % forward
+
+        start_pnt = self.rnd.in_range(0, 20)
+        end_pnt = start_pnt + offset * gcd
+        fg = forward * gcd
+        bg = backward * gcd
+
+        text_forms = [ 'единицу', 'единицы', 'единиц', ]
+        fg_text = num_text(fg, text_forms)
+        bg_text = num_text(bg, text_forms)
+
+        self.text = f''' 
+Исполнитель КУЗНЕЧИК живёт на числовой оси.
+Начальное положение КУЗНЕЧИКА – точка {start_pnt}. Система команд Кузнечика:<br />
+Вперед {fg} – Кузнечик прыгает вперёд на {fg_text},<br />
+Назад {bg} – Кузнечик прыгает назад на {bg_text}.<br />
+Какое наименьшее количество раз должна встретиться в программе команда «Назад {bg}»,
+чтобы Кузнечик оказался в точке {end_pnt}?'''
+        self.correct = back_cnt
+        self.accept_number()
         return self

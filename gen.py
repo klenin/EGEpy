@@ -96,6 +96,7 @@ questions = [q.generate() for q in [
     B13.PlusMinus(rnd),
     B15.LogicVarSet(rnd),
     Z06.FindNumber(rnd),
+    Z06.Grasshopper(rnd),
     Z09.GetMemorySize(rnd),
     Z10.WordsCount(rnd),
     Z13.Tumblers(rnd),
