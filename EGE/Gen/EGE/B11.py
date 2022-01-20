@@ -7,6 +7,7 @@ import itertools
 
 import EGE.Html as html
 
+from EGE.Bits import Bits
 from EGE.GenBase import DirectInput
 from EGE.Utils import char_range, nrange, unique
 
@@ -70,3 +71,69 @@ IP-адресу узла и маске. <br/>
 {example_table_text}
 <i>В этом случае правильный ответ будет записан в виде: {example_answer}</i>"""
         return self
+
+class SubnetMask(DirectInput):
+    """
+    Генератор B11 subnet_mask - найти наибольший (или наименьший) возможный
+        или конкретный третий байт маски по заданным адресам ip и сети
+    """
+    def generate(self):
+        question, question_type = self.rnd.pick([
+            ('Чему равно наибольшее возможное значение третьего слева байта маски?', 0),
+            ('Чему равно наименьшее возможное значение третьего слева байта маски?', 1),
+            ('Чему равен третий слева байт маски?', 2),
+        ])
+        subnet_network = [
+            self.rnd.in_range(200, 255), self.rnd.in_range(30, 255), 0, 0
+        ]
+
+        ip_address = [
+            subnet_network[0],
+            subnet_network[1],
+            0,
+            self.rnd.pick([ 0, self.rnd.in_range(100, 255) ])
+        ]
+
+        ip = [ 0 ] * 8
+
+        subnet_zeros = self.rnd.in_range(5, 7)
+        ip[8 - subnet_zeros - 1] = 1
+        for i in range(8 - subnet_zeros, len(ip)):
+            ip[i] = int(self.rnd.coin())
+        if question_type == 2:
+            ip[8 - subnet_zeros] = 1
+
+        ip_address[2] = Bits() \
+            .set_bin(ip, True) \
+            .get_dec()
+
+        subnet = [0] * 8
+        subnet[8 - subnet_zeros - 1] = 1
+        subnet_network[2] = Bits() \
+            .set_bin(subnet, True) \
+            .get_dec()
+
+        mask = [0] * 8
+        for i in range(8):
+            if question_type == 1:
+                mask[i] = 1 if ip[i] == subnet[i] and i < 8 - subnet_zeros else 0
+            else:
+                mask[i] = 1 if ip[i] == subnet[i] else 0
+            if mask[i] == 0:
+                break
+
+        answer = Bits() \
+            .set_bin(mask, True) \
+            .get_dec()
+
+        self.text = f"""
+В терминологии сетей TCP/IP маской сети называется 32-разрядная двоичная последовательность, определяющая, какая часть IP-адреса узла сети относится
+к адресу сети, а какая – к адресу самого узла в этой сети. При этом в маске сначала (в старших разрядах) стоят единицы, а затем с некоторого места нули.
+Адрес сети получается в результате применения поразрядной конъюнкции к заданному IP-адресу узла и маске. Обычно маска записывается по тем же правилам,
+что и IP-адрес – в виде четырёх байтов, причём каждый байт записывается в виде десятичного числа.<br/>
+Пример. Пусть IP-адрес узла равен 231.32.255.131, а маска равна 255.255.240.0. Тогда адрес сети равен 231.32.240.0.<br/>
+Для узла с IP-адресом {ip_address} адрес сети равен {subnet_network} . {question} Ответ запишите в виде десятичного числа."""
+        self.correct = answer
+        return self
+
+

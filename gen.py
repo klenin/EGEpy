@@ -94,6 +94,7 @@ questions = [q.generate() for q in [
     B10.TransText(rnd),
     B10.TransTimeSize(rnd),
     B11.IpMask(rnd),
+    B11.SubnetMask(rnd),
     B13.PlusMinus(rnd),
     B15.LogicVarSet(rnd),
     Z06.FindNumber(rnd),
