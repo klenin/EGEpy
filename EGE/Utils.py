@@ -23,7 +23,12 @@ def minmax(*args):
 
 def nrange(f, t):
     return list(range(f, t + 1))
-    
+
 def ucfirst(s: str) -> str:
     return s[0].upper() + s[1:]
 
+
+def unique(l: list) -> list:
+    # From python 3.7 plain dict is insertion-ordered
+    # So dict.fromkeys does not lose ordering
+    return list(dict.fromkeys(l))
