@@ -41,13 +41,50 @@ class FindNumber(DirectInput):
 
 class MinAddDigits(DirectInput):
     def generate(self):
+        while True:
+            # Не генерируем числа кратные 100.
+            original = self.rnd.in_range(1, 9) * 100 + self.rnd.in_range(1, 99)
+            result = self._convert(original)
+            # Не генерируем число из примера.
+            if (result != 712):
+                break
+
+        self.text = f'''
+Автомат получает на вход трёхзначное число. По этому числу строится новое число по следующим правилам.
+<ol>
+<li>Складываются первая и вторая, а также вторая и третья цифры исходного числа.</li>
+<li>Полученные два числа записываются друг за другом в порядке возрастания (без разделителей).</li>
+</ol>
+Пример. Исходное число: 348. Суммы: 3+4 = 7; 4+8 = 12. Результат: 712.<br />
+Укажите наименьшее число, в результате обработки которого автомат выдаст число {result}.'''
+
+        self.correct = self._get_min_origin(result)
+        if result != self._convert(self.correct) or self.correct > original:
+            raise ValueError(f"{original} => {result}, min = {self.correct}")
         return self
 
-    def _convert(self):
-        pass
+    def _convert(self, original: int) -> int:
+        x, y, z = original // 100, (original // 10) % 10, original % 10
+        a, b = sorted([ x + y, y + z ])
+        return int(str(a) + str(b))
 
-    def _get_min_origin(self):
-        pass
+    def _get_min_origin(self, result: int) -> int:
+        if result < 100:
+            y, z = (result // 10) % 10, result % 10
+            parts = [ 1, y - 1, z - y + 1 ]
+        elif result < 1000:
+            x, y, z = result // 100, (result // 10) % 10, result % 10
+            part = y * 10 + z
+            if part - x == 9:
+                parts = [ 1, y - 1, z - y + 1 ]
+            else:
+                parts = [ 1, x - 1, part - x + 1 ]
+        elif result < 10000:
+            w, x, y, z = result // 1000, (result // 100) % 10, (result // 10) % 10, result % 10
+            parts = [ w * 10 + x - 9, 9, y * 10 + z - 9 ]
+        else:
+            raise ValueError("result more or equal then 10000")
+        return int(''.join([ str(part) for part in parts ]))
 
 class Grasshopper(DirectInput):
     def generate(self):
