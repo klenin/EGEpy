@@ -34,3 +34,6 @@ def unique(l: list) -> list:
 
 def sign(a, b) -> int:
     return bool(a > b) - bool(a < b)
+
+def gcd(n: int, m: int):
+    return math.gcd(n, m)
