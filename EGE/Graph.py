@@ -1,6 +1,11 @@
 from . import Html as html
 from . import Svg as svg
 from math import sqrt
+from dataclasses import dataclass
+
+@dataclass
+class GraphVertex:
+    at: list = None
 
 class Graph:
     def __init__(self, vertices: dict):
@@ -78,7 +83,7 @@ class Graph:
     def bounding_box(self):
         xmin, ymin, xmax, ymax = None, None, None, None
         for v in self.vertices.values():
-            x, y = v['at']
+            x, y = v.at
             if xmin is None or x < xmin:
                 xmin = x
             if xmax is None or x > xmax:
@@ -116,12 +121,12 @@ class Graph:
 
         texts, lines = [], []
         for src in self.vertex_names():
-            at = self.vertices[src]['at']
+            at = self.vertices[src].at
             texts.append([ src, { 'x': at[0] + radius, 'y': at[1] - 3 } ])
 
             edges = self.edges.get(src, {})
             for e in edges.keys():
-                dest_at = self.vertices[e]['at']
+                dest_at = self.vertices[e].at
                 c = [ 0.5 * (at[i] + dest_at[i]) for i in range(0, 2) ]
                 if at[1] == dest_at[1]:
                     c[1] -= font_size // 2
@@ -152,7 +157,7 @@ class Graph:
                 markerUnits='userSpaceOnUse',
                 viewBox='0 0 20 20'
             ))
-        s += svg.g([ svg.circle(cx=v['at'][0], cy=v['at'][1], r=radius) for v in self.vertices.values() ],
+        s += svg.g([ svg.circle(cx=v.at[0], cy=v.at[1], r=radius) for v in self.vertices.values() ],
                    fill='black',
                    stroke='black'
         )
