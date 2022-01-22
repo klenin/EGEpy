@@ -373,7 +373,7 @@ class CrcMessage(SingleChoice):
         def modificate_bit(bit: Bits) -> Bits:
             new_bit = bit.dup()
             flipped_bits = new_bit.flip(self.rnd.pick_n(self.rnd.in_range(1, 4), [ _ for _ in range(lenght + 1) ]))
-            return flipped_bits.set_bit(self.rnd.in_range(lenght - 1), 1)
+            return flipped_bits.set_bit(self.rnd.in_range(0, lenght - 1), 1)
         
         received_msg = [ modificate_bit(bit) for bit in original_msg ]
         correct_idx = Bits().set_bin([ bit.xor_bits() for bit in received_msg ], True).get_dec()
