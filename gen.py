@@ -3,7 +3,9 @@ import sys
 import EGE.GenBase
 import EGE.Html
 import EGE.Random
-from EGE.Gen.EGE import A01, A02, A03, A04, A05, A07, A08, A09, A10, A11, A12, A13, A15, A16, A17, A18, B01, B02, B03, B04, B05, B06, B07, B08, B10, B13, B15, Z06, Z09, Z10, Z11, Z12, Z13, Z15, Z18
+from EGE.Gen.EGE import A01, A02, A03, A04, A05, A07, A08, A09, A10, A11, A12, A13, A15, A16, A17, A18
+from EGE.Gen.EGE import B01, B02, B03, B04, B05, B06, B07, B08, B10, B11, B13, B15
+from EGE.Gen.EGE import Z06, Z09, Z10, Z11, Z12, Z13, Z15, Z18
 
 rnd = EGE.Random.Random(2342134)
 
@@ -93,6 +95,8 @@ questions = [q.generate() for q in [
     B10.MinPeriodOfTime(rnd),
     B10.TransText(rnd),
     B10.TransTimeSize(rnd),
+    B11.IpMask(rnd),
+    B11.SubnetMask(rnd),
     B13.PlusMinus(rnd),
     B15.LogicVarSet(rnd),
     Z06.FindNumber(rnd),
