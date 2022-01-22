@@ -1,5 +1,5 @@
 from ... import Html as html
-from ...Graph import Graph
+from ...Graph import Graph, GraphVertex
 from ...GenBase import SingleChoice
 from ...RussianModules.NumText import num_by_words
 from math import ceil
@@ -7,11 +7,11 @@ from math import ceil
 class GraphByMatrix(SingleChoice):
     def generate(self):
         vertices = {
-            'A': { 'at': [  50,  0 ] },
-            'B': { 'at': [  25, 50 ] },
-            'C': { 'at': [  75, 50 ] },
-            'D': { 'at': [   0,  0 ] },
-            'E': { 'at': [ 100,  0 ] },
+            'A': GraphVertex(at=[  50,  0 ]),
+            'B': GraphVertex(at=[  25, 50 ]),
+            'C': GraphVertex(at=[  75, 50 ]),
+            'D': GraphVertex(at=[   0,  0 ]),
+            'E': GraphVertex(at=[ 100,  0 ]),
         }
         edges = [
             ['A', 'B'],

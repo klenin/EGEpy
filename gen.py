@@ -3,7 +3,7 @@ import sys
 import EGE.GenBase
 import EGE.Html
 import EGE.Random
-from EGE.Gen.EGE import A01, A02, A03, A04, A05, A07, A08, A09, A10, A11, A12, A13, A15, A16, A17, A18, B01, B02, B03, B04, B05, B06, B07, B08, B10, B13, B15, Z09, Z10, Z18
+from EGE.Gen.EGE import A01, A02, A03, A04, A05, A07, A08, A09, A10, A11, A12, A13, A15, A16, A17, A18, B01, B02, B03, B04, B05, B06, B07, B08, B10, B13, B15, Z09, Z10, Z15, Z18
 
 rnd = EGE.Random.Random(2342134)
 
@@ -97,6 +97,7 @@ questions = [q.generate() for q in [
     B15.LogicVarSet(rnd),
     Z09.GetMemorySize(rnd),
     Z10.WordsCount(rnd),
+    Z15.CityRoads(rnd),
     Z18.BitwiseConjunction(rnd),
 ]]
 
