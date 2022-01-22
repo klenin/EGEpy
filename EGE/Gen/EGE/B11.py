@@ -29,6 +29,7 @@ class IpMask(DirectInput):
             ''.join([ header[i] for i in map(find_part, ip) ]),
             html.table(html.row('th', header) + html.row('td', parts), border=1)
         )
+
     @staticmethod
     def sign(a, b):
         return bool(a > b) - bool(a < b)
@@ -103,15 +104,11 @@ class SubnetMask(DirectInput):
         if question_type == 2:
             ip[8 - subnet_zeros] = 1
 
-        ip_address[2] = Bits() \
-            .set_bin(ip, True) \
-            .get_dec()
+        ip_address[2] = Bits().set_bin(ip, True).get_dec()
 
         subnet = [0] * 8
         subnet[8 - subnet_zeros - 1] = 1
-        subnet_network[2] = Bits() \
-            .set_bin(subnet, True) \
-            .get_dec()
+        subnet_network[2] = Bits().set_bin(subnet, True).get_dec()
 
         mask = [0] * 8
         for i in range(8):
@@ -122,9 +119,7 @@ class SubnetMask(DirectInput):
             if mask[i] == 0:
                 break
 
-        answer = Bits() \
-            .set_bin(mask, True) \
-            .get_dec()
+        answer = Bits().set_bin(mask, True).get_dec()
 
         self.text = f"""
 В терминологии сетей TCP/IP маской сети называется 32-разрядная двоичная последовательность, определяющая, какая часть IP-адреса узла сети относится
@@ -135,5 +130,3 @@ class SubnetMask(DirectInput):
 Для узла с IP-адресом {ip_address} адрес сети равен {subnet_network} . {question} Ответ запишите в виде десятичного числа."""
         self.correct = answer
         return self
-
-
