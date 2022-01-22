@@ -1,8 +1,10 @@
+import imp
 from statistics import variance
 from EGE.Bits import Bits
 from ...GenBase import SingleChoice
 from ...LangTable import unpre, table
 from ...Prog import make_block
+from ...Utils import sign
 
 class CountBySign(SingleChoice):
     def generate(self):
@@ -75,16 +77,6 @@ class FindMinMax(SingleChoice):
 Значения двух массивов A[1..{array_length}] и B[1..{array_length}]
 задаются с помощью следующего фрагмента программы: {lang_table}
 Какой элемент массива B будет {case['name']}?'''
-
-        # Analoge of '<=>' operator in Perl.
-        # ToDo: write better implementation.
-        def sign(x: int, y: int) -> int:
-            if x < y:
-                return -1
-            elif x == y:
-                return 0
-            else:
-                return 1
 
         array_B = code_block.run_val('B')
         correct = 1
@@ -380,8 +372,8 @@ class CrcMessage(SingleChoice):
         
         def modificate_bit(bit: Bits) -> Bits:
             new_bit = bit.dup()
-            flipped_bits = new_bit.flip(self.rnd.pick_n(self.rnd.in_range(1, 4), [ _ for _ in range(0, lenght + 1) ]))
-            return flipped_bits.set_bit(self.rnd.in_range(0, lenght - 1), 1)
+            flipped_bits = new_bit.flip(self.rnd.pick_n(self.rnd.in_range(1, 4), [ _ for _ in range(lenght + 1) ]))
+            return flipped_bits.set_bit(self.rnd.in_range(lenght - 1), 1)
         
         received_msg = [ modificate_bit(bit) for bit in original_msg ]
         correct_idx = Bits().set_bin([ bit.xor_bits() for bit in received_msg ], True).get_dec()

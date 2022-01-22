@@ -27,8 +27,10 @@ def nrange(f, t):
 def ucfirst(s: str) -> str:
     return s[0].upper() + s[1:]
 
-
 def unique(l: list) -> list:
     # From python 3.7 plain dict is insertion-ordered
     # So dict.fromkeys does not lose ordering
     return list(dict.fromkeys(l))
+
+def sign(a, b) -> int:
+    return bool(a > b) - bool(a < b)
