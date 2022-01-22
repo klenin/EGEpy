@@ -34,3 +34,8 @@ def unique(l: list) -> list:
 
 def sign(a, b) -> int:
     return bool(a > b) - bool(a < b)
+
+def transpose(array: list, *other_arrays) -> list:
+    arrays = [ a for a in other_arrays ]
+    arrays.insert(0, array)
+    return [ [ a[i] for a in arrays ] for i in range(len(array)) ]
