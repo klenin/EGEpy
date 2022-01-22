@@ -1,6 +1,6 @@
 from functools import reduce
 
-from EGE.ProgModules.RandomAlg import big_o, monomial, to_logic
+from EGE.ProgModules.RandomAlg import big_o, monomial, to_logic, _log
 from ...GenBase import SingleChoice
 from ...Utils  import transpose
 
@@ -21,3 +21,34 @@ class OPoly(SingleChoice):
 
         return self
 
+class OPolyCmp(SingleChoice):
+    def generate(self):
+        power = self.rnd.in_range(3, 6)
+        func = big_o(monomial('n', 1, power))
+        blocks = [
+            power - self.rnd.in_range(1, 3),
+            [ '/', 1, power],
+            -power,
+        ]
+        variants = [ big_o(monomial('n', 1, block)) for block in blocks ]
+        additional_variants = [
+            monomial('n', _log('n'), power - self.rnd.in_range(1, 2)),
+            _log(monomial('n', 1, power)),
+            [ '+', _log('n'), monomial('n', 1, power - self.rnd.in_range(1,3)) ],
+        ] 
+        for v in additional_variants:
+            variants.append(big_o(v))
+
+        correct_variants = [
+            monomial('n', 1, power + self.rnd.in_range(1, 3)),
+            monomial(power, 1, 'n'),
+            monomial(power - 1, 1, 'n'),
+            monomial('n', _log('n'), power + self.rnd.in_range(0, 2)),
+        ]
+
+        correct = self.rnd.pick([ big_o(v) for v in correct_variants ])
+
+        self.text = f"Всякая функция, являющаяся {func}, является также и"
+        self.set_variants([ correct ] + self.rnd.pick_n(3, variants))
+
+        return self

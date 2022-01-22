@@ -124,6 +124,7 @@ questions = [q.generate() for q in [
     Z15.CityRoads(rnd),
     Z18.BitwiseConjunction(rnd),
     #Complexity.OPoly(rnd),
+    #Complexity.OPolyCmp(rnd),
 ]]
 
 if not sys.stdout.isatty():

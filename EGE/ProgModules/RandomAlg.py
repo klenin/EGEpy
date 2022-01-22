@@ -3,6 +3,9 @@ from ..Prog import make_expr
 def big_o(arg_code_block):
     return '<i>O</i>(' + to_logic(arg_code_block) + ')'
 
+def _log(arg) -> list:
+    return [ '()', 'log', arg, ]
+
 def pow(number, power):
     return number if str(power) == '1' else [ '**', number, power, ] 
 
