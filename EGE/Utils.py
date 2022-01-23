@@ -1,8 +1,14 @@
 import math
+from EGE.SQL.Aggregate import Aggregate
 
-def aggregate_function(name):
-    # TODO
-    return None
+def aggregate_function(name:str = None):
+    '''name: Union[str, None]'''
+    aggr = Aggregate.__subclasses__()
+    if name is not None:
+        for sub in aggr:
+            if name == sub.__name__:
+                return sub
+    return [ sub for sub in aggr ]
 
 def last_key(d, key):
     while key in d[key]:
