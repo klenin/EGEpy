@@ -2,6 +2,7 @@ import unittest
 
 from EGE.GenBase import EGEError
 from EGE.Random import Random
+from EGE.Prog import make_expr
 
 if __name__ == '__main__':
     import sys
@@ -84,6 +85,20 @@ class test_SQL(unittest.TestCase):
 
         r = tab.random_row(rnd)[0]
         self.assertTrue(r == 1 or r == 2 or r == 3, 'random_row')
+
+    def test_select_where(self):
+        eq = self.assertEqual
+
+        tab = Table('id name city'.split())
+        tab.insert_rows([ 1, 'aaa', 3 ], [ 2, 'bbb', 2 ], [ 3, 'ccc', 1 ], [ 4, 'bbn', 2 ])
+        e = make_expr([ '==', 'city', 2 ])
+        eq('id name city|2 bbb 2|4 bbn 2', pack_table(tab.where(e)), 'where city == 2')
+        eq(2, tab.count_where(e), 'count_where city == 2')
+        eq('id name|2 bbb|4 bbn', pack_table(tab.select(['id', 'name'], e)), 'select id, name where city == 2')
+        eq('||', pack_table(tab.select([], e)), 'select where city == 2')
+        eq(4, tab.count(), 'count')
+        eq(0, tab.where(make_expr(0)).count(), 'where false')
+        eq(0, tab.count_where(make_expr(0)), 'count_where false')
 
 
 if __name__ == '__main__':

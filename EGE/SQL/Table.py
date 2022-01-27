@@ -35,7 +35,7 @@ class Field:
 
 class Table:
     def __init__(self, fields: list, **kwargs):
-        if not fields or fields is None:
+        if fields is None:
             raise EGEError('No fields')
 
         self.fields: list[Field] = [ self._make_field(i) for i in fields ]
@@ -138,16 +138,19 @@ class Table:
     def group_by(self):
         raise NotImplemented()
 
-    def where(self, where=None, ref=None):
+    def where(self, where:Op=None, ref=None):
         """where: Union[callable, None], ref: Union[bool, None]"""
         if where is None:
             return self
         table = Table(self.fields)
-        table.data = [ data if ref else data[:] for data in self.data if where(self._row_hash(data)) ]
+        table.data = [ data if ref else data[:] for data in self.data if where.run(self._row_hash(data)) ]
         return table
 
-    def count_where(self):
-        raise NotImplemented()
+    def count_where(self, where: Op = None):
+        if where is None:
+            return self.count()
+        res = list(filter(lambda x: where.run(self._row_hash(x)), self.data))
+        return len(res)
 
     def update(self):
         raise NotImplemented()
