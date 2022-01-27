@@ -3,6 +3,7 @@ import unittest
 from EGE.GenBase import EGEError
 from EGE.Random import Random
 from EGE.Prog import make_expr
+from EGE.Utils import nrange
 
 if __name__ == '__main__':
     import sys
@@ -100,6 +101,18 @@ class test_SQL(unittest.TestCase):
         eq(0, tab.where(make_expr(0)).count(), 'where false')
         eq(0, tab.count_where(make_expr(0)), 'count_where false')
 
+    def test_where_copy_ref(self):
+        eq = self.assertEqual
+
+        tab = Table([ 'id' ])
+        tab.insert_rows(*[ [i] for i in range(1, 6) ])
+        e = make_expr([ '==', 'id', '3' ])
+        w2 = tab.where(e)
+        w2.data[0][0] = 9
+        eq('id|1|2|3|4|5', pack_table(tab), 'where copy')
+        w1 = tab.where(e, True)
+        w1.data[0][0] = 9
+        eq('id|1|2|9|4|5', pack_table(tab), 'where ref')
 
 if __name__ == '__main__':
     unittest.main(verbosity=1)

@@ -138,7 +138,7 @@ class Table:
     def group_by(self):
         raise NotImplemented()
 
-    def where(self, where:Op=None, ref=None):
+    def where(self, where: Op = None, ref: bool = None):
         """where: Union[callable, None], ref: Union[bool, None]"""
         if where is None:
             return self
