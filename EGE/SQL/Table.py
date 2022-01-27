@@ -1,5 +1,5 @@
 from EGE.GenBase import EGEError
-from EGE.Prog import CallFuncAggregate, make_expr
+from EGE.Prog import CallFuncAggregate, make_expr, Op
 from EGE.Random import Random
 from EGE.Utils import aggregate_function
 
@@ -23,6 +23,14 @@ class Field:
         if self.name_alias:
             return f"Field({{'name': '{self.name}', 'name_alias': '{self.name_alias}'}})"
         return f"Field('{self.name}')"
+
+    def __eq__(self, other):
+        if isinstance(other, str):
+            return other == self.name or other == self.name_alias
+        elif isinstance(other, Field):
+            return other.name == self.name and other.name_alias == self.name_alias
+        raise EGEError("Imvalid type to compare with Field!")
+
 
 
 class Table:
@@ -49,16 +57,13 @@ class Table:
         self.name = name
         return name
 
-    def fields(self):
-        return self.fields
-
     def assign_field_alias(self, alias: str):
        raise NotImplemented()
 
     def insert_row(self, *fields):
         if len(fields) != len(self.fields):
             EGEError(f'Wrong column count {len(fields)} != {len(self.fields)}')
-        self.data.append(fields)
+        self.data.append(list(fields))
         return self
 
     def insert_rows(self, *rows):
@@ -93,7 +98,10 @@ class Table:
 
     def select(self, fields, where=None, p=None):
         if not isinstance(fields, list):
-            fields = [fields]
+            fields = [ fields ]
+        for f in fields:
+            if not isinstance(f, CallFuncAggregate) and f not in self.fields:
+                raise EGEError(f"Table '{self.name}' does not contain field '{f}'!")
         ref, aggr, group, having = 0, 0, 0, 0
         if isinstance(ref, dict):
             ref = p[ref]
@@ -182,7 +190,7 @@ class Table:
         column_idx = self._field_index(field)
         return [ data[column_idx] for data in self.data ]
 
-    def column_hash(self, field: int | str):
+    def column_hash(self, field):
         """field: Union[int, str]"""
         column_idx = self._field_index(field)
         r = {}

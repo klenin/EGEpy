@@ -28,7 +28,7 @@ def pack_table_sorted(table: Table):
     return '|'.join([ join_sp(table.fields) ] + [ join_sp(d) for d in sorted(table.data) ])
 
 class test_SQL(unittest.TestCase):
-    def test_CreateTable(self):
+    def test_create_table(self):
         eq = self.assertEqual
 
         with self.assertRaisesRegex(EGEError, 'fields', msg='no fields'):
@@ -36,33 +36,51 @@ class test_SQL(unittest.TestCase):
         t = Table(['a', 'b', 'c'], name='table')
         eq(t.name, 'table', 'table name')
 
-    def test_SelectInsertHash(self):
+    def test_insert_row_copies(self):
+        eq = self.assertEqual
+
+        tab = Table(['f'], name='table')
+        r = 1
+        tab.insert_row(r)
+        r = 2
+        eq('f|1', pack_table(tab), 'insert_row copies')
+
+    def test_insert_rows_copies(self):
+        eq = self.assertEqual
+
+        tab = Table(['f'], name='table')
+        r = [ 1 ]
+        tab.insert_rows(r, r)
+        r[0] = 2
+        eq('f|1|1', pack_table(tab), 'insert_row copies')
+
+    def test_select_insert_hash(self):
         eq = self.assertEqual
         tab = Table('id name'.split())
 
         self.assertDictEqual(tab._row_hash([ 2, 3 ]), { 'id': 2, 'name': 3 }, 'row hash')
         tab.insert_rows([ 1, 'aaa' ], [ 2, 'bbb' ])
-        eq(pack_table(tab.select([ 'id', 'name' ])), 'id name|1 aaa|2 bbb', 'all fields')
+        eq('id name|1 aaa|2 bbb', pack_table(tab.select([ 'id', 'name' ])), 'all fields')
         tab.insert_row(3, 'ccc')
-        eq(pack_table(tab.select('id')), 'id|1|2|3', 'field 1')
+        eq('id|1|2|3', pack_table(tab.select('id')), 'field 1')
 
-        self.assertListEqual(tab.column_array('id'), [ 1, 2, 3 ], 'column_array')
-        self.assertListEqual(tab.column_array(1), [ 1, 2, 3 ], 'column_array by number')
+        self.assertListEqual([ 1, 2, 3 ], tab.column_array('id'), 'column_array')
+        self.assertListEqual([ 1, 2, 3 ], tab.column_array(1), 'column_array by number')
         with self.assertRaisesRegex(EGEError, 'zzz', msg='column_array none'):
             tab.column_array('zzz')
         with self.assertRaisesRegex(EGEError, '77', msg='column_array by number none'):
             tab.column_array(77)
 
-        self.assertDictEqual(tab.column_hash('name'), { 'aaa': 1, 'bbb': 1, 'ccc': 1 }, 'column_hash')
-        self.assertDictEqual(tab.column_hash(2), { 'aaa': 1, 'bbb': 1, 'ccc': 1 }, 'column_hash by number')
+        self.assertDictEqual({ 'aaa': 1, 'bbb': 1, 'ccc': 1 }, tab.column_hash('name'), 'column_hash')
+        self.assertDictEqual({ 'aaa': 1, 'bbb': 1, 'ccc': 1 }, tab.column_hash(2), 'column_hash by number')
         with self.assertRaisesRegex(EGEError, 'xxx', msg='column_hash none'):
             tab.column_hash('xxx')
 
-        eq(pack_table(tab.select('name')), 'name|aaa|bbb|ccc', 'field 2')
-        eq(pack_table(tab.select([ 'id', 'id' ])), 'id id|1 1|2 2|3 3', 'duplicate field')
-        #TODO exception used to be raised from Prog::Var::run, but it removed from there. Need to restore it or choose new place to raise
-        # with self.assertRaisesRegex(EGEError, 'zzz', msg='bad field'):
-        #     tab.select('zzz')
+        eq('name|aaa|bbb|ccc', pack_table(tab.select('name')), 'field 2')
+        eq('id id|1 1|2 2|3 3', pack_table(tab.select([ 'id', 'id' ])), 'duplicate field')
+        # TODO exception used to be raised from Prog::Var::run, but it removed from there. Need to restore it or choose new place to raise
+        with self.assertRaisesRegex(EGEError, 'zzz', msg='bad field'):
+            tab.select('zzz')
 
         r = tab.random_row(rnd)[0]
         self.assertTrue(r == 1 or r == 2 or r == 3, 'random_row')
