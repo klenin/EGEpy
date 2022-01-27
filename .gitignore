@@ -1,3 +1,5 @@
 *.pyc
 t.xhtml
 t.py
+.idea
+.venv
