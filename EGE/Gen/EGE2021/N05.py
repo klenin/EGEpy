@@ -106,3 +106,35 @@ class EightBitNumber(DirectInput):
         self.accept_number()
 
         return self
+
+class FourDigitNumber(DirectInput):
+    def generate(self):
+        initial = self.rnd.in_range(1000, 9999, 1982)
+        sums = self._get_digits_sums(initial)
+        sums.remove(min(sums))
+        sums.sort()
+        result = int("".join(map(str, sums)))
+
+        self.text = f"""
+            Автомат получает на вход четырёхзначное число (число не может начинаться с нуля). По этому числу строится
+            новое число по следующим правилам.<ol><li>Складываются отдельно первая и вторая, вторая и третья,
+            третья и четвёртая цифры заданного числа.</li><li>Наименьшая из полученных трёх сумм удаляется.</li>
+            <li>Оставшиеся две суммы записываются друг за другом в порядке неубывания без разделителей.</li></ol>
+            <i>Пример.</i> Исходное число: 1982. Суммы: 1 + 9 = 10, 9 + 8 = 17, 8 + 2 = 10. Удаляется 10.
+            Результат: 1017.<br/>Укажите наименьшее число, при обработке которого автомат выдаёт результат {result}.
+            <br/><b>Примечание.</b> Если меньшие из сумм равны, то отбрасывают одну из них."""
+        self.correct = initial
+        self.accept_number()
+
+        return self
+
+    def _get_digits_sums(self, number: int) -> list:
+        if not (1000 <= number <= 9999):
+            raise ValueError(f"{number} is not 4-digit number")
+
+        sums = []
+        for _ in range(3):
+            sums.append(number % 10 + number // 10 % 10)
+            number //= 10
+
+        return sums
