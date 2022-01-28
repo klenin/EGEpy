@@ -32,3 +32,32 @@ class Robot(DirectInput):
         self.accept_number()
 
         return self
+
+class Calculator(DirectInput):
+    def generate(self):
+        initial = self.rnd.in_range(10, 50)
+        add = self.rnd.in_range(1, 3)
+        multiply = self.rnd.in_range(2, 3)
+        result, amount = self._generate_number(initial, add, multiply)
+
+        self.text = f"""
+            Исполнитель КАЛЬКУЛЯТОР имеет только две команды, которым присвоены номера:<br/>
+            <ol><b><li>прибавь {add}</li><li>умножь на {multiply}</li></b></ol> Выполняя команду номер 1, КАЛЬКУЛЯТОР 
+            прибавляет к числу на экране {add}, а выполняя команду номер 2, умножает число на экране на {multiply}. 
+            Укажите минимальное число команд, которое должен выполнить исполнитель, чтобы получить из числа {initial} 
+            число {result}."""
+        self.correct = amount
+        self.accept_number()
+
+        return self
+
+    def _generate_number(self, initial: int, add: int, multiply: int) -> (int, int):
+        result = initial
+        amount = self.rnd.in_range(5, 15)
+        for _ in range(amount):
+            if self.rnd.coin() == 0:
+                result += add
+            else:
+                result *= multiply
+
+        return result, amount
