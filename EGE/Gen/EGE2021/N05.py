@@ -1,4 +1,7 @@
+from math import log
+
 from ..EGE.Z06 import FindNumber, MinAddDigits
+from ...Bits import Bits
 from ...GenBase import DirectInput
 
 class FindBinaryNumber(FindNumber):
@@ -60,3 +63,24 @@ class Calculator(DirectInput):
                 result *= multiply
 
         return result, amount
+
+class BinaryNumberMachine(DirectInput):
+    def generate(self):
+        result = self.rnd.in_range(2, 3000, 13)
+        number = Bits().set_dec(result)
+        last_bits = number.get_bits()[-2:]
+        initial = Bits().set_bin_array(number.get_bits()[:-2] + ([1 if last_bits == [1, 0] else 0])).get_dec()
+
+        self.text = f"""
+            Автомат обрабатывает натуральное число N > 1 по следующему алгоритму.<br/><ol><li>Строится
+            двоичная запись числа N.</li><li>Последняя цифра двоичной записи удаляется.</li><li>Если исходное число N
+            было нечётным, в конец записи (справа) дописываются цифры 10, если чётным - 01.</li><li>Результат
+            переводится в десятичную систему и выводится на экран.</li></ol><br/><i>Пример.</i> Дано число N = 13.
+            Алгоритм работает следующим образом. <ol><li>Двоичная запись числа N: 1101.</li><li>Удаляется последняя
+            цифра, новая запись: 110.</li><li>Исходное число нечётно, дописываются цифры 10, новая запись: 11010</li>
+            <li>На экран выводитсячисло 26.</li></ol>Какое число нужно ввести в автомат, чтобы в результате
+            получилось {result}?"""
+        self.correct = initial
+        self.accept_number()
+
+        return self
