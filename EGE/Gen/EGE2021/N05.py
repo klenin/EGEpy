@@ -1,4 +1,11 @@
+from ..EGE.Z06 import FindNumber, MinAddDigits
 from ...GenBase import DirectInput
+
+class FindBinaryNumber(FindNumber):
+    pass
+
+class MachineMinAddDigits(MinAddDigits):
+    pass
 
 class Robot(DirectInput):
     def generate(self):
