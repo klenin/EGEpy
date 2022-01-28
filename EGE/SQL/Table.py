@@ -1,5 +1,5 @@
 from EGE.GenBase import EGEError
-from EGE.Prog import CallFuncAggregate, make_expr, Op
+from EGE.Prog import CallFuncAggregate, make_expr, Op, SynElement, Block
 from EGE.Random import Random
 from EGE.Utils import aggregate_function
 
@@ -52,10 +52,6 @@ class Table:
     def _update_field_index(self):
         for i, key in enumerate(self.fields):
             self.field_index[key.name] = i
-
-    def name(self, name: str):
-        self.name = name
-        return name
 
     def assign_field_alias(self, alias: str):
        raise NotImplemented()
@@ -152,8 +148,14 @@ class Table:
         res = list(filter(lambda x: where.run(self._row_hash(x)), self.data))
         return len(res)
 
-    def update(self):
-        raise NotImplemented()
+    def update(self, assigns: Block, where: Op = None):
+        data = self.data if where is None else self.where(where, True)
+        for row in data:
+            row_hash = self._row_hash(row)
+            assigns.run(row_hash)
+            for f in self.fields:
+                row[self._field_index(f.name)] = row_hash[f.name]
+        return self
 
     def delete(self):
         raise NotImplemented()

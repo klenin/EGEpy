@@ -2,17 +2,19 @@ import unittest
 
 from EGE.GenBase import EGEError
 from EGE.Random import Random
-from EGE.Prog import make_expr
+from EGE.Prog import make_expr, make_block
 from EGE.Utils import nrange
 
 if __name__ == '__main__':
     import sys
     sys.path.append('..')
     from SQL.Table import Table
+    from SQL.Queries import *
     # from SQL.Utils import Utils
     # from SQL.RandomTable import RandomTable
 else:
-    from ..SQL.Table import Table
+    from EGE.SQL.Table import Table
+    from EGE.SQL.Queries import *
     # from ..SQL.Utils import Utils
     # from ..SQL.RandomTable import RandomTable
 
@@ -159,8 +161,33 @@ class test_SQL(unittest.TestCase):
         with self.subTest(msg='test where ref'):
             eq('id|1|2|9|4|5', pack_table(tab))
 
-    # def test_update_var(self):
+    def test_update(self):
+        eq = self.assertEqual
 
+        tab = Table('a b'.split())
+        tab.insert_rows([ 1, 2 ], [ 3, 4 ], [ 5, 6 ])
+        tab.update(make_block('= a b'.split()))
+        with self.subTest(msg='test update with var'):
+            eq('a b|2 2|4 4|6 6', pack_table(tab))
+
+        tab.update(make_block([ '=', 'a', [ '+', 'a', '1' ] ]))
+        with self.subTest(msg='test update with expr'):
+            eq('a b|3 2|5 4|7 6', pack_table(tab))
+
+        Update(tab, make_block([ '=', 'b', 'a' ])).run()
+        with self.subTest(msg='test update query'):
+            eq('a b|3 3|5 5|7 7', pack_table(tab))
+
+        with self.subTest(msg='test update query none'):
+            with self.assertRaisesRegex(ValueError, 'none'):
+                # TODO need to do something with it!!!
+                # run of block below must be terminated with exception
+                # because there is no 'none' field/variable
+                # but in prog module there is an error:
+                # it isn't fails when variable is undefined
+                # raise of ValueError was removed in
+                # https://github.com/klenin/EGEpy/commit/d5d9b0ec9ff4224f62d00708fc865bee5741cf5b
+                Update(tab, make_block(['=', 'b', 'none'])).run()
 
 if __name__ == '__main__':
     unittest.main(verbosity=1)
