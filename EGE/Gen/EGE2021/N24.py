@@ -47,6 +47,7 @@ class LengthOfSymbolsSequence(DirectInput):
                     Укажите длину самой длинной последовательности, состоящей из {chosen_type.type}.
                     """
         self.correct = chosen_type.ans_func(rnd_str)
+        self.accept_number()
 
         return self
         
