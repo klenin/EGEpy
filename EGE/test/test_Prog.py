@@ -31,14 +31,14 @@ class Test_Prog(unittest.TestCase):
         ]
         for idx, test in enumerate(t):
             eq(make_expr(test[0]).run({}), test[1], 'op ' + str(idx + 1))
-        env = { 'a': 2, 'b': 3 }
+        env = { 'a': Box(2), 'b': Box(3) }
         eq(make_expr('b').run(env), 3, 'basic env 1')
         eq(make_expr([ '*', 'a', [ '+', 'b', 7 ] ]).run(env), 20, 'basic env 2')
 
     def test_black_box(self):
         eq = self.assertEqual
-        eq(make_expr(lambda x: x['z'] * 2).run({ 'z': 9 }), 18, 'black box')
-        h = {'y' : 5}
+        eq(make_expr(lambda x: x['z'] * 2).run({ 'z': Box(9) }), 18, 'black box')
+        h = {'y' : Box(5)}
         def t3(x):
             x['y'] = 6
         make_expr(t3).run(h)
@@ -55,8 +55,8 @@ class Test_Prog(unittest.TestCase):
     def test_between(self):
         eq = self.assertEqual
         e = make_expr(['between', 'a', '1', ['+', '2', '5']])
-        eq(e.run({ 'a': 3 }), 1, 'between 1')
-        eq(e.run({ 'a': 8 }), 0, 'between 2')
+        eq(e.run({ 'a': Box(3) }), 1, 'between 1')
+        eq(e.run({ 'a': Box(8) }), 0, 'between 2')
         eq(e.to_lang_named('C'), '1 <= a && a <= 2 + 5', 'between C')
         eq(e.to_lang_named('C', {'html': 1}), '1 &lt;= a &amp;&amp; a &lt;= 2 + 5', 'between html C')
         eq(e.to_lang_named('Pascal'), 'InRange(a, 1, 2 + 5)', 'between Pascal')
@@ -65,7 +65,7 @@ class Test_Prog(unittest.TestCase):
     def test_run(self):
         eq = self.assertEqual
         e = make_expr(['[]', 'a', 2])
-        eq(e.run({ 'a': [ i for i in range(1, 4) ] }), 3, 'run []')
+        eq(e.run({ 'a': Box([ i for i in range(1, 4) ]) }), 3, 'run []')
 
     def test_make_expr(self):
         eq = self.assertEqual
@@ -74,7 +74,7 @@ class Test_Prog(unittest.TestCase):
 
     def test_vars(self):
         eq = self.assertEqual
-        env = { 'a_1': 2, 'a_b': 3 }
+        env = { 'a_1': Box(2), 'a_b': Box(3) }
         eq(make_expr('a_b').run(env), 3, 'var underline')
         eq(make_expr('a_1').run(env), 2, 'var digit')
 
@@ -134,6 +134,10 @@ class Test_Prog(unittest.TestCase):
         eq(b.to_lang_named('Perl'), "$x = 3;\n$y = $x;")
         eq(b.run_val('y'), 3)
 
+        b = make_block(['=', 'y', 3, '=', 'y', 'x'])
+        with self.assertRaisesRegex(ValueError, 'x'):
+            b.run_val('y')
+
     def test_run_simple(self):
         eq = self.assertEqual
         m = 5
@@ -153,7 +157,7 @@ class Test_Prog(unittest.TestCase):
         eq = self.assertEqual
         b = make_block([ '=', [ '[]', 'A', 2 ], 5 ])
         eq(b.to_lang_named('Pascal'), 'A[2] := 5;')
-        eq(b.run_val('A'), {2: 5})
+        eq(b.run_val('A'), [ None, None, 5 ])
 
     def test_loops(self):
         eq = self.assertEqual
@@ -162,7 +166,7 @@ class Test_Prog(unittest.TestCase):
         ])
         p = "for i := 0 to 4 do\n  M[i] := i;"
         eq(b.to_lang_named('Pascal'), p, 'loop in Pascal')
-        eq(b.run_val('M'), {0: 0, 1: 1, 2: 2, 3: 3, 4: 4}, 'loop run')
+        eq(b.run_val('M'), [ 0, 1, 2, 3, 4 ], 'loop run')
 
     def test_double_array(self):
         eq = self.assertEqual
@@ -177,7 +181,7 @@ class Test_Prog(unittest.TestCase):
         ])
         p = "for i := 0 to 4 do\n  for j := 0 to 4 do\n    A[i, j] := i * j;"
         eq(b.to_lang_named('Pascal'), p, 'double array in Pascal')
-        w = { i: { j: i * j for j in range(5) } for i in range(5) }
+        w = [ [ i * j for j in range(5) ] for i in range(5) ]
         eq(b.run_val('A'), w, 'double array run')
 
     def test_triple_array(self):
@@ -195,7 +199,7 @@ class Test_Prog(unittest.TestCase):
         ])
         p = "for i := 0 to 2 do\n  for j := 0 to 2 do\n    for k := 0 to 2 do\n      A[i, j, k] := i * j * k;"
         eq(b.to_lang_named('Pascal'), p, 'triple array in Pascal')
-        w = { i: { j: { k : i * j * k for k in range(3) } for j in range(3) } for i in range(3) }
+        w = [ [ [ i * j * k for k in range(3) ] for j in range(3) ] for i in range(3) ]
         eq(b.run_val('A'), w, 'triple array run')
 
     def test_Pascal_loop(self):
@@ -231,8 +235,8 @@ end;"""
         ])
         eq(b.to_lang_named('Basic'), 'IF a THEN x = 7', 'if in Basic')
         eq(b.to_lang_named('Perl'), "if ($a) {\n  $x = 7;\n}", 'if in Perl')
-        eq(b.run_val('x', { 'a': 0 }), None, 'if (false) run')
-        eq(b.run_val('x', { 'a': 1 }), 7, 'if (true) run')
+        eq(b.run_val('x', { 'a': Box(0) }), None, 'if (false) run')
+        eq(b.run_val('x', { 'a': Box(1) }), 7, 'if (true) run')
 
     def test_while(self):
         eq = self.assertEqual
@@ -243,7 +247,7 @@ end;"""
            'while in Basic')
 
         eq(b.to_lang_named('C'), "while (a > 0)\n  a = a - 1;", 'while in C')
-        eq(b.run_val('a', {'a': 5}), 0, 'while run')
+        eq(b.run_val('a', {'a': Box(5)}), 0, 'while run')
 
     def test_while_with_assign(self):
         eq = self.assertEqual
@@ -265,7 +269,7 @@ end;"""
 
         eq(b.to_lang_named('C'), "while (!(a == 0))\n  a = a - 1;",
            'until in C')
-        eq(b.run_val('a', { 'a': 5 }), 0, 'until run')
+        eq(b.run_val('a', { 'a': Box(5) }), 0, 'until run')
 
     def test_gather(self):
         eq = self.assertEqual
@@ -427,13 +431,13 @@ end;"""
 
     def test_inc(self):
         eq = self.assertEqual
-        eq(make_expr([ '++{}', 'i' ]).run({ 'i': 2 }), 3, 'run prefix increment')
-        eq(make_expr([ '{}--', 'i' ]).run({ 'i': 4 }), 4, 'run postfix decrement')
+        eq(make_expr([ '++{}', 'i' ]).run({ 'i': Box(2) }), 3, 'run prefix increment')
+        eq(make_expr([ '{}--', 'i' ]).run({ 'i': Box(4) }), 4, 'run postfix decrement')
 
         e = make_expr([ '+', [ '++{}', 'i' ], [ '++{}', 'i' ] ])
         eq(e.to_lang_named('C'), '++i + ++i', 'to lang increment')
 
-        env = {'i': 5}
+        env = {'i': Box(5)}
         eq(e.run(env), 13, 'run increment return value')
         eq(env['i'], 7, 'run increment side effect')
 
@@ -620,6 +624,8 @@ end;"""
         }
         for lang in c.keys():
             self.check_sub(lang, b, c[lang], f"print str in {lang}")
+
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=1)

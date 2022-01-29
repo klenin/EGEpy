@@ -5,11 +5,12 @@ import EGE.Svg as svg
 from .ProgModules import Lang
 from . import Html as html
 from . import Utils
+from EGE.Utils import Box
 from .ProgModules.Flowchart import Flowchart, Jump
 
 class SynElement:
 
-    def to_lang_named(self, lang_name: str, options=None):
+    def to_lang_named(self, lang_name: str, options=None) -> str:
         lang = getattr(Lang, lang_name)(options)
         ret = self.to_lang(lang)
         h = lang.html
@@ -24,12 +25,12 @@ class SynElement:
     def to_lang(self, attr): pass
     def run(self, attr): pass
 
-    def assign(self, env, value): pass
+    def assign(self, env: dict[str, Box], value): pass
 
-    def run_val(self, name: str, env=None):
+    def run_val(self, name: str, env: dict[str, Box] = None):
         env = env or {}
         self.run(env)
-        return env.get(name)
+        return env.get(name).value if env.get(name) else env.get(name)
 
     def gather_vars(self, *args): pass
 
@@ -70,7 +71,7 @@ class BlackBox(SynElement):
         self.lang = lang or {}
         self.assign = assign
 
-    def assign(self, env, value):
+    def assign(self, env: dict[str, Box], value):
         if self.assign:
             self.assign(env, value)
 
@@ -79,7 +80,7 @@ class BlackBox(SynElement):
 
     def to_lang(self, lang): return self.to_lang_named(lang.name)
 
-    def run(self, env): return self.code(env)
+    def run(self, env: dict[str, Box]): return self.code(env)
 
 
 class Assign(SynElement):
@@ -90,9 +91,10 @@ class Assign(SynElement):
 
     def to_lang(self, lang):
         return lang.get_fmt('assign_fmt').format(*[
-            e.to_lang(lang) for e in (self.var, self.expr)])
+            e.to_lang(lang) for e in (self.var, self.expr)
+        ])
 
-    def run(self, env):
+    def run(self, env: dict[str, Box]):
         v = self.expr.run(env)
         self.var.assign(env, v)
         return v
@@ -105,9 +107,10 @@ class Assign(SynElement):
         yield from self.var.get_children_dfs()
         yield from self.expr.get_children_dfs()
 
-    def complexity(self, env, mistakes, iter_):
+    def complexity(self, env: dict[str, Box], mistakes, iter_):
         name = self.var.name
-        if not name: return []
+        if not name:
+            return []
         if not iter_[name]:
             raise ValueError(f"Assign to iterator: '{name}'")
 
@@ -131,19 +134,28 @@ class Index(SynElement):
         return lang.get_fmt('index_fmt').format(*[self.array.to_lang(lang),
                                                   ', '.join(str(i.to_lang(lang)) for i in self.indices)])
 
-    def run(self, env):
+    def run(self, env: dict[str, Box]):
         v = self.array.run(env)
         for i in self.indices:
             v = v[i.run(env)]
         return v
 
-    def assign(self, env, value):
-        v = self.array.run(env)
-        for i in self.indices[:-1]:
+    def assign(self, env: dict[str, Box], value):
+        v = self.array.get_ref(env)
+        if v.value is None:
+            v.value = []
+        for step, i in enumerate(self.indices[:]):
             index = i.run(env)
-            elem = v.get(index)
-            v[index] = {} if elem is None else elem
-            v = v[index]
+            if index >= len(v.value):
+                for j in range(len(v.value), index + 1):
+                    if step + 1 == len(self.indices):
+                        v.value.append(None)
+                    else:
+                        v.value.append(Box([]))
+            if step + 1 < len(self.indices):
+                tmp = v[index]
+                v = None
+                v = tmp
         v[self.indices[-1].run(env)] = value
         return value
 
@@ -165,7 +177,8 @@ class CallFunc(SynElement):
     def to_lang(self, lang):
         return lang.get_fmt('call_func_fmt').format(*[
             self.func,
-            lang.get_fmt('args_separator').join(a.to_lang(lang) for a in self.args)])
+            lang.get_fmt('args_separator').join(a.to_lang(lang) for a in self.args)
+        ])
 
     def run(self, env):
         arg_val = [ a.run(env) for a in self.args ]
@@ -174,7 +187,7 @@ class CallFunc(SynElement):
 
 class CallFuncAggregate(CallFunc):
 
-    def run(self, env):
+    def run(self, env: dict[str, Box]):
         func = env['&'][self.func]
         if self in env['&result']:
             return env['&result'][self]
@@ -185,7 +198,6 @@ class CallFuncAggregate(CallFunc):
             arg_val = [ a.run(new_env) for a in self.args ]
             ans = func.call(arg_val, new_env, self)
         env['&result'][self] = ans
-
 
 class Print(SynElement):
 
@@ -199,13 +211,13 @@ class Print(SynElement):
         return lang.get_fmt(self.fmt).format(
             lang.get_fmt('args_separator').join(a.to_lang(lang) for a in self.args))
 
-    def run(self, env):
+    def run(self, env: dict[str, Box]):
         line = ' '.join(str(a.run(env)) for a in self.args)
         o = '<out>'
         if o in env:
             env[o] += "\n" + line
         else:
-            env[o] = line
+            env[o] = Box(line)
 
 
 class Op(SynElement):
@@ -223,7 +235,7 @@ class Op(SynElement):
             else:
                 child.rename_vars(dct)
 
-    def run(self, env):
+    def run(self, env: dict[str, Box]):
         return eval(self.run_fmt().format(*[c.run(env) for c in self.children()]))
 
     def prio(self, lang):
@@ -235,15 +247,16 @@ class Op(SynElement):
 
     def to_lang(self, lang):
         return self.to_lang_fmt(lang).format(*[
-            self.operand(lang, c) for c in self.children()])
+            self.operand(lang, c) for c in self.children()
+        ])
 
     def needs_parens(self, lang, parent_prio):
         return parent_prio < self.prio(lang)
 
     def run_fmt(self): return self.to_lang_fmt(Lang.Python(params=None))
-    def to_lang_fmt(self, *args): pass
+    def to_lang_fmt(self, *args) -> str: pass
 
-    def gather_vars(self, env):
+    def gather_vars(self, env: dict[str, Box]):
         for c in self.children():
             c.gather_vars(env)
 
@@ -319,12 +332,12 @@ class UnOp(Op):
 
 class Inc(UnOp):
 
-    def run(self, env):
+    def run(self, env: dict[str, Box]):
         if self.op[:2] == '++':
             env[self.arg.name] += 1
         elif self.op[:2] == '--':
             env[self.arg.name] -= 1
-        return env[self.arg.name]
+        return env[self.arg.name].value
 
 
 class TernaryOp(Op):
@@ -351,19 +364,28 @@ class Var(SynElement):
     def to_lang(self, lang):
         return lang.get_fmt('var_fmt').format(self.name)
 
-    def run(self, env):
+    def run(self, env: dict[str, Box]):
         if env.get(self.name) is None:
-            env[self.name] = {}
-        return env.get(self.name)
+            raise ValueError(f"Undefined variable {self.name}")
+        return env.get(self.name).value
 
-    def assign(self, env, value):
-        env[self.name] = value
+    def assign(self, env: dict[str, Box], value) -> Box:
+        if self.name not in env:
+            env[self.name] = Box(value)
+        else:
+            env[self.name].value = value
+        return env[self.name]
 
-    def gather_vars(self, vars_): vars_[self.name] = 1
+    def get_ref(self, env: dict[str, Box]) -> Box:
+        if self.name not in env:
+            self.assign(env, None)
+        return env[self.name]
 
-    def polinom_degree(self, env, mistakes, iter_):
+    def gather_vars(self, vars_): vars_[self.name] = Box(1)
+
+    def polinom_degree(self, env: dict[str, Box], mistakes, iter_):
         n = self.name
-        if env[n]:
+        if env[n].value:
             return mistakes.var_as_const and n == mistakes.var_as_const or env[n]
         if iter_[n]:
             return 0 if mistakes.var_as_const else iter_[Utils.last_key(iter_, n)]
@@ -376,7 +398,8 @@ class Const(SynElement):
 
     def to_lang(self, lang): return str(self.value)
 
-    def run(self, env): return self.value
+    def run(self, env: dict[str, Box]):
+        return self.value
 
     def polinom_degree(self): return 0
 
@@ -395,7 +418,7 @@ class Block(SynElement):
         return lang.get_fmt('block_stmt_separator').join(
             s.to_lang(lang) for s in self.statements)
 
-    def run(self, env):
+    def run(self, env: dict[str, Box]):
         for s in self.statements:
             s.run(env)
 
@@ -407,7 +430,7 @@ class Block(SynElement):
         for s in self.statements:
             yield from s.get_children_dfs()
 
-    def complexity(self, env, mistakes, iter_):
+    def complexity(self, env: dict[str, Box], mistakes, iter_):
         items = [s.complexity(env, mistakes, iter_) for s in self.statements]
         if mistakes.change_min:
             return min(items)
@@ -511,18 +534,18 @@ class ForLoop(CompoundStatement):
     def to_lang_fmt(self): return '{}'
     def to_lang_fields(self): return [ 'var', 'lb', 'ub' ]
 
-    def run(self, env):
+    def run(self, env: dict[str, Box]):
         for i in range(self.lb.run(env), self.ub.run(env) + 1):
             self.var.assign(env, i)
             self.body.run(env)
 
-    def complexity(self, env, mistakes, iter_):
+    def complexity(self, env: dict[str, Box], mistakes, iter_):
         name = self.var.name
         degree = self.ub.polinom_degree(env, mistakes, iter_)
         iter_.name = degree
 
         body_complexity = self.body.complexity(env, mistakes, iter_)
-        env[name] = degree
+        env[name].value = degree
 
         cur_complexity = sum(
             float(i) for i in iter_.values() if i.replace('.', '', 1).isdigit())
@@ -539,11 +562,11 @@ class IfThen(CompoundStatement):
     def to_lang_fmt(self): return '{}'
     def to_lang_fields(self): return [ 'cond' ]
 
-    def run(self, env):
+    def run(self, env: dict[str, Box]):
         if self.cond.run(env):
             self.body.run(env)
 
-    def complexity(self, env, mistakes, iter_):
+    def complexity(self, env: dict[str, Box], mistakes, iter_):
         (cond, body) = (self.cond, self.body)
         names = [ cond.left.name, cond.right.name ]
 
@@ -662,10 +685,11 @@ class While(CondLoop):
     def to_lang_fmt(self): return '{}'
     def to_lang_fields(self): return [ 'cond' ]
 
-    def run(self, env):
+    def run(self, env: dict[str, Box]):
         while True:
             self.body.run(env)
-            if not self.cond.run(env): break
+            if not self.cond.run(env):
+                break
 
     @staticmethod
     def continue_label():
@@ -683,10 +707,11 @@ class Until(CondLoop):
     def to_lang_fmt(self): return '{}'
     def to_lang_fields(self): return [ 'cond' ]
 
-    def run(self, env):
+    def run(self, env: dict[str, Box]):
         while True:
             self.body.run(env)
-            if self.cond.run(env): break
+            if self.cond.run(env):
+                break
 
     @staticmethod
     def continue_label():
@@ -712,7 +737,7 @@ class ExprStmt(SynElement):
     def to_lang(self, lang):
         return lang.get_fmt('expr_fmt').format(self.expr.to_lang(lang))
 
-    def run(self, env):
+    def run(self, env: dict[str, Box]):
         return self.expr.run(env)
 
     def complexity(self): return 0
@@ -736,13 +761,13 @@ class FuncDef(CompoundStatement):
     def to_lang_fmt(self): return '{}'
     def to_lang_fields(self): return [ 'head' ]
 
-    def run(self, env):
+    def run(self, env: dict[str, Box]):
         if env.get('&') and self.head.name in env.get('&'):
             raise ValueError(f"Redefinition of function {self.head.name}")
-        env['&'] = {}
+        env['&'] = Box({})
         env['&'][self.head.name] = self
 
-    def call(self, args, env):
+    def call(self, args, env: dict[str, Box]):
         act_len = len(args)
         form_len = len(self.head.params)
         if act_len > form_len:
@@ -750,7 +775,7 @@ class FuncDef(CompoundStatement):
         if act_len < form_len:
             raise ValueError(f"Too few arguments to function {self.head.name}")
 
-        new_env = { '&': env['&'], **{v: k for k, v in zip(args, self.head.params) }}
+        new_env = { '&': env['&'], **{k: Box(v) for v, k in zip(args, self.head.params) }}
 
         try: # return реализован с использованием исключений
             self.body.run(new_env)
@@ -790,7 +815,7 @@ class Return(SynElement):
             lang.c_return_fmt().format(self.expr.to_lang(lang)) or
             lang.p_return_fmt().format(self.func.head.name))
 
-    def run(self, env):
+    def run(self, env: dict[str, Box]):
         raise (self.func.c_style and
             FuncReturnException(return_=self.expr.run(env)) or
             FuncReturnException(p_return=1))
