@@ -20,18 +20,22 @@ class DotDict(dict):
                 value = DotDict(value)
             self[key] = value
 
+allowed_symbols = [chr(x) for x in range(ord('0'), ord('9') + 1)] \
+                    + [chr(x) for x in range(ord('A'), ord('Z') + 1)] \
+                    + [chr(x) for x in range(ord('a'), ord('z') + 1)]
 
-def _generate_string(rnd, str_len):
-    result = ''.join([chr(rnd.pick([rnd.in_range(ord('0'), ord('9')), 
-                                        rnd.in_range(ord('A'), ord('Z')),
-                                        rnd.in_range(ord('a'), ord('z'))])) for i in range(str_len)])
+def _generate_string_from(rnd, str_len, allowed=None):
+    if allowed == None:
+        allowed = allowed_symbols
+
+    result = ''.join([rnd.pick(allowed) for i in range(str_len)])
     return result
 
 
 class LengthOfSymbolsSequence(DirectInput):
     def generate(self):
         str_len = self.rnd.in_range(10**5, 10**6)
-        rnd_str = _generate_string(self.rnd, str_len)
+        rnd_str = _generate_string_from(self.rnd, str_len)
 
         filename = 'N24_string.txt'
 
@@ -98,7 +102,7 @@ class LengthOfSymbolsSequence(DirectInput):
 class NthOccurenceInString(DirectInput):
     def generate(self):
         str_len = self.rnd.in_range(10**5, 10**6)
-        rnd_str = _generate_string(self.rnd, str_len)
+        rnd_str = _generate_string_from(self.rnd, str_len)
 
         filename = 'N24_nth_occurence_string.txt'
 
@@ -121,3 +125,32 @@ class NthOccurenceInString(DirectInput):
     
     def _find_symbol_start(self, symbol, string, occurence):
         return list(re.finditer(symbol, string))[occurence].start() + 1
+
+
+class SubstringOccurencesInString(DirectInput):
+    def generate(self):
+        substr_len = self.rnd.get(10) + 1
+        rnd_substr = ''.join(self.rnd.pick_n(substr_len, allowed_symbols))
+
+        substr_n = self.rnd.in_range(1000, 2000)
+        rnd_strs = []
+        for i in range(substr_n + 1):
+            str_len = self.rnd.in_range(1, 100)
+            rnd_strs.append(_generate_string_from(self.rnd, str_len, [c for c in allowed_symbols if not (c == rnd_substr[-1])]))
+        
+        rnd_str = rnd_substr.join(rnd_strs)
+
+        filename = 'N24_substr_occurence.txt'
+
+        with open(filename, 'w') as fout:
+            fout.write(rnd_str)
+
+        text = f"""\
+                    В файле <a href="{filename}" download="{filename}">{filename}</a> записана последовательность символов. 
+                    Сколько подстрок «{rnd_substr}» содержится в файле?
+                    """
+        self.text = '\n'.join([line.strip() for line in text.split('\n') if line.strip() != ''])
+        self.correct = substr_n
+        self.accept_number()
+
+        return self
