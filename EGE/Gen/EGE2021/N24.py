@@ -23,19 +23,19 @@ class LengthOfSymbolsSequence(DirectInput):
         str_len = self.rnd.in_range(10**5, 10**6)
         rnd_str = self._generate_string(str_len)
 
-        filename = "N24_string.txt"
+        filename = 'N24_string.txt'
 
-        with open(filename, "w") as fout:
+        with open(filename, 'w') as fout:
             fout.write(rnd_str)
 
         types = [
             DotDict({
-                "type": "одинаковых символов",
-                "ans_func": self._same_symbols_len
+                'type': 'одинаковых символов',
+                'ans_func': self._same_symbols_len
             }),
             DotDict({
-                "type": "цифр",
-                "ans_func": self._numbers_len
+                'type': 'цифр',
+                'ans_func': self._numbers_len
             }),
         ]
 
@@ -53,9 +53,9 @@ class LengthOfSymbolsSequence(DirectInput):
         return self
         
     def _generate_string(self, str_len):
-        result = "".join([chr(self.rnd.pick([self.rnd.in_range(ord("0"), ord("9")), 
-                                            self.rnd.in_range(ord("A"), ord("Z")),
-                                            self.rnd.in_range(ord("a"), ord("z"))])) for i in range(str_len)])
+        result = ''.join([chr(self.rnd.pick([self.rnd.in_range(ord('0'), ord('9')), 
+                                            self.rnd.in_range(ord('A'), ord('Z')),
+                                            self.rnd.in_range(ord('a'), ord('z'))])) for i in range(str_len)])
         return result
 
     def _same_symbols_len(self, s):
@@ -74,7 +74,7 @@ class LengthOfSymbolsSequence(DirectInput):
         return result
     
     def _numbers_len(self, s):
-        numbers_str = "0123456789"
+        numbers_str = '0123456789'
 
         result = 0
         tmp_result = s[0] in numbers_str
