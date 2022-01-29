@@ -42,10 +42,11 @@ class LengthOfSymbolsSequence(DirectInput):
         rnd_type = self.rnd.get(2)
         chosen_type = types[rnd_type]
 
-        self.text = f"""\
+        text = f"""\
                     В файле <a href="{filename}" download="{filename}">{filename}</a> записана последовательность символов.
                     Укажите длину самой длинной последовательности, состоящей из {chosen_type.type}.
                     """
+        self.text = '\n'.join([line.strip() for line in text.split('\n') if line.strip() != ''])
         self.correct = chosen_type.ans_func(rnd_str)
         self.accept_number()
 
