@@ -166,3 +166,37 @@ class LessOrEqualMachine(DirectInput):
         self.accept_number()
 
         return self
+
+class ReverseBitsMachine(DirectInput):
+    def generate(self):
+        result = self.rnd.in_range(1, 50)
+        limit = self.rnd.in_range(100, 300)
+        bits = Bits().set_dec(result).reverse_().get_bits()
+        index = self._get_valuable_index(bits)
+        del bits[:index]
+        while True:
+            if Bits().set_bin_array(bits).get_dec() > limit:
+                break
+            bits.append(0)
+
+        self.text = f"""
+            Автомат обрабатывает натуральное число N по следующему алгоритму:<ol><li>Строится двоичная запись
+            числа N.</li><li>Запись «переворачивается», то есть читается справа налево. Если при этом
+            появляются ведущие нули, они отбрасываются.</li><li>Полученное число переводится в десятичную
+            запись и выводится на экран.</li></ol><i>Пример</i>. Дано число N = 58. Алгоритм работает следующим образом.
+            <ol><li>Двоичная запись числа N: 111010.</li><li>Запись справа налево: 10111 (ведущий ноль отброшен).</li>
+            <li>На экран выводится десятичное значение полученного числа 23.</li></ol>Какое наибольшее число,
+            не превышающее <b>{limit}</b>, после обработки автоматом даёт результат <b>{result}</b>?"""
+        self.correct = Bits().set_bin_array(bits[:-1]).get_dec()
+        self.accept_number()
+
+        return self
+
+    def _get_valuable_index(self, bits: list) -> int:
+        index = -1
+        for i, bit in enumerate(bits):
+            if bit == 1:
+                index = i
+                break
+
+        return index
