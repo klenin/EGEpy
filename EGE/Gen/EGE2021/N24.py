@@ -1,4 +1,6 @@
 from EGE.GenBase import DirectInput
+import re
+
 
 class DotDict(dict):
     """
@@ -18,10 +20,18 @@ class DotDict(dict):
                 value = DotDict(value)
             self[key] = value
 
+
+def _generate_string(rnd, str_len):
+    result = ''.join([chr(rnd.pick([rnd.in_range(ord('0'), ord('9')), 
+                                        rnd.in_range(ord('A'), ord('Z')),
+                                        rnd.in_range(ord('a'), ord('z'))])) for i in range(str_len)])
+    return result
+
+
 class LengthOfSymbolsSequence(DirectInput):
     def generate(self):
         str_len = self.rnd.in_range(10**5, 10**6)
-        rnd_str = self._generate_string(str_len)
+        rnd_str = _generate_string(self.rnd, str_len)
 
         filename = 'N24_string.txt'
 
@@ -51,12 +61,6 @@ class LengthOfSymbolsSequence(DirectInput):
         self.accept_number()
 
         return self
-        
-    def _generate_string(self, str_len):
-        result = ''.join([chr(self.rnd.pick([self.rnd.in_range(ord('0'), ord('9')), 
-                                            self.rnd.in_range(ord('A'), ord('Z')),
-                                            self.rnd.in_range(ord('a'), ord('z'))])) for i in range(str_len)])
-        return result
 
     def _same_symbols_len(self, s):
         result = 1
@@ -89,3 +93,31 @@ class LengthOfSymbolsSequence(DirectInput):
         result = max(result, tmp_result)
 
         return result
+
+
+class NthOccurenceInString(DirectInput):
+    def generate(self):
+        str_len = self.rnd.in_range(10**5, 10**6)
+        rnd_str = _generate_string(self.rnd, str_len)
+
+        filename = 'N24_nth_occurence_string.txt'
+
+        with open(filename, 'w') as fout:
+            fout.write(rnd_str)
+
+        rnd_symbol = self.rnd.pick(list(set(rnd_str)))
+        symbol_n = len(re.findall(rnd_symbol, rnd_str))
+        rnd_pos = self.rnd.get(symbol_n)
+
+        text = f"""\
+                    В файле <a href="{filename}" download="{filename}">{filename}</a> записана последовательность символов. На какой позиции от начала строки
+                    встречается {rnd_pos} символ «{rnd_symbol}»? Нумерация символов в строке ведется с единицы.
+                    """
+        self.text = '\n'.join([line.strip() for line in text.split('\n') if line.strip() != ''])
+        self.correct =  self._find_symbol_start(rnd_symbol, rnd_str, rnd_pos)
+        self.accept_number()
+
+        return self
+    
+    def _find_symbol_start(self, symbol, string, occurence):
+        return list(re.finditer(symbol, string))[occurence].start() + 1
