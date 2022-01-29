@@ -1,7 +1,7 @@
 from ...GenBase import SingleChoice
 from ...RussianModules.NumText import num_text
 from ...Logic import random_logic_expr, truth_table_string, equiv_not
-
+from ...Utils import Box
 
 class AudioData:
     channels_title = [
@@ -61,7 +61,7 @@ class EquivCommon(SingleChoice):
     def generate_common(self, vars: list):
         e, e_text = self.rand_expr_text(vars)
         e_tts = truth_table_string(e)
-        seen = {e_tts: 1}
+        seen = {e_tts: Box(1)}
         good, bad = [], []
         while not (good and len(bad) >= 3):
             if len(bad) > 30:

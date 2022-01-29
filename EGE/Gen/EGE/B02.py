@@ -3,6 +3,7 @@
 from ...GenBase import DirectInput
 from ...Random import Random
 from ...RussianModules.NumText import num_bits, num_bytes, num_by_words, num_by_words_text
+from ...Utils import Box
 import EGE.Prog
 import EGE.LangTable
 
@@ -33,7 +34,7 @@ class Flowchart(DirectInput):
 {b.to_svg_main()}
 <i>Примечание: знаком “:=” обозначена операция присваивания</i>
 """
-        vars = { va: 0, vb: 0 }
+        vars = { va: Box(0), vb: Box(0) }
         b.run(vars)
         self.correct = vars[vb]
         self.accept = r"^\-?\d+"

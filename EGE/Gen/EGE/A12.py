@@ -79,7 +79,7 @@ class ArrayFlip(SingleChoice):
         bad1 = list(range((n - 1) // 2 + 1)) + list(range(n // 2))[::-1]
         bad2 = list(range((n - 1) // 2 + 1))[::-1] + list(range(n % 2, (n - 1) // 2 + 1))
 
-        ar_val = list(ar_val.values())
+        ar_val = list(ar_val)
         self.set_variants([ ' '.join(str(x) for x in v) for v in [ ar_val, ar_val[::-1], bad1, bad2 ] ])
         self.text = f'''В программе используется одномерный целочисленный массив A с индексами
                     от 0 до {n - 1}. Ниже представлен фрагмент программы, записанный на 

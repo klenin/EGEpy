@@ -9,6 +9,7 @@ import EGE.LangTable
 import EGE.Prog
 from EGE.GenBase import DirectInput, EGEError
 from EGE.RussianModules.NumText import num_text
+from EGE.Utils import Box
 
 
 class IdentifyLetter(DirectInput):
@@ -124,11 +125,11 @@ class FirstSumDigits(DirectInput):
             ],
         ])
 
-        d = { 'x': x }
+        d = { 'x': Box(x) }
         block.run(d)
         if d['a'] != a or d['b'] != b:
             raise EGEError(f"wrong {maximal} x={x} a={a}, b={b}")
-        d = { 'x': x + (9 if maximal else -9) }
+        d = { 'x': Box(x + (9 if maximal else -9)) }
         block.run(d)
 
         if d['a'] == a and d['b'] == b:
