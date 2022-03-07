@@ -2,6 +2,7 @@ from .Prog import make_expr
 from .Bits import Bits
 from .GenBase import EGEError
 from .Prog import UnOp, BinOp
+from .Utils import Box
 
 def maybe_not(rnd, arr: list):
     return rnd.pick([ arr, arr, [ '!', arr ] ])
@@ -29,7 +30,7 @@ def random_logic_expr(rnd, arr: list):
     return make_expr(random_logic(rnd, arr))
 
 def bits_to_vars(bits, names: list):
-    return { name: bits.get_bit(i) for i, name in enumerate(names) }
+    return { name: Box(bits.get_bit(i)) for i, name in enumerate(names) }
 
 def truth_table_string(expr):
     expr_vars = {}

@@ -40,7 +40,7 @@ A[1], … A[{array_length}], B[1], … B[{array_length}] */'''
 {case['name']} значения после выполнения данной программы?'''
 
         array_B = code_block.run_val('B')
-        correct = len(list(filter(lambda x: case['test'](x), array_B.values())))
+        correct = len(list(filter(lambda x: case['test'](x), array_B[1:])))
         errors = [
             correct + 1, correct - 1, array_length - correct, array_length - correct + 1, array_length - correct - 1
         ]

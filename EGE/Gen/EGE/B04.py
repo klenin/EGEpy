@@ -9,7 +9,7 @@ import EGE.Html as html
 import EGE.RussianModules.Animals
 from EGE.RussianModules.NumText import num_by_words
 from EGE.GenBase import DirectInput
-from EGE.Utils import product, minmax, nrange
+from EGE.Utils import product, minmax, nrange, Box
 
 class ImplBorder(DirectInput):
     """
@@ -47,7 +47,7 @@ class ImplBorder(DirectInput):
         values = []
         while not (1 <= sum(values) <= n) or e is None:
             e = EGE.Prog.make_expr([ '=>', self.__make_side(), self.__make_side() ])
-            values = [ e.run({ 'X': i }) for i in range(n + 1) ]
+            values = [ e.run({ 'X': Box(i) }) for i in range(n + 1) ]
 
         et = html.cdata(e.to_lang_named('Logic'))
         shfls = self.rnd.shuffle([ dict(
