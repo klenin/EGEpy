@@ -1,12 +1,14 @@
-
+import re
 from collections import Counter
+import EGE.Random
 
 class EGEError(Exception):
     pass
 
 class Question:
+    rnd: EGE.Random.Random
 
-    def __init__(self, rnd, text: str = None, correct = None):
+    def __init__(self, rnd: EGE.Random.Random, text: str = None, correct = None):
         self.rnd = rnd
         self.text = text
         self.correct = correct
@@ -23,7 +25,7 @@ class Question:
 
 class SingleChoice(Question):
 
-    def __init__(self, rnd, text: str = None, correct: int = 0):
+    def __init__(self, rnd: EGE.Random.Random, text: str = None, correct: int = 0):
         super().__init__(rnd, text, correct)
         self.variants: list = []
 
@@ -54,3 +56,23 @@ class SingleChoice(Question):
         self.check_distinct_variants()
         self.shuffle_variants()
 
+class DirectInput(Question):
+
+    def __init__(self, rnd: EGE.Random.Random, text: str = None, correct: int = 0):
+        super().__init__(rnd, text, correct)
+        self.accept = r".+"
+        self.variants = []
+        pass
+
+    def export_type(self):
+        return 'di'
+
+    def accept_number(self):
+        self.accept = r"^\d+$"
+        pass
+
+    def post_process(self):
+        if re.search(self.accept, self.correct):
+            return
+        # TODO: ask ask if message is correct
+        raise EGEError(f"Correct answer is not acceptable in {self}: {self.correct}")

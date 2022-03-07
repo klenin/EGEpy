@@ -1,3 +1,4 @@
+import string
 
 # Permuted congruential generator, http://www.pcg-random.org/
 class Random:
@@ -43,7 +44,7 @@ class Random:
 
     def pick(self, array: list, exclude=None):
         if len(array) == 0:
-            raise ValueError('pick from empty array');
+            raise ValueError('pick from empty array')
         if exclude:
             if len(array) <= 1:
                 raise ValueError('exclude nothing')
@@ -65,6 +66,23 @@ class Random:
     def shuffle(self, array):
         return self.pick_n(len(array), array)
 
+    def index_var(self, number=1):
+        return self.pick_n(number, [ 'i', 'j', 'k', 'a', 'b', 'c' ])
+
+    def english_letter(self):
+        return self.pick(list(string.ascii_lowercase))
+
+    def pretty_russian_letter(self):
+        return self.get_letter_from_string('абвгдежзиклмнопрстуфхэя')
+
+    def get_letter_from_string(self, string):
+        return string[self.in_range(0, len(string) - 1)]
+
+    def split_number(self, number: int, parts: int):
+        if parts > number:
+            raise ValueError('too much parts')
+        p = sorted(self.pick_n(parts - 1, [ i for i in range(1, number) ]))
+        return [p[0], *[ p[i] - p[i-1] for i in range(1, len(p)) ], number - p[-1]]
 
 if __name__ == '__main__':
     import unittest

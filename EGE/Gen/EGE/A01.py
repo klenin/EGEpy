@@ -2,10 +2,23 @@ from dataclasses import dataclass
 
 from ...GenBase import SingleChoice
 from ...Random import Random
-from ...Russian.NumText import num_bits, num_bytes
+from ...RussianModules.NumText import num_bits, num_bytes
 
 def bits_or_bytes(rnd: Random, n: int):
     return num_bytes(n) if rnd.coin() else num_bits(n * 8)
+
+def recode_get_encodings(rnd, change, txts):
+    big = rnd.pick([
+        FromTo('16-битной кодировке UCS-2', '16-битную кодировку UCS-2'),
+        FromTo('2-байтном коде Unicode', '2-байтный код Unicode'),
+    ])
+    little = rnd.pick([
+        FromTo('8-битной кодировке КОИ-8', '8-битную кодировке КОИ-8'),
+    ])
+    return FromTo(
+        (big if change else little).from_,
+        (little if change else big).to,
+        change=txts[change])
 
 @dataclass
 class FromTo:
@@ -13,22 +26,9 @@ class FromTo:
 
 class Recode(SingleChoice):
 
-    def _recode_get_encodings(self, change, txts):
-        big = self.rnd.pick([
-            FromTo('16-битной кодировке UCS-2', '16-битную кодировку UCS-2'),
-            FromTo('2-байтном коде Unicode', '2-байтный код Unicode'),
-        ]);
-        little = self.rnd.pick([
-          FromTo('8-битной кодировке КОИ-8', '8-битную кодировке КОИ-8'),
-        ])
-        return FromTo(
-            (big if change else little).from_,
-            (little if change else big).to,
-            change = txts[change])
-
     def generate(self):
         delta = self.rnd.pick([ 8, 16, 32 ] + [ i * 10 for i in range (1, 11) ])
-        dir_ = self._recode_get_encodings(self.rnd.coin(), [ 'увеличилось', 'уменьшилось' ])
+        dir_ = recode_get_encodings(self.rnd, self.rnd.coin(), [ 'увеличилось', 'уменьшилось' ])
         delta_text = bits_or_bytes(self.rnd, delta)
         self.text = f"""
 Автоматическое устройство осуществило перекодировку информационного сообщения,

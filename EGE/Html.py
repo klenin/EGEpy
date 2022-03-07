@@ -1,4 +1,3 @@
-
 from functools import partial
 
 def _remove_trailing_underline(s: str):
@@ -11,10 +10,10 @@ def attrs_str(**kwargs):
 def open_tag(tag: str, attrs: dict = {}, rest: str = '>'):
     return '<' + tag + attrs_str(**attrs) + rest
 
-def tag(tag: str, body = None, **attrs):
+def tag(tag: str, body=None, **attrs):
     if hasattr(body, '__iter__'):
-        body = ''.join(body)
-    return open_tag(tag, attrs, f">{body}</{tag}>" if body else '/>')
+        body = ''.join(list(map(str, body)))
+    return open_tag(tag, attrs, f">{body}</{tag}>" if body is not None else '/>')
 
 def close_tag(tag: str):
     return f"</{tag}>"
@@ -76,8 +75,11 @@ def global_head():
 """
 
 def make_question_html(q):
-    result = ''.join(
-        (li(v, class_='correct') if q.correct == i else li(v)) + "\n" for i, v in enumerate(q.variants))
+    if q.export_type() == 'sc':
+        result = ''.join((li(v, class_='correct') if q.correct == i else li(v))
+                         + "\n" for i, v in enumerate(q.variants))
+    if q.export_type() == 'di':
+        result = li(q.correct) + "\n"
     return div(f"{q.text}\n" + ol("\n" + result) + "\n", class_='q') + "\n"
 
 def make_html(questions):
