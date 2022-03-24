@@ -12,14 +12,14 @@ from EGE.Gen.EGE2022 import N11
 rnd = EGE.Random.Random(2342134)
 
 questions = [q.generate() for q in [
-    N11.Amount_of_Information_Cars(rnd),
-    N11.Amount_of_Information_Cars(rnd),
-    N11.Amount_of_Information_Cars(rnd),
-    N11.Amount_of_Information_Cars(rnd),
-    N11.Amount_of_Information_Cars(rnd),
-    N11.Amount_of_Information_Cars(rnd),
-    N11.Amount_of_Information_Cars(rnd),
-    N11.Amount_of_Information_Cars(rnd)
+    N11.AmountOfInformationCars(rnd),
+    N11.AmountOfInformationCars(rnd),
+    N11.AmountOfInformationCars(rnd),
+    N11.AmountOfInformationCars(rnd),
+    N11.AmountOfInformationCars(rnd),
+    N11.AmountOfInformationCars(rnd),
+    N11.AmountOfInformationCars(rnd),
+    N11.AmountOfInformationCars(rnd)
     # A01.Recode(rnd),
     # A01.Simple(rnd),
     # A02.SportsmanNumbers(rnd),
