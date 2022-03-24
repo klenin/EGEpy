@@ -1,6 +1,6 @@
 from ...GenBase import DirectInput
 
-class Amount_of_Information_Cars(DirectInput):
+class AmountOfInformationCars(DirectInput):
     def __init__(self, rnd):
         self.rnd = rnd
         self.amount_of_symbols = self.rnd.in_range(5, 10)
@@ -9,9 +9,9 @@ class Amount_of_Information_Cars(DirectInput):
         self.text = ''
 
     def get_text(self, amount_of_symbols, amount_of_letters, amount_of_car_numbers):
-        if amount_of_letters in [21, 31]:
+        if amount_of_letters in [ 21, 31 ]:
             text_for_letters = 'различная буква'
-        elif amount_of_letters in [22, 23, 24, 32, 33]:
+        elif amount_of_letters in [ 22, 23, 24, 32, 33 ]:
             text_for_letters = 'различные буквы'
         else:
             text_for_letters = 'различных букв'
@@ -40,5 +40,3 @@ class Amount_of_Information_Cars(DirectInput):
         amount_of_car_numbers = self.amount_of_car_numbers
         self.get_text(amount_of_symbols, amount_of_letters, amount_of_car_numbers)
         return self
-
-
