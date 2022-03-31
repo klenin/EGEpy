@@ -188,29 +188,29 @@ class GenDatabase(DirectInput):
         for i in range(self.number_of_products):
             price_list.append(self.rnd.in_range(100, 200))
             supplier = ''
-            if products[i]['type'] == 'milk':
+            if products[i].type == 'milk':
                 supplier = 'Молокозавод'
-            if products[i]['type'] == 'eggs':
+            if products[i].type == 'eggs':
                 supplier = 'Птицеферма'
-            if products[i]['type'] == 'eco':
+            if products[i].type == 'eco':
                 supplier = 'Экопродукты'
-            if products[i]['type'] == 'grain':
+            if products[i].type == 'grain':
                 supplier = 'Продбаза'
-            if products[i]['type'] == 'pasta':
+            if products[i].type == 'pasta':
                 supplier = 'Макаронная фабрика'
-            if products[i]['type'] == 'tea-coffe':
+            if products[i].type == 'tea-coffe':
                 supplier = 'Чай-Кофе-Сахар'
-            if products[i]['type'] == 'meat':
+            if products[i].type == 'meat':
                 supplier = 'Мясокомбинат'
 
-            if products[i]['measurement'] == 'шт':
+            if products[i].measurement == 'шт':
                 amount = self.rnd.in_range(1, 10)
             else:
                 amount = self.rnd.in_range(1, 10) / 10
             product.append({'Артикул': i,
-                            'Отдел': products[i]['department'],
-                            'Наименование товара': products[i]['name'],
-                            'Ед. изм': products[i]['measurement'],
+                            'Отдел': products[i].department,
+                            'Наименование товара': products[i].name,
+                            'Ед. изм': products[i].measurement,
                             'Количество в упаковке': amount,
                             'Поставщик': supplier
                             })
@@ -283,19 +283,19 @@ class GenDatabase(DirectInput):
         provider = self.rnd.pick(product['Поставщик'].unique())
         product_list = product[product['Поставщик'] == provider]['Артикул'].to_list()
         movement_type4 = movement[movement['Артикул'].isin(product_list)].copy()
-        #task_type = self.rnd.pick([TaskType1, TaskType2, TaskType3, TaskType4])
+        # task_type = self.rnd.pick([TaskType1, TaskType2, TaskType3, TaskType4])
         task_type = [TaskType1, TaskType2, TaskType3, TaskType4]
         task = task_type[num](rnd=self.rnd,
-                         name=products[product_id]['name'],
-                         price=price_list[product_id],
-                         provider=provider,
-                         measurement=product[product['Артикул'] == product_id][['Ед. изм']].values[0],
-                         prod_id=product_id,
-                         amount=product[product['Артикул'] == product_id][['Количество в упаковке']].values[0],
-                         district=district,
-                         dates_info=self.dates,
-                         movement_type1_3=movement_type1_3,
-                         movement_type4=movement_type4)
+                              name=products[product_id].name,
+                              price=price_list[product_id],
+                              provider=provider,
+                              measurement=product[product['Артикул'] == product_id][['Ед. изм']].values[0],
+                              prod_id=product_id,
+                              amount=product[product['Артикул'] == product_id][['Количество в упаковке']].values[0],
+                              district=district,
+                              dates_info=self.dates,
+                              movement_type1_3=movement_type1_3,
+                              movement_type4=movement_type4)
         task, ans = task.gen()
         self.text += task
         self.correct = ans
