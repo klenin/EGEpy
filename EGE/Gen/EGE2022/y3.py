@@ -55,7 +55,7 @@ class TaskType1(Task):
         accepted = movement[movement['Тип операции'] == 'Поступление']['Количество упаковок, шт.'].sum()
         soled = movement[movement['Тип операции'] == 'Продажа']['Количество упаковок, шт.'].sum()
         self.correct = accepted - soled
-        self.text = (f"на сколько увеличилось количество упаковок {self.name}  что, "
+        self.text = (f"на сколько увеличилось количество упаковок товара \"{self.name}\" "
                      f"имеющихся в наличии в магазинах {self.district} за период c {self.dates_info[0]} по "
                      f"{self.dates_info[-1]} "
                      "В ответе запишите только число.</p>")
@@ -71,8 +71,8 @@ class TaskType2(Task):
 
     def gen(self):
         fork = self.fork()
-        var = 0
-        self.text = (f"сколько {measure_genetive(self.measurement)}"
+        #var = 0
+        self.text = (f"сколько {measure_genetive(self.measurement)} "
                      f"товара \"{self.name}\" {fork} в "
                      f"магазинах {districts_genetive(self.district)} района за период с "
                      f"{self.dates_info[0]} до {self.dates_info[-1]}\n"
@@ -99,7 +99,7 @@ class TaskType3(Task):
 
     def gen(self):
         fork = self.fork()
-        var = 0
+        #var = 0
         self.text = (f"сколько рублей {fork[0]} "
                      f"{districts_genetive(self.district)} района {fork[1]} "
                      f"товара \"{self.name}\" за период с "
@@ -127,7 +127,7 @@ class TaskType4(TaskType3):
 
     def gen(self):
         fork = self.fork()
-        var = 0
+        #var = 0
         self.text = (f"сколько рублей {fork[0]} "
                      f"{districts_genetive(self.district)} района {fork[1]} "
                      f"товаров поставщика \"{self.provider}\" за период с "
@@ -145,7 +145,7 @@ class TaskType4(TaskType3):
 
 
 class GenDatabase(DirectInput):
-    def __init__(self, rnd, type):
+    def __init__(self, rnd, num):
         self.text = (
             "<p>В файле приведён фрагмент базы данных «Продукты», содержащей"
             "информацию о поставках товаров и их продаже.База данных состоит из трёх таблиц.</p>"
@@ -154,11 +154,12 @@ class GenDatabase(DirectInput):
             "в первой декаде июня 2021г. и о продаже товаров в этот же период.Таблица «Товар» содержит"
             " данные о товарах.Таблица «Магазин» содержит адреса магазинов."
             "На рисунке приведена схема базы данных, содержащая все поля каждой таблицы и связи между ними.</p>"
-            "<img src=\"EGE/Gen/EGE2022/ER-db.png\" style = \"display: block; margin-left: auto;margin-right: auto;\"/>\n"
+            "<img src=\"EGE/Gen/EGE2022/ER-db.png\" "
+            "style = \"display: block; margin-left: auto;margin-right: auto;\"/>\n"
             "<p>Используя информацию из приведённой базы данных, определите, "
         )
         self.rnd = rnd
-        self.type = type
+        self.num = num
         self.dates = ['0' + str(i + 1) + '.06.2021' for i in range(rnd.in_range(3, 6))]  # rnd.pick([4, 6, 8])
         self.number_of_shops = rnd.in_range(10, 18)
         self.number_of_rows = self.number_of_shops * 142
@@ -169,7 +170,7 @@ class GenDatabase(DirectInput):
             self.number_of_shops += 1
         self.addresses = [addresses[rnd.in_range(0, 15)] + ", " + str(rnd.in_range(1, 30)) for _ in
                           range(self.number_of_shops)]
-        self.districts = [rnd.pick(districts) for i in range(self.number_of_shops)]
+        self.districts = [rnd.pick(districts) for _ in range(self.number_of_shops)]
 
     def gen_shops(self):
         shops = pd.DataFrame()
@@ -240,6 +241,8 @@ class GenDatabase(DirectInput):
         counter_days = 0
         j = 0
         for i in range(0, int(self.number_of_rows / 2), 2):
+            day = ''
+            shop = ''
             articul = self.rnd.in_range(0, len(price_list) - 1)
             if i == counter_shops:
                 counter_shops += lines_per_shop
@@ -386,7 +389,7 @@ class GenDatabase(DirectInput):
         shops, shops_ids = self.gen_shops()
         product, shops = pd.DataFrame(product), pd.DataFrame(shops)
         movement = pd.DataFrame(self.gen_movement(price_list, shops_ids))
-        self.gen_text(product, shops, movement, price_list, self.type)
+        self.gen_text(product, shops, movement, price_list, self.num)
 
         write = pd.ExcelWriter(r'EGE/Gen/EGE2022/multiple.xlsx', engine='xlsxwriter')
         movement.to_excel(write, sheet_name='Движение товаров', index=False)
