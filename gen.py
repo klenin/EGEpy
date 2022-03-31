@@ -12,13 +12,11 @@ from EGE.Gen.EGE2022 import N05, N11, N14
 rnd = EGE.Random.Random(2342134)
 
 questions = [q.generate() for q in [
-    y3.Gen_Database(rnd, 0),
-    y3.Gen_Database(rnd, 1),
-    y3.Gen_Database(rnd, 2),
-    y3.Gen_Database(rnd, 3),
-    y3.Gen_Database(rnd, 4),
-    y3.Gen_Database(rnd, 5),
-    y3.Gen_Database(rnd, 6)
+    y3.GenDatabase(rnd, 0),
+    y3.GenDatabase(rnd, 1),
+    y3.GenDatabase(rnd, 2),
+    y3.GenDatabase(rnd, 3),
+
     # A01.Recode(rnd),
     # A01.Simple(rnd),
     # A02.SportsmanNumbers(rnd),
