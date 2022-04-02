@@ -2,6 +2,7 @@ from ...RussianModules.Products import products
 from ...RussianModules.Addresses import addresses
 from ...RussianModules.Districts import districts, districts_genetive
 from ...GenBase import DirectInput
+from ..EGE2022.image import img_src
 import pandas as pd
 
 
@@ -154,7 +155,7 @@ class GenDatabase(DirectInput):
             "в первой декаде июня 2021г. и о продаже товаров в этот же период.Таблица «Товар» содержит"
             " данные о товарах.Таблица «Магазин» содержит адреса магазинов."
             "На рисунке приведена схема базы данных, содержащая все поля каждой таблицы и связи между ними.</p>"
-            "<img src=\"EGE/Gen/EGE2022/ER-db.png\" "
+            f"<img src=\"{img_src}\" "
             "style = \"display: block; margin-left: auto;margin-right: auto;\"/>\n"
             "<p>Используя информацию из приведённой базы данных, определите, "
         )
