@@ -329,7 +329,6 @@ class GenDatabase(DirectInput):
         product.to_excel(write, sheet_name='Товар', index=False)
         shops.to_excel(write, sheet_name='Магазин', index=False)
         for my_dataframe, sheet_name in zip([movement, product, shops], ['Движение товаров', 'Товар', 'Магазин']):
-            workbook = write.book
             worksheet = write.sheets[sheet_name]
             for i, col in enumerate(my_dataframe.columns):
                 column_len = my_dataframe[col].astype(str).str.len().max()
