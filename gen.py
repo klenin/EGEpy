@@ -8,7 +8,7 @@ from EGE.Gen.EGE import A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11, A
 from EGE.Gen.EGE import B01, B02, B03, B04, B05, B06, B07, B08, B10, B11, B12, B13, B14, B15
 from EGE.Gen.EGE import Z06, Z09, Z10, Z11, Z12, Z13, Z15, Z16, Z18, Z22
 
-from EGE.Gen.EGE2021 import N05
+from EGE.Gen.EGE2022 import N05
 
 rnd = EGE.Random.Random(2342134)
 
@@ -128,7 +128,7 @@ questions = [q.generate() for q in [
     Z22.CalculatorFindPrgmCount(rnd),
 ]]
 
-questions_2021 = [q.generate() for q in [
+questions_2022 = [q.generate() for q in [
     N05.FindBinaryNumber(rnd),
     N05.MachineMinAddDigits(rnd),
     N05.Robot(rnd),
@@ -142,4 +142,4 @@ questions_2021 = [q.generate() for q in [
 
 if not sys.stdout.isatty():
     sys.stdout.reconfigure(encoding='utf-8') # type: ignore
-print(EGE.Html.make_html(questions + questions_2021))
+print(EGE.Html.make_html(questions + questions_2022))
