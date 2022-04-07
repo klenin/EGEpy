@@ -129,10 +129,12 @@ questions = [q.generate() for q in [
 ]]
 
 questions_2022 = [q.generate() for q in [
+    N05.Draftsman(rnd),
+    N05.RobotMigrant(rnd),
+    N05.RobotAndIronCurtain(rnd),
+    N05.Grasshopper(rnd),
     N05.FindBinaryNumber(rnd),
     N05.MachineMinAddDigits(rnd),
-    N05.Draftsman(rnd),
-    N05.Robot(rnd),
     N05.Calculator(rnd),
     N05.BinaryNumberMachine(rnd),
     N05.EightBitNumber(rnd),

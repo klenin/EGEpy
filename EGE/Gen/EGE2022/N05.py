@@ -1,9 +1,11 @@
 from dataclasses import dataclass
 from math import dist
 
-from ..EGE.Z06 import FindNumber, MinAddDigits
+from ..EGE.Z06 import FindNumber, MinAddDigits, Grasshopper
 from ...Bits import Bits
 from ...GenBase import DirectInput
+
+import EGE.Random
 
 class FindBinaryNumber(FindNumber):
     pass
@@ -16,12 +18,13 @@ class Offset:
     x: float = 0
     y: float = 0
 
+    @property
     def distance(self) -> float:
         return dist([self.x, self.y], [0, 0])
 
 class Draftsman(DirectInput):
     def generate(self):
-        algorithm, self.correct = self._gen_algorithm()
+        algorithm, self.correct = self._generate_algorithm()
         self.text = f"""
             Исполнитель Чертежник имеет перо, которое можно поднимать, опускать и перемещать. При перемещении опущенного
             пера за ним остается след в виде прямой линии. У исполнителя существуют следующие команды:<br/>Сместиться на
@@ -35,7 +38,7 @@ class Draftsman(DirectInput):
 
         return self
 
-    def _gen_algorithm(self) -> (str, int):
+    def _generate_algorithm(self) -> (str, int):
         actions = {0: "Сместиться на вектор", 1: "Повторить"}
         offset = Offset()
         algorithm = ""
@@ -52,33 +55,82 @@ class Draftsman(DirectInput):
             offset.x += repeats * x_offset
             offset.y += repeats * y_offset
 
-        return algorithm, int(offset.distance())
+        return algorithm, int(offset.distance)
 
 class Robot(DirectInput):
+    def __init__(self, rnd: EGE.Random.Random, text: str = None, correct: int = 0):
+        super().__init__(rnd, text, correct)
+        self.directions = {1: "вверх", 2: "вниз", 3: "вправо", 4: "влево"}
+        self.opposite_directions = {1: 2, 2: 1, 3: 4, 4: 3}
+
+    def _generate_path(self, length: int = 10):
+        if length < 1:
+            raise ValueError(f"Path length must be greater or equal to 1, {length} given")
+
+        path = [self.rnd.pick(list(self.directions))]
+        for i in range(1, length):
+            path.append(self.rnd.pick(list(self.directions), self.opposite_directions[int(path[i - 1])]))
+
+        return path
+
+class RobotMigrant(Robot):
     def generate(self):
-        cycles = ["1324", "1423", "2314", "2413", "3142", "3241", "4132", "4231"]
-        opposite_directions = {1: 2, 2: 1, 3: 4, 4: 3}
-        directions = list(opposite_directions.keys())
-        path = str(self.rnd.pick(directions))
-        for i in range(1, 7):
-            path += str(self.rnd.pick(directions, opposite_directions[int(path[i - 1])]))
+        path = self._generate_path(8)
 
+        tasks = [
+            "Укажите наименьшее возможное число команд, которое необходимо для того, чтобы Робот вернулся в ту же"
+            "клетку, из которой начал движение.",
+            "Укажите наименьшее возможное число команд в программе, переводящей Робота из той же начальной клетки в ту"
+            "же конечную.",
+            "Укажите наименьшее возможное число команд в программе, которая вернет Робота в начальную точку."
+        ]
         self.text = f"""
-            Исполнитель Робот действует на клетчатой доске, между соседними клетками которой могут 
-            стоять стены. Робот передвигается по клеткам доски и может выполнять команды <b>1 (вверх)</b>, 
-            <b>2 (вниз)</b>, <b>3 (вправо)</b> и <b>4 ( влево)</b>, переходя на соседнюю клетку в направлении, 
-            указанном в скобках. Если в этом направлении между клетками стоит стена, то Робот разрушается. Робот успешно 
-            выполнил программу<br/><b>{path}</b>.<br/>Какую последовательность из четырех команд должен выполнить Робот, 
-            чтобы вернуться в ту клетку, где он был перед началом выполнения программы, и не разрушиться вне зависимости 
-            от того, какие стены стоят на поле?"""
+            Исполнитель Робот ходит по клеткам бесконечной вертикальной клетчатой доски, переходя
+            по одной из команд <b>вверх</b>, <b>вниз</b>, <b>вправо</b>, <b>влево</b> в соседнюю
+            клетку в указанном направлении. Робот выполнил следующую программу:<br/>
+            <b>{"<br/>".join([self.directions[direction] for direction in path])}</b><br/>{self.rnd.pick(tasks)}"""
 
-        for cycle in cycles:
-            path = path.replace(cycle, '')
-
-        self.correct = int("".join([str(opposite_directions[int(direction)]) for direction in reversed(path)]))
+        self.correct = self._get_min_path_length(path)
         self.accept_number()
 
         return self
+
+    def _get_min_path_length(self, path: list) -> int:
+        directions_sums = {i: 0 for i in list(self.directions)}
+        for direction in path:
+            directions_sums[direction] += 1
+
+        return abs(directions_sums[1] - directions_sums[2]) + abs(directions_sums[3] - directions_sums[4])
+
+class RobotAndIronCurtain(Robot):
+    def generate(self):
+        path = self._generate_path(7)
+
+        self.text = f"""
+            Исполнитель Робот действует на клетчатой доске, между соседними клетками которой могут стоять стены.
+            Робот передвигается по клеткам доски и может выполнять команды <b>1 (вверх)</b>, <b>2 (вниз)</b>,
+            <b>3 (вправо)</b> и <b>4 ( влево)</b>, переходя на соседнюю клетку в направлении, указанном в скобках.
+            Если в этом направлении между клетками стоит стена, то Робот разрушается. Робот успешно выполнил
+            программу<br/><b>{"".join(map(str, path))}</b>.<br/>Какую последовательность из четырех команд должен
+            выполнить Робот, чтобы вернуться в ту клетку, где он был перед началом выполнения программы, и не
+            разрушиться вне зависимости от того, какие стены стоят на поле?"""
+
+        path = self._remove_cycles(path)
+        self.correct = int("".join(map(str, self._get_reversed_path(path))))
+        self.accept_number()
+
+        return self
+
+    def _remove_cycles(self, path: list) -> list:
+        cycles = ["1324", "1423", "2314", "2413", "3142", "3241", "4132", "4231"]
+        path = "".join(map(str, path))
+        for cycle in cycles:
+            path = path.replace(cycle, '')
+
+        return list(map(int, path))
+
+    def _get_reversed_path(self, path: list) -> list:
+        return [self.opposite_directions[direction] for direction in reversed(path)]
 
 class Calculator(DirectInput):
     def generate(self):
