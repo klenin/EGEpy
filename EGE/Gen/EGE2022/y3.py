@@ -171,7 +171,7 @@ class GenDatabase(DirectInput):
         self.number_of_shops = rnd.in_range(10, 18)
         self.number_of_rows = self.number_of_shops * 142
 
-        self.number_of_products = rnd.in_range(20, 65)
+        self.number_of_products = rnd.in_range(20, 64)
 
         if self.number_of_shops % 2 != 0:
             self.number_of_shops += 1
