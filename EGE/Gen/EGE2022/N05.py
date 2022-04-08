@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from math import dist
 
 from ..EGE.Z06 import FindNumber, MinAddDigits, Grasshopper
+from ..EGE.B05 import Calculator
+
 from ...Bits import Bits
 from ...GenBase import DirectInput
 
@@ -131,35 +133,6 @@ class RobotAndIronCurtain(Robot):
 
     def _get_reversed_path(self, path: list) -> list:
         return [self.opposite_directions[direction] for direction in reversed(path)]
-
-class Calculator(DirectInput):
-    def generate(self):
-        initial = self.rnd.in_range(10, 50)
-        add = self.rnd.in_range(1, 3)
-        multiply = self.rnd.in_range(2, 3)
-        result, amount = self._generate_number(initial, add, multiply)
-
-        self.text = f"""
-            Исполнитель КАЛЬКУЛЯТОР имеет только две команды, которым присвоены номера:<br/>
-            <ol><b><li>прибавь {add}</li><li>умножь на {multiply}</li></b></ol> Выполняя команду номер 1, КАЛЬКУЛЯТОР 
-            прибавляет к числу на экране {add}, а выполняя команду номер 2, умножает число на экране на {multiply}. 
-            Укажите минимальное число команд, которое должен выполнить исполнитель, чтобы получить из числа <b>{initial}
-            </b> число <b>{result}</b>."""
-        self.correct = amount
-        self.accept_number()
-
-        return self
-
-    def _generate_number(self, initial: int, add: int, multiply: int) -> (int, int):
-        result = initial
-        amount = self.rnd.in_range(5, 15)
-        for _ in range(amount):
-            if self.rnd.coin() == 0:
-                result += add
-            else:
-                result *= multiply
-
-        return result, amount
 
 class BinaryNumberMachine(DirectInput):
     def generate(self):
