@@ -134,6 +134,34 @@ class RobotAndIronCurtain(Robot):
     def _get_reversed_path(self, path: list) -> list:
         return [self.opposite_directions[direction] for direction in reversed(path)]
 
+class CalculatorBothWays(Calculator):
+    def _get_commands(self):
+        v1 = self.rnd.in_range(1, 9)
+        v2 = self.rnd.in_range(2, 5)
+        v3 = self.rnd.in_range(1, 4)
+
+        return [[
+            f"прибавь {v1}",
+            f"прибавляет к числу на экране {v1}",
+            f"прибавляет к нему {v1}",
+            lambda x: x + v1,
+        ], [
+            f"умножь на {v2}",
+            f"умножает число на экране на {v2}",
+            f"умножает его на {v2}",
+            lambda x: x * v2,
+        ], [
+            "возведи в квадрат",
+            "возводит число на экране в квадрат",
+            "возводит его в квадрат",
+            lambda x: x ** 2,
+        ], [
+            f"{self.rnd.pick(['вычти', 'отними'])} {v3}",
+            f"уменьшает число на экране на {v3}",
+            f"отнимает от числа на экране {v3}",
+            lambda x: x - v3,
+        ], ]
+
 class BinaryNumberMachine(DirectInput):
     def generate(self):
         result = self.rnd.in_range(2, 3000, 13)

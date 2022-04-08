@@ -10,7 +10,7 @@ from EGE.Gen.EGE import Z06, Z09, Z10, Z11, Z12, Z13, Z15, Z16, Z18, Z22
 
 from EGE.Gen.EGE2022 import N05
 
-rnd = EGE.Random.Random(2342134)
+rnd = EGE.Random.Random(1000)
 
 questions = [q.generate() for q in [
     A01.Recode(rnd),
@@ -133,7 +133,7 @@ questions_2022 = [q.generate() for q in [
     N05.RobotMigrant(rnd),
     N05.RobotAndIronCurtain(rnd),
     N05.Grasshopper(rnd),
-    N05.Calculator(rnd),
+    N05.CalculatorBothWays(rnd),
     N05.FindBinaryNumber(rnd),
     N05.MachineMinAddDigits(rnd),
     N05.BinaryNumberMachine(rnd),
