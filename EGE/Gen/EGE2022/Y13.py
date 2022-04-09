@@ -3,6 +3,9 @@ from dataclasses import dataclass
 from EGE.GenBase import DirectInput
 from ...Graph import Graph, GraphVertex
 
+MinVerticesCount = 10
+MaxVerticesCount = 18
+
 @dataclass
 class ObjectLabel:
     nominative: str
@@ -13,7 +16,7 @@ class PathCounting(DirectInput):
     def generate(self):
         self.vertices_label = self.rnd.pick([
             ObjectLabel('город', 'города', 'города'),
-            ObjectLabel('пункт', 'пукнта', 'пункты'),
+            ObjectLabel('пункт', 'пункта', 'пункты'),
         ])
 
         self.graph = self._generate_graph()
@@ -24,24 +27,24 @@ class PathCounting(DirectInput):
         return self._generate_intro() + ' ' + self._generate_body() + '?'
 
     def _generate_graph(self) -> Graph:
-        self.vertices_count = self.rnd.in_range(10, 18)
+        self.vertices_count = self.rnd.in_range(MinVerticesCount, MaxVerticesCount)
         self.vertices_names = self.__generate_vertices_names()
 
-        self.start_vertex_name = self.rnd.pick(self.vertices_names)
-        self.end_vertex_name = self.rnd.pick(self.vertices_names, self.start_vertex_name)
+        self.start_vertex_name = self.vertices_names[0]
+        self.end_vertex_name = self.vertices_names[-1]
         
         self.reserved_vertices_names = [ self.start_vertex_name, self.end_vertex_name ]
 
-    def _generate_body(self) -> str:
-        body = f"Сколько существует различных путей из {self.vertices_label.genitive} {self.start_vertex_name} "
-        body += f"в {self.vertices_label.nominative} {self.end_vertex_name}"
-        return body
-
     def _generate_intro(self) -> str:
-        intro = f"На рисунке {self.rnd.pick([ 'представлена', 'изображена', '—' ])}"
-        intro += f" схема дорог, связывающих {self.vertices_label.plural} {', '.join(self.vertices_names)}. "
-        intro += 'По каждой дороге можно двигаться только в одном направлении, указанном стрелкой.'
-        return intro
+        return f'''
+На рисунке {self.rnd.pick([ 'представлена', 'изображена', '—' ])}
+схема дорог, связывающих {self.vertices_label.plural} {', '.join(self.vertices_names)}.
+По каждой дороге можно двигаться только в одном направлении, указанном стрелкой.'''
+
+    def _generate_body(self) -> str:
+        return f'''
+Сколько существует различных путей из {self.vertices_label.genitive} {self.start_vertex_name}
+в {self.vertices_label.nominative} {self.end_vertex_name}'''
 
     def _get_free_vertices_names(self) -> list:
         free_names = []
@@ -50,6 +53,11 @@ class PathCounting(DirectInput):
                 [ name for name in self.vertices_names if name not in self.reserved_vertices_names ]
             )
         return free_names
+
+    def _get_and_reserve_random_free_vertex_name(self) -> str:
+        vertex_name = self.rnd.pick(self._get_free_vertices_names())
+        self.reserved_vertices_names.append(vertex_name)
+        return vertex_name
 
     def __generate_vertices_names(self) -> list:
         ignored_names = [ 'Ё', 'Й' ]
@@ -82,8 +90,7 @@ class PathCountingWithRequiredVertex(PathCounting):
         return graph
 
     def _set_required_vertex(self):
-        self.required_vertex_name = self._get_free_vertices_names()
-        self.reserved_vertices_names.append(self.required_vertex_name)
+        self.required_vertex_name = self._get_and_reserve_random_free_vertex_name()
 
     def _generate_requried_statement(self) -> str:
         return f", проходящих через {self.vertices_label.nominative} {self.required_vertex_name}"
@@ -98,8 +105,7 @@ class PathCountingWithIgnoredVertex(PathCounting):
         return graph
     
     def _set_ignored_vertex(self):
-        self.ignored_vertex_name = self._get_free_vertices_names()
-        self.reserved_vertices_names.append(self.ignored_vertex_name)
+        self.ignored_vertex_name = self._get_and_reserve_random_free_vertex_name()
 
     def _generate_ignored_statement(self) -> str:
         return f" не проходящих через {self.vertices_label.nominative} {self.ignored_vertex_name}"
@@ -107,7 +113,7 @@ class PathCountingWithIgnoredVertex(PathCounting):
 class PathCountingWithRequiredAndIgnoredVertex(PathCountingWithRequiredVertex, PathCountingWithIgnoredVertex):
     def _generate_text(self) -> str:
         text = self._generate_intro() + ' ' + self._generate_body() + self._generate_requried_statement()
-        text += self.rnd.pick([ ', но', ' и', ' и при этом' ]) + self._generate_ignored_statement() + '?'
+        text += self.rnd.pick([ ', но', ' и', '' ]) + self.rnd.pick(' при этом', '') + self._generate_ignored_statement() + '?'
         return text
 
     def _generate_graph(self) -> Graph:
@@ -115,3 +121,20 @@ class PathCountingWithRequiredAndIgnoredVertex(PathCountingWithRequiredVertex, P
         self._set_required_vertex()
         self._set_ignored_vertex()
         return graph
+
+# ToDo: Need better class name
+class PathCountingWithMutuallyExclusiveAndRequiredVertices(PathCounting):
+    def _generate_text(self) -> str:
+        text = self._generate_intro() + ' ' + self._generate_body() + self.__generate_condition_statement() + '?'
+        return text
+
+    def _generate_graph(self) -> Graph:
+        graph = PathCounting._generate_graph(self)
+        self.first_vertex_name = self._get_and_reserve_random_free_vertex_name()
+        self.scond_vertex_name = self._get_and_reserve_random_free_vertex_name()
+        return graph
+
+    def __generate_condition_statement(self) -> str:
+        return f'''
+, проходящих через {self.vertices_label.nominative} {self.first_vertex_name} или через 
+{self.vertices_label.nominative} {self.scond_vertex_name}, но не через оба этих {self.vertices_label.genitive}'''
