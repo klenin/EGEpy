@@ -65,7 +65,7 @@ class Robot(DirectInput):
         self.directions = {1: "вверх", 2: "вниз", 3: "вправо", 4: "влево"}
         self.opposite_directions = {1: 2, 2: 1, 3: 4, 4: 3}
 
-    def _generate_path(self, length: int = 10):
+    def _generate_path(self, length: int = 10) -> list:
         if length < 1:
             raise ValueError(f"Path length must be greater or equal to 1, {length} given")
 
@@ -162,6 +162,58 @@ class CalculatorBothWays(Calculator):
             lambda x: x - v3,
         ], ]
 
+class DecimalSymbolConversion(DirectInput):
+    def _get_possible_results(self, number_of_digits: int, remove_min_sum: bool, reverse: bool, selection) -> dict:
+        results = {}
+        for number in range(10 ** (number_of_digits - 1), 10 ** number_of_digits):
+            sums = self._get_digits_sums(number)
+            if remove_min_sum:
+                sums.remove(min(sums))
+            sums.sort(reverse=reverse)
+            result = int("".join(map(str, sums)))
+            if result in list(results):
+                results[result] = selection(results[result], number)
+            else:
+                results[result] = number
+
+        return results
+
+    def _get_digits_sums(self, number: int) -> list:
+        sums = []
+        for _ in range(len(str(number)) - 1):
+            sums.append(number % 10 + number // 10 % 10)
+            number //= 10
+
+        return sums
+
+class ThreeDigitNumber(DecimalSymbolConversion):
+    def generate(self):
+        pass
+
+class FourDigitNumber(DecimalSymbolConversion):
+    def generate(self):
+        min_or_max = [
+            ["наименьшее", min],
+            ["наибольшее", max],
+        ][self.rnd.coin()]
+        possible_results = self._get_possible_results(4, True, False, min_or_max[1])
+        result = self.rnd.pick(list(possible_results))
+        initial = possible_results[result]
+
+        self.text = f"""
+            Автомат получает на вход четырёхзначное число (число не может начинаться с нуля). По этому числу строится
+            новое число по следующим правилам.<ol><li>Складываются отдельно первая и вторая, вторая и третья,
+            третья и четвёртая цифры заданного числа.</li><li>Наименьшая из полученных трёх сумм удаляется.</li>
+            <li>Оставшиеся две суммы записываются друг за другом в порядке неубывания без разделителей.</li></ol>
+            <i>Пример.</i> Исходное число: 1982. Суммы: 1 + 9 = 10, 9 + 8 = 17, 8 + 2 = 10. Удаляется 10.
+            Результат: 1017.<br/>Укажите <b>{min_or_max[0]}</b> число, при обработке которого
+            автомат выдаёт результат <b>{result}</b>.<br/><b>Примечание.</b> Если меньшие из сумм равны, то
+            отбрасывают одну из них."""
+        self.correct = initial
+        self.accept_number()
+
+        return self
+
 class BinaryNumberMachine(DirectInput):
     def generate(self):
         result = self.rnd.in_range(2, 3000, 13)
@@ -204,38 +256,6 @@ class EightBitNumber(DirectInput):
         self.accept_number()
 
         return self
-
-class FourDigitNumber(DirectInput):
-    def generate(self):
-        initial = self.rnd.in_range(1000, 9999, 1982)
-        sums = self._get_digits_sums(initial)
-        sums.remove(min(sums))
-        sums.sort()
-        result = int("".join(map(str, sums)))
-
-        self.text = f"""
-            Автомат получает на вход четырёхзначное число (число не может начинаться с нуля). По этому числу строится
-            новое число по следующим правилам.<ol><li>Складываются отдельно первая и вторая, вторая и третья,
-            третья и четвёртая цифры заданного числа.</li><li>Наименьшая из полученных трёх сумм удаляется.</li>
-            <li>Оставшиеся две суммы записываются друг за другом в порядке неубывания без разделителей.</li></ol>
-            <i>Пример.</i> Исходное число: 1982. Суммы: 1 + 9 = 10, 9 + 8 = 17, 8 + 2 = 10. Удаляется 10.
-            Результат: 1017.<br/>Укажите наименьшее число, при обработке которого автомат выдаёт результат
-            <b>{result}</b>.<br/><b>Примечание.</b> Если меньшие из сумм равны, то отбрасывают одну из них."""
-        self.correct = initial
-        self.accept_number()
-
-        return self
-
-    def _get_digits_sums(self, number: int) -> list:
-        if not (1000 <= number <= 9999):
-            raise ValueError(f"{number} is not 4-digit number")
-
-        sums = []
-        for _ in range(3):
-            sums.append(number % 10 + number // 10 % 10)
-            number //= 10
-
-        return sums
 
 class LessOrEqualMachine(DirectInput):
     def generate(self):
