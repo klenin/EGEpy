@@ -2,9 +2,16 @@ from dataclasses import dataclass
 
 from EGE.GenBase import DirectInput
 from ...Graph import Graph, GraphVertex
+from ... import Html as html
 
 MinVerticesCount = 10
 MaxVerticesCount = 18
+
+MinLayerSize = 2
+MaxLayerSize = 4
+
+GraphSVGWidthDelta = 60
+GraphSVGHeight = 120
 
 @dataclass
 class ObjectLabel:
@@ -24,16 +31,63 @@ class PathCounting(DirectInput):
         return self
 
     def _generate_text(self) -> str:
-        return self._generate_intro() + ' ' + self._generate_body() + '?'
+        return self._generate_intro() + ' ' + self._generate_body() + '?' + self.__get_graph_svg()
+
+    def __get_graph_svg(self):
+        return html.div_xy(self.graph.as_svg(), (len(self.layers) - 1) * GraphSVGWidthDelta, GraphSVGHeight, margin='5px')
 
     def _generate_graph(self) -> Graph:
-        self.vertices_count = self.rnd.in_range(MinVerticesCount, MaxVerticesCount)
+        self.vertices_number = self.rnd.in_range(MinVerticesCount, MaxVerticesCount)
         self.vertices_names = self.__generate_vertices_names()
 
         self.start_vertex_name = self.vertices_names[0]
         self.end_vertex_name = self.vertices_names[-1]
         
         self.reserved_vertices_names = [ self.start_vertex_name, self.end_vertex_name ]
+
+        self.__prepare_vertices_layers()
+
+        graph = self._create_graph()
+        return graph
+
+    def __prepare_vertices_layers(self):
+        self.layers = [ [ self.start_vertex_name ] ]
+        vertices_count = 1
+        while vertices_count < self.vertices_number - 1:
+            remain_vertices = self.vertices_number - vertices_count - 1
+            if remain_vertices == 1:
+                self.layers[-1].append(self.vertices_names[vertices_count])
+                vertices_count += 1
+            else:
+                new_layer_size = self.rnd.in_range(MinLayerSize, min(MaxLayerSize, remain_vertices))
+                self.layers.append([ v for v in self.vertices_names[vertices_count:vertices_count + new_layer_size]])
+                vertices_count += new_layer_size
+        self.layers.append([ self.end_vertex_name ])
+
+    def _create_graph(self) -> Graph:
+        graph = Graph(self.__create_raw_graph())
+        return graph
+
+    def __create_raw_graph(self) -> dict:
+        raw_graph = {}
+        width = 0
+        for layer in self.layers:
+            layer_size = len(layer)
+            if layer_size == 0:
+                pass
+            elif layer_size == 1:
+                raw_graph[layer[0]] = GraphVertex(at=[ width, 60 ])
+            elif layer_size == 2:
+                raw_graph[layer[0]] = GraphVertex(at=[ width, 30 ])
+                raw_graph[layer[1]] = GraphVertex(at=[ width, 90 ])
+            else:
+                delta = GraphSVGHeight // (layer_size - 1)
+                height = 0
+                for vertex in layer:
+                    raw_graph[vertex] = GraphVertex(at=[ width, height ])
+                    height += delta
+            width += GraphSVGWidthDelta
+        return raw_graph
 
     def _generate_intro(self) -> str:
         return f'''
@@ -67,10 +121,10 @@ class PathCounting(DirectInput):
         start_symbol = 'А' if cyrillic else 'A'
         start_symbol_code = ord(start_symbol)
 
-        names = [ start_symbol for _ in range(self.vertices_count) ]
+        names = [ start_symbol for _ in range(self.vertices_number) ]
         code = start_symbol_code
         count = 0
-        while count < self.vertices_count:
+        while count < self.vertices_number:
             name = chr(code)
             code += 1
             if name in ignored_names:
