@@ -29,7 +29,9 @@ class PathCounting(DirectInput):
         ])
 
         self.graph = self._generate_graph()
+        self.visited_vertices = set()
         self.text = self._generate_text()
+        self.correct = self._get_path_count(self.start_vertex_name)
         return self
 
     def _generate_graph(self) -> Graph:
@@ -158,8 +160,30 @@ class PathCounting(DirectInput):
     def __get_graph_svg(self):
         return html.div_xy(self.graph.as_svg(oriented=True), (len(self.layers) - 1) * GraphSVGWidthDelta, GraphSVGHeight, margin='5px') 
 
-    def _get_path_count(self):
-        return self.graph.count_paths(self.start_vertex_name, self.end_vertex_name)
+    def _get_path_count(self, vertex: str, cache: dict = {}) -> int:
+        if not self._check_vertex(vertex):
+            return 0
+        if vertex == self.end_vertex_name:
+            if self._check_on_end_path():
+                cache[vertex] = 1
+                return 1
+            else:
+                return 0
+        if vertex in cache:
+            return cache[vertex]
+        path_count = 0
+        self.visited_vertices.add(vertex)
+        for edge in self.graph.edges.get(vertex, {}).keys():
+            path_count += self._get_path_count(edge, cache)
+        self.visited_vertices.remove(vertex)
+        cache[vertex] = path_count
+        return path_count
+
+    def _check_vertex(self, vertex: str):
+        return True
+
+    def _check_on_end_path(self) -> bool:
+        return True
 
     def _get_and_reserve_random_free_vertex_name(self) -> str:
         vertex_name = self.rnd.pick(self._get_free_vertices_names())
@@ -189,6 +213,12 @@ class PathCountingWithRequiredVertex(PathCounting):
     def _generate_requried_statement(self) -> str:
         return f", проходящих через {self.vertices_label.nominative} {self.required_vertex_name}"
 
+    def _check_on_end_path(self) -> bool:
+        return self._is_required_vertex_visited()
+
+    def _is_required_vertex_visited(self) -> bool:
+        return self.required_vertex_name in self.visited_vertices
+
 class PathCountingWithIgnoredVertex(PathCounting):
     def _generate_graph(self) -> Graph:
         graph = super()._generate_graph()
@@ -203,6 +233,12 @@ class PathCountingWithIgnoredVertex(PathCounting):
 
     def _generate_ignored_statement(self) -> str:
         return f" не проходящих через {self.vertices_label.nominative} {self.ignored_vertex_name}"
+    
+    def _check_vertex(self, vertex: str):
+        return not self._is_ignored_vertex(vertex)
+
+    def _is_ignored_vertex(self, vertex: str):
+        return vertex == self.ignored_vertex_name
 
 class PathCountingWithRequiredAndIgnoredVertex(PathCountingWithRequiredVertex, PathCountingWithIgnoredVertex):
     def _generate_graph(self) -> Graph:
@@ -221,10 +257,14 @@ class PathCountingWithMutuallyExclusiveAndRequiredVertices(PathCounting):
     def _generate_graph(self) -> Graph:
         graph = PathCounting._generate_graph(self)
         self.first_vertex_name = self._get_and_reserve_random_free_vertex_name()
-        self.scond_vertex_name = self._get_and_reserve_random_free_vertex_name()
+        self.second_vertex_name = self._get_and_reserve_random_free_vertex_name()
         return graph
 
     def _generate_additional_statement(self) -> str:
         return f'''
 , проходящих через {self.vertices_label.nominative} {self.first_vertex_name} или через 
-{self.vertices_label.nominative} {self.scond_vertex_name}, но не через оба этих {self.vertices_label.genitive}'''
+{self.vertices_label.nominative} {self.second_vertex_name}, но не через оба этих {self.vertices_label.genitive}'''
+
+    def _check_on_end_path(self) -> bool:
+        return (self.first_vertex_name in self.visited_vertices) != (self.second_vertex_name in self.visited_vertices)
+
