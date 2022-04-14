@@ -10,8 +10,10 @@ MaxVerticesCount = 18
 MinLayerSize = 2
 MaxLayerSize = 4
 
-GraphSVGWidthDelta = 60
-GraphSVGHeight = 120
+GraphSVGWidthDelta = 120
+GraphSVGHeight = 240
+
+ConcatenateFarVertices = True
 
 @dataclass
 class ObjectLabel:
@@ -31,10 +33,14 @@ class PathCounting(DirectInput):
         return self
 
     def _generate_text(self) -> str:
-        return self.__generate_intro() + ' ' + self.__generate_body() + self._generate_additional_statement() + '?' + self.__get_graph_svg()
+        intro = self.__generate_intro()
+        body = self.__generate_body()
+        additional_statemant = self._generate_additional_statement()
+        svg = self.__get_graph_svg()
+        return intro + ' ' + body + additional_statemant  + '?' + svg
 
     def __get_graph_svg(self):
-        return html.div_xy(self.graph.as_svg(), (len(self.layers) - 1) * GraphSVGWidthDelta, GraphSVGHeight, margin='5px')
+        return html.div_xy(self.graph.as_svg(oriented=True), (len(self.layers) - 1) * GraphSVGWidthDelta, GraphSVGHeight, margin='5px')
 
     def _generate_graph(self) -> Graph:
         self.vertices_number = self.rnd.in_range(MinVerticesCount, MaxVerticesCount)
@@ -66,6 +72,7 @@ class PathCounting(DirectInput):
 
     def _create_graph(self) -> Graph:
         graph = Graph(self.__create_raw_graph())
+        self.__set_edges_to_graph(graph)
         return graph
 
     def __create_raw_graph(self) -> dict:
@@ -76,10 +83,10 @@ class PathCounting(DirectInput):
             if layer_size == 0:
                 pass
             elif layer_size == 1:
-                raw_graph[layer[0]] = GraphVertex(at=[ width, 60 ])
+                raw_graph[layer[0]] = GraphVertex(at=[ width, GraphSVGHeight / 2 ])
             elif layer_size == 2:
-                raw_graph[layer[0]] = GraphVertex(at=[ width, 30 ])
-                raw_graph[layer[1]] = GraphVertex(at=[ width, 90 ])
+                raw_graph[layer[0]] = GraphVertex(at=[ width, GraphSVGHeight / 4 ])
+                raw_graph[layer[1]] = GraphVertex(at=[ width, 3 * GraphSVGHeight / 4 ])
             else:
                 delta = GraphSVGHeight // (layer_size - 1)
                 height = 0
@@ -88,6 +95,35 @@ class PathCounting(DirectInput):
                     height += delta
             width += GraphSVGWidthDelta
         return raw_graph
+
+    def __set_edges_to_graph(self, graph):
+        if len(self.layers) == 1:
+            return
+        if len(self.layers) == 2:
+            graph.edge1(self.start_vertex_name, self.end_vertex_name)
+            return
+
+        for vertex_name in self.layers[1]:
+            graph.edge1(self.start_vertex_name, vertex_name)
+
+        for i in range(1, len(self.layers) - 1):
+            for j in self.rnd.shuffle(list(range(len(self.layers[i])))):
+                current_vertex_name = self.layers[i][j]
+                vertices_pull = self.layers[i + 1].copy()
+                if ConcatenateFarVertices and i + 3 < len(self.layers):
+                    vertices_pull += self.rnd.pick(self.layers[i + 2])
+                if j > 0:
+                    vertices_pull += self.layers[i][j - 1]
+                if j + 1 < len(self.layers[i]):
+                    vertices_pull += self.layers[i][j + 1]
+                edges_number = min(self.rnd.in_range(1, 4), len(vertices_pull))
+                for other_vertex_name in self.rnd.pick_n(edges_number, vertices_pull):
+                    if not (other_vertex_name in graph.edges and current_vertex_name in graph.edges[other_vertex_name]):
+                        graph.edge1(current_vertex_name, other_vertex_name)
+
+        for vertex_name in self.layers[-2]:
+            graph.edge1(vertex_name, self.end_vertex_name)
+                 
 
     def __generate_intro(self) -> str:
         return f'''
@@ -169,7 +205,7 @@ class PathCountingWithIgnoredVertex(PathCounting):
 class PathCountingWithRequiredAndIgnoredVertex(PathCountingWithRequiredVertex, PathCountingWithIgnoredVertex):
     def _generate_additional_statement(self) -> str:
         statement = self._generate_requried_statement() + self.rnd.pick([ ', но', ' и', '' ])
-        statement += self.rnd.pick(' при этом', '') + self._generate_ignored_statement()
+        statement += self.rnd.pick([ ' при этом', '' ]) + self._generate_ignored_statement()
         return statement
 
     def _generate_graph(self) -> Graph:
