@@ -84,8 +84,9 @@ class RobotMigrant(Robot):
             "клетку, из которой начал движение.",
             "Укажите наименьшее возможное число команд в программе, переводящей Робота из той же начальной клетки в ту"
             "же конечную.",
-            "Укажите наименьшее возможное число команд в программе, которая вернет Робота в начальную точку."
+            "Укажите наименьшее возможное число команд в программе, которая вернет Робота в начальную точку.",
         ]
+
         self.text = f"""
             Исполнитель Робот ходит по клеткам бесконечной вертикальной клетчатой доски, переходя
             по одной из команд <b>вверх</b>, <b>вниз</b>, <b>вправо</b>, <b>влево</b> в соседнюю
@@ -163,42 +164,89 @@ class CalculatorBothWays(Calculator):
         ], ]
 
 class DecimalSymbolConversion(DirectInput):
-    def _get_possible_results(self, number_of_digits: int, remove_min_sum: bool, reverse: bool, selection) -> dict:
+    def __init__(self, rnd: EGE.Random.Random):
+        super().__init__(rnd)
+        self.selections = [{
+            "function": min,
+            "text": "Укажите <b>наименьшее</b> число, в результате обработки которого автомат выдаст число"
+        }, {
+            "function": max,
+            "text": "Укажите <b>наибольшее</b> число, в результате обработки которого автомат выдаст число"
+        }, {
+            "function": len,
+            "text": "<b>Сколько</b> существует чисел, в результате обработки которых автомат выдаст число"
+        }, ]
+        self.actions = [
+            {"operator": '*', "function": self._get_product, "text": "Перемножаются"},
+            {"operator": '+', "function": self._get_sum, "text": "Складываются"},
+        ]
+        self.sorts = [
+            {"reverse": True, "text": ["убывания", "невозрастания"]},
+            {"reverse": False, "text": ["возрастания", "неубывания"]},
+        ]
+
+    def _get_possible_results(self, number_of_digits: int, function, remove_min_sum: bool, reverse: bool) -> dict:
         results = {}
         for number in range(10 ** (number_of_digits - 1), 10 ** number_of_digits):
-            sums = self._get_digits_sums(number)
+            sums = self._get_processed_digits(number, function)
             if remove_min_sum:
                 sums.remove(min(sums))
             sums.sort(reverse=reverse)
             result = int("".join(map(str, sums)))
             if result in list(results):
-                results[result] = selection(results[result], number)
+                results[result].append(number)
             else:
-                results[result] = number
+                results[result] = [number]
 
         return results
 
-    def _get_digits_sums(self, number: int) -> list:
-        sums = []
+    def _get_processed_digits(self, number: int, function) -> list:
+        processed = []
         for _ in range(len(str(number)) - 1):
-            sums.append(number % 10 + number // 10 % 10)
+            processed.append(function(number % 10, number // 10 % 10))
             number //= 10
 
-        return sums
+        return processed
+
+    def _get_sum(self, a: int, b: int) -> int:
+        return a + b
+
+    def _get_product(self, a: int, b: int) -> int:
+        return a * b
 
 class ThreeDigitNumber(DecimalSymbolConversion):
     def generate(self):
-        pass
+        sort = self.rnd.pick(self.sorts)
+        action = self.rnd.pick(self.actions)
+        selection = self.rnd.pick(self.selections)
+
+        possible_results = self._get_possible_results(number_of_digits=3, function=action["function"], remove_min_sum=False, reverse=sort["reverse"])
+        result = self.rnd.pick(list(possible_results))
+        initial = selection["function"](possible_results[result])
+
+        example_text = f"""
+            <i>Пример.</i> Исходное число: 348. Суммы: 3 {action["operator"]} 4 = {action["function"](3, 4)};
+            4 {action["operator"]} 8 = {action["function"](4, 8)}. Результат:
+            {"".join(map(str, sorted([action["function"](3, 4), action["function"](4, 8)], reverse=sort["reverse"])))}.
+            <br/>"""
+
+        self.text = f"""
+            Автомат получает на вход трёхзначное число. По этому числу строится новое число по следующим правилам.
+            <ol><li>{action["text"]} первая и вторая, а также вторая и третья цифры исходного числа.</li><li>Полученные
+            два числа записываются друг за другом в порядке {sort["text"][self.rnd.coin()]} (без разделителей).
+            </li></ol>{example_text} {selection["text"]} <b>{result}</b>."""
+        self.correct = initial
+        self.accept_number()
+
+        return self
 
 class FourDigitNumber(DecimalSymbolConversion):
     def generate(self):
-        min_or_max = [
-            ["наименьшее", min],
-            ["наибольшее", max],
-        ][self.rnd.coin()]
-        possible_results = self._get_possible_results(4, True, False, min_or_max[1])
+        selection = self.rnd.pick(self.selections, self.selections[2])
+
+        possible_results = self._get_possible_results(number_of_digits=4, function=self._get_sum, remove_min_sum=True, reverse=False)
         result = self.rnd.pick(list(possible_results))
-        initial = possible_results[result]
+        initial = selection["function"](possible_results[result])
 
         self.text = f"""
             Автомат получает на вход четырёхзначное число (число не может начинаться с нуля). По этому числу строится
@@ -206,9 +254,8 @@ class FourDigitNumber(DecimalSymbolConversion):
             третья и четвёртая цифры заданного числа.</li><li>Наименьшая из полученных трёх сумм удаляется.</li>
             <li>Оставшиеся две суммы записываются друг за другом в порядке неубывания без разделителей.</li></ol>
             <i>Пример.</i> Исходное число: 1982. Суммы: 1 + 9 = 10, 9 + 8 = 17, 8 + 2 = 10. Удаляется 10.
-            Результат: 1017.<br/>Укажите <b>{min_or_max[0]}</b> число, при обработке которого
-            автомат выдаёт результат <b>{result}</b>.<br/><b>Примечание.</b> Если меньшие из сумм равны, то
-            отбрасывают одну из них."""
+            Результат: 1017.<br/>{selection["text"]} <b>{result}</b>.<br/><b>Примечание.</b> Если меньшие из сумм равны,
+            то отбрасывают одну из них."""
         self.correct = initial
         self.accept_number()
 
