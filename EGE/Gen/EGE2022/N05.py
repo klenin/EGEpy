@@ -157,7 +157,7 @@ class CalculatorBothWays(Calculator):
             "возводит его в квадрат",
             lambda x: x ** 2,
         ], [
-            f"{self.rnd.pick(['вычти', 'отними'])} {v3}",
+            f"""{self.rnd.pick(["вычти", "отними"])} {v3}""",
             f"уменьшает число на экране на {v3}",
             f"отнимает от числа на экране {v3}",
             lambda x: x - v3,
@@ -166,33 +166,38 @@ class CalculatorBothWays(Calculator):
 class DecimalSymbolConversion(DirectInput):
     def __init__(self, rnd: EGE.Random.Random):
         super().__init__(rnd)
+
+        self.THREE_DIGIT_NUMBER = 3
+        self.FOUR_DIGIT_NUMBER = 4
+        self.FIVE_DIGIT_NUMBER = 5
+
         self.selections = [{
             "function": min,
-            "text": "Укажите <b>наименьшее</b> число, в результате обработки которого автомат выдаст число"
+            "text": "Укажите <b>наименьшее</b> число, в результате обработки которого автомат выдаст число",
         }, {
             "function": max,
-            "text": "Укажите <b>наибольшее</b> число, в результате обработки которого автомат выдаст число"
+            "text": "Укажите <b>наибольшее</b> число, в результате обработки которого автомат выдаст число",
         }, {
             "function": len,
-            "text": "<b>Сколько</b> существует чисел, в результате обработки которых автомат выдаст число"
+            "text": "<b>Сколько</b> существует чисел, в результате обработки которых автомат выдаст число",
         }, ]
         self.actions = [
-            {"operator": '*', "function": self._get_product, "text": "Перемножаются"},
-            {"operator": '+', "function": self._get_sum, "text": "Складываются"},
+            {"operator": '*', "function": self._get_product, "verb": "Перемножаются", "noun": "Произведения"},
+            {"operator": '+', "function": self._get_sum, "verb": "Складываются", "noun": "Суммы"},
         ]
         self.sorts = [
             {"reverse": True, "text": ["убывания", "невозрастания"]},
             {"reverse": False, "text": ["возрастания", "неубывания"]},
         ]
 
-    def _get_possible_results(self, number_of_digits: int, function, remove_min_sum: bool, reverse: bool) -> dict:
+    def _get_possible_results(self, number_of_digits: int, function, remove_min_processed_digit: bool, reverse: bool, step: int = 1) -> dict:
         results = {}
         for number in range(10 ** (number_of_digits - 1), 10 ** number_of_digits):
-            sums = self._get_processed_digits(number, function)
-            if remove_min_sum:
-                sums.remove(min(sums))
-            sums.sort(reverse=reverse)
-            result = int("".join(map(str, sums)))
+            processed_digits = self._get_processed_digits(number, function, step)
+            if remove_min_processed_digit:
+                processed_digits.remove(min(processed_digits))
+            processed_digits.sort(reverse=reverse)
+            result = int("".join(map(str, processed_digits)))
             if result in list(results):
                 results[result].append(number)
             else:
@@ -200,11 +205,17 @@ class DecimalSymbolConversion(DirectInput):
 
         return results
 
-    def _get_processed_digits(self, number: int, function) -> list:
-        processed = []
-        for _ in range(len(str(number)) - 1):
-            processed.append(function(number % 10, number // 10 % 10))
-            number //= 10
+    def _get_processed_digits(self, number: int, function, step: int = 1) -> list:
+        string_number = str(number)
+        if len(string_number) == 5:
+            processed = [int(string_number[0]), int(string_number[1])]
+            for i, digit in enumerate(string_number[2:]):
+                processed[i % 2] = function(processed[i % 2], int(digit))
+        else:
+            processed = []
+            for _ in range(len(string_number) - step):
+                processed.append(function(number % 10, number // 10 % 10))
+                number //= 10 ** step
 
         return processed
 
@@ -220,21 +231,26 @@ class ThreeDigitNumber(DecimalSymbolConversion):
         action = self.rnd.pick(self.actions)
         selection = self.rnd.pick(self.selections)
 
-        possible_results = self._get_possible_results(number_of_digits=3, function=action["function"], remove_min_sum=False, reverse=sort["reverse"])
+        possible_results = self._get_possible_results(
+            number_of_digits=self.THREE_DIGIT_NUMBER,
+            function=action["function"],
+            remove_min_processed_digit=False,
+            reverse=sort["reverse"],
+        )
         result = self.rnd.pick(list(possible_results))
         initial = selection["function"](possible_results[result])
 
         example_text = f"""
-            <i>Пример.</i> Исходное число: 348. Суммы: 3 {action["operator"]} 4 = {action["function"](3, 4)};
+            <i>Пример.</i> Исходное число: 348. {action["noun"]}: 3 {action["operator"]} 4 = {action["function"](3, 4)};
             4 {action["operator"]} 8 = {action["function"](4, 8)}. Результат:
             {"".join(map(str, sorted([action["function"](3, 4), action["function"](4, 8)], reverse=sort["reverse"])))}.
             <br/>"""
 
         self.text = f"""
             Автомат получает на вход трёхзначное число. По этому числу строится новое число по следующим правилам.
-            <ol><li>{action["text"]} первая и вторая, а также вторая и третья цифры исходного числа.</li><li>Полученные
+            <ol><li>{action["verb"]} первая и вторая, а также вторая и третья цифры исходного числа.</li><li>Полученные
             два числа записываются друг за другом в порядке {sort["text"][self.rnd.coin()]} (без разделителей).
-            </li></ol>{example_text} {selection["text"]} <b>{result}</b>."""
+            </li></ol>{example_text}{selection["text"]} <b>{result}</b>."""
         self.correct = initial
         self.accept_number()
 
@@ -242,20 +258,37 @@ class ThreeDigitNumber(DecimalSymbolConversion):
 
 class FourDigitNumber(DecimalSymbolConversion):
     def generate(self):
+        sort = self.rnd.pick(self.sorts)
+        action = self.rnd.pick(self.actions)
         selection = self.rnd.pick(self.selections, self.selections[2])
+        variant = self.rnd.pick([{
+            "step": 1,
+            "remove_min_processed_digit": True,
+            "text": f"""{action["verb"]} отдельно первая и вторая, вторая и третья, третья и четвёртая цифры числа.""",
+        }, {
+            "step": 2,
+            "remove_min_processed_digit": False,
+            "text": f"""{action["verb"]} первая и вторая, а также третья и четвёртая цифры исходного числа.""",
+        }, ])
 
-        possible_results = self._get_possible_results(number_of_digits=4, function=self._get_sum, remove_min_sum=True, reverse=False)
+        possible_results = self._get_possible_results(
+            number_of_digits=self.FOUR_DIGIT_NUMBER,
+            function=action["function"],
+            remove_min_processed_digit=variant["remove_min_processed_digit"],
+            reverse=sort["reverse"],
+            step=variant["step"],
+        )
         result = self.rnd.pick(list(possible_results))
         initial = selection["function"](possible_results[result])
 
         self.text = f"""
-            Автомат получает на вход четырёхзначное число (число не может начинаться с нуля). По этому числу строится
-            новое число по следующим правилам.<ol><li>Складываются отдельно первая и вторая, вторая и третья,
-            третья и четвёртая цифры заданного числа.</li><li>Наименьшая из полученных трёх сумм удаляется.</li>
-            <li>Оставшиеся две суммы записываются друг за другом в порядке неубывания без разделителей.</li></ol>
-            <i>Пример.</i> Исходное число: 1982. Суммы: 1 + 9 = 10, 9 + 8 = 17, 8 + 2 = 10. Удаляется 10.
-            Результат: 1017.<br/>{selection["text"]} <b>{result}</b>.<br/><b>Примечание.</b> Если меньшие из сумм равны,
-            то отбрасывают одну из них."""
+            Автомат получает на вход четырёхзначное число (число не может начинаться с нуля). По этому
+            числу строится новое число по следующим правилам.<ol><li>{variant["text"]}</li>
+            {"<li>Наименьшее из полученных чисел удаляется.</li>" if variant["remove_min_processed_digit"] else ""}
+            <li>Получившиеся два числа записываются друг за другом в порядке {sort["text"][self.rnd.coin()]} без
+            разделителей.</li></ol>{selection["text"]} <b>{result}</b>.<br/>
+            {"<b>Примечание.</b> Если меньшие из чисел равны на 2 шаге, то отбрасывают только одно число."
+            if variant["remove_min_processed_digit"] else ""}"""
         self.correct = initial
         self.accept_number()
 
