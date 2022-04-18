@@ -110,3 +110,48 @@ class TwoLinearFunctions(DirectInput):
 Для Вашего удобства программа представлена на разных языках программирования. {lt}"""
         return self
 
+class InputTwoLinearFunctions(DirectInput):
+    def generate(self):
+        num_iteration = self.rnd.in_range(4, 10)
+        task_type = self.rnd.in_range(0, 2)
+
+        if task_type == 0:
+            loop_op, s_op, n_op = '<', '+', '*'
+            s_arg = self.rnd.in_range(2, 20)
+            n_arg = self.rnd.in_range(2, 5)
+            n_init = self.rnd.in_range(1, 10)
+            loop_arg = num_iteration * s_arg + self.rnd.in_range(1, 100)
+            num = n_init * (n_arg ** num_iteration)
+            ans = loop_arg - (num_iteration - 1) * s_arg - 1
+        elif task_type == 1:
+            loop_op, s_op, n_op = '<', '*', '+'
+            s_arg = self.rnd.in_range(2, 5)
+            n_arg = self.rnd.in_range(1, 20)
+            n_init = self.rnd.in_range(20, 100)
+            loop_arg = (s_arg ** num_iteration) + self.rnd.in_range(1, 200)
+            num = n_init + num_iteration * n_arg
+            tmp = s_arg ** (num_iteration - 1)
+            ans = loop_arg // tmp - (1 if loop_arg % tmp == 0 else 0)
+        else:
+            loop_op, s_op, n_op = '>', '-', '//'
+            n_arg = self.rnd.in_range(2, 4)
+            s_arg = self.rnd.in_range(5, 20)
+            n_init = n_arg ** num_iteration + self.rnd.in_range(10, 100)
+            loop_arg = self.rnd.in_range(0, 10)
+            num = n_init // (n_arg ** num_iteration)
+            ans = loop_arg + num_iteration * s_arg
+
+        code_block = make_block([
+            'expr', [ 'input', 's' ],
+            '=', 'n', n_init,
+            'while', [ loop_op, 's', loop_arg ],
+            [ '=', 's', [ s_op, 's', s_arg], '=', 'n', [ n_op, 'n', n_arg], ],
+            'expr', [ 'print', 'num', 'n' ]
+        ])
+        lt = table(code_block, [['Basic', 'Alg'], ['Pascal', 'C']])
+        self.correct = ans
+        self.accept = r"^\-?\d+"
+        self.text = f"""
+Определите, при каком наибольшем введённом значении переменной s программа выведет число {num}.  
+Для Вашего удобства программа представлена на разных языках программирования. {lt}"""
+        return self

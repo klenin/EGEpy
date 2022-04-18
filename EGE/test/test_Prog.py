@@ -625,6 +625,17 @@ end;"""
         for lang in c.keys():
             self.check_sub(lang, b, c[lang], f"print str in {lang}")
 
+    def test_input_int(self):
+        eq = self.assertEqual
+        b = make_block([ 'expr', [ 'input', 'i' ] ])
+        c = {
+            'Basic': [ 'INPUT i' ],
+            'Alg': [ 'ввод i' ],
+            'Pascal': [ 'readln(i);' ],
+            'C': [ 'scanf("%d", &i);' ],
+        }
+        for lang in c:
+            self.check_sub(lang, b, c[lang], f"print in {lang}")
 
 
 if __name__ == '__main__':
