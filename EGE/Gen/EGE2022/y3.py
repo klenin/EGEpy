@@ -199,9 +199,6 @@ class GenDatabase(DirectInput):
         return shops
 
     def gen_products(self):
-        # it could me more random if choose random product name and delete it from list of products
-        # for the first time its good as it is
-        # but if you'll do it,then you should somehow give list of products to gen_text()
         product = []
         price_list = []
         for i in range(self.number_of_products):
@@ -306,7 +303,6 @@ class GenDatabase(DirectInput):
         product_list = product[product['Поставщик'] == provider]['Артикул'].to_list()
         movement_type4 = movement[movement['Артикул'].isin(product_list)].copy()
         movement_type4 = movement_type4[movement_type4['ID Магазина'].isin(shop_to_filter)]
-        # task_type = self.rnd.pick([FirstProblemType, SecondProblemType, ThirdProblemType, ForthProblemType])
         task_type = [FirstProblemType, SecondProblemType, ThirdProblemType, ForthProblemType]
         task = task_type[num](rnd=self.rnd,
                               name=products[product_id].name,
