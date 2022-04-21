@@ -15,7 +15,7 @@ def measure_genetive(name):
         return 'литров'
 
 
-class Task:
+class Problem:
     def __init__(self,
                  rnd,
                  name: str,
@@ -42,8 +42,11 @@ class Task:
         self.text = ""
         self.correct = -1
 
+    def mutation(self):
+        global mutations
+        return self.rnd.pick(list(mutations.keys()))
 
-class TaskType1(Task):
+class FirstProblemType(Problem):
     def __init__(self, rnd, name, price, provider, measurement, prod_id, amount, district, dates_info, movement_type1_3,
                  movement_type4):
         super().__init__(rnd, name, price, provider, measurement, prod_id, amount, district, dates_info,
@@ -62,22 +65,25 @@ class TaskType1(Task):
         return self.text, self.correct
 
 
-class TaskType2(Task):
+class SecondProblemType(Problem):
+    mutations = {1: 'было продано',
+                 2: 'появилось'}
+
     def __init__(self, rnd, name, price, provider, measurement, prod_id, amount, district, dates_info, movement_type1_3,
                  movement_type4):
         super().__init__(rnd, name, price, provider, measurement, prod_id, amount, district, dates_info,
                          movement_type1_3, movement_type4)
 
     def gen(self):
-        fork = self.fork()
+        mutation = mutations[self.mutation()]
         movement = self.movement_type1_3[self.movement_type1_3['Артикул'] == self.prod_id]
         # var = 0
         self.text = (f"сколько {measure_genetive(self.measurement)} "
-                     f"товара \"{self.name}\" {fork} в "
+                     f"товара \"{self.name}\" {mutation} в "
                      f"магазинах {districts_genetive(self.district)} района за период с "
                      f"{self.dates_info[0]} до {self.dates_info[-1]}.\n"
                      "В ответе запишите только число. Ответ округлите до десятых.</p>")
-        if fork == 'было продано':
+        if mutation == 'было продано':
             var = movement[movement['Тип операции'] == 'Продажа'][
                 'Количество упаковок, шт.'].sum()
         else:
@@ -87,26 +93,26 @@ class TaskType2(Task):
         self.correct = var * self.amount
         return self.text, self.correct
 
-    def fork(self):
-        return self.rnd.pick(['было продано', 'появилось'])
 
+class ThirdProblemType(Problem):
+    mutations = {1: ['потребовалось магазинам', 'для закупки'],
+                 2: ['выручили магазины', 'от продажи']}
 
-class TaskType3(Task):
     def __init__(self, rnd, name, price, provider, measurement, prod_id, amount, district, dates_info, movement_type1_3,
                  movement_type4):
         super().__init__(rnd, name, price, provider, measurement, prod_id, amount, district, dates_info,
                          movement_type1_3, movement_type4)
 
     def gen(self):
-        fork = self.fork()
+        mutation = mutations[self.mutation()]
         movement = self.movement_type1_3[self.movement_type1_3['Артикул'] == self.prod_id]
         # var = 0
-        self.text = (f"сколько рублей {fork[0]} "
-                     f"{districts_genetive(self.district)} района {fork[1]} "
+        self.text = (f"сколько рублей {mutation[0]} "
+                     f"{districts_genetive(self.district)} района {mutation[1]} "
                      f"товара \"{self.name}\" за период с "
                      f"{self.dates_info[0]} до {self.dates_info[-1]}.\n"
                      "В ответе запишите только число.</p>")
-        if fork[0] == 'выручили магазины':
+        if mutation[0] == 'выручили магазины':
             var = movement[movement['Тип операции'] == 'Продажа'][
                 'Количество упаковок, шт.'].sum()
         else:
@@ -116,25 +122,21 @@ class TaskType3(Task):
         self.correct = var * self.price
         return self.text, self.correct
 
-    def fork(self):
-        return self.rnd.pick([['потребовалось магазинам', 'для закупки'], ['выручили магазины', 'от продажи']])
 
-
-class TaskType4(TaskType3):
+class ForthProblemType(ThirdProblemType):
     def __init__(self, rnd, name, price, provider, measurement, prod_id, amount, district, dates_info, movement_type1_3,
                  movement_type4):
         super().__init__(rnd, name, price, provider, measurement, prod_id, amount, district, dates_info,
                          movement_type1_3, movement_type4)
 
     def gen(self):
-        fork = self.fork()
-        # var = 0
-        self.text = (f"сколько рублей {fork[0]} "
-                     f"{districts_genetive(self.district)} района {fork[1]} "
+        mutation = self.mutation()
+        self.text = (f"сколько рублей {mutation[0]} "
+                     f"{districts_genetive(self.district)} района {mutation[1]} "
                      f"товаров поставщика \"{self.provider}\" за период с "
                      f"{self.dates_info[0]} до {self.dates_info[-1]}.\n"
                      "В ответе запишите только число.</p>")
-        if fork[0] == 'потребовалось магазинам':
+        if mutation[0] == 'потребовалось магазинам':
             var = self.movement_type4[self.movement_type4['Тип операции'] == 'Поступление'][
                 'Количество упаковок, шт.']
             var = var * self.movement_type4[self.movement_type4['Тип операции'] == 'Поступление'][
@@ -299,8 +301,8 @@ class GenDatabase(DirectInput):
         product_list = product[product['Поставщик'] == provider]['Артикул'].to_list()
         movement_type4 = movement[movement['Артикул'].isin(product_list)].copy()
         movement_type4 = movement_type4[movement_type4['ID Магазина'].isin(shop_to_filter)]
-        # task_type = self.rnd.pick([TaskType1, TaskType2, TaskType3, TaskType4])
-        task_type = [TaskType1, TaskType2, TaskType3, TaskType4]
+        # task_type = self.rnd.pick([FirstProblemType, SecondProblemType, ThirdProblemType, ForthProblemType])
+        task_type = [FirstProblemType, SecondProblemType, ThirdProblemType, ForthProblemType]
         task = task_type[num](rnd=self.rnd,
                               name=products[product_id].name,
                               price=price_list[product_id],
