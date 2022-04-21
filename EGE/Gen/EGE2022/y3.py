@@ -46,6 +46,7 @@ class Problem:
         global mutations
         return self.rnd.pick(list(mutations.keys()))
 
+
 class FirstProblemType(Problem):
     def __init__(self, rnd, name, price, provider, measurement, prod_id, amount, district, dates_info, movement_type1_3,
                  movement_type4):
@@ -86,7 +87,7 @@ class SecondProblemType(Problem):
         if mutation == 'было продано':
             var = movement[movement['Тип операции'] == 'Продажа'][
                 'Количество упаковок, шт.'].sum()
-        else:
+        elif mutation == 'появилось':
             var = movement[movement['Тип операции'] == 'Поступление'][
                 'Количество упаковок, шт.'].sum()
 
@@ -115,7 +116,7 @@ class ThirdProblemType(Problem):
         if mutation[0] == 'выручили магазины':
             var = movement[movement['Тип операции'] == 'Продажа'][
                 'Количество упаковок, шт.'].sum()
-        else:
+        elif mutation[0] == 'потребовалось магазинам':
             var = movement[movement['Тип операции'] == 'Поступление'][
                 'Количество упаковок, шт.'].sum()
 
@@ -142,7 +143,7 @@ class ForthProblemType(ThirdProblemType):
             var = var * self.movement_type4[self.movement_type4['Тип операции'] == 'Поступление'][
                 'Цена руб./шт.']
             var = var.sum()
-        else:
+        elif mutation[0] == 'выручили магазины':
             var = self.movement_type4[self.movement_type4['Тип операции'] == 'Продажа'][
                 'Количество упаковок, шт.'].sum()
             var = var * self.movement_type4[self.movement_type4['Тип операции'] == 'Продажа'][
@@ -154,6 +155,8 @@ class ForthProblemType(ThirdProblemType):
 
 
 class GenDatabase(DirectInput):
+    CONST_rows_per_shop = 142
+
     def __init__(self, rnd, num):
         self.text = (
             "<p>В файле приведён фрагмент базы данных «Продукты», содержащей"
@@ -167,11 +170,13 @@ class GenDatabase(DirectInput):
             "style = \"display: block; margin-left: auto;margin-right: auto;\"/>\n"
             "<p>Используя информацию из приведённой базы данных, определите, "
         )
+
+        global CONST_rows_per_shop
         self.rnd = rnd
         self.num = num
         self.dates = ['0' + str(i + 1) + '.06.2021' for i in range(rnd.in_range(3, 6))]  # rnd.pick([4, 6, 8])
         self.number_of_shops = rnd.in_range(10, 18)
-        self.number_of_rows = self.number_of_shops * 142
+        self.number_of_rows = self.number_of_shops * CONST_rows_per_shop
 
         self.number_of_products = rnd.in_range(20, 64)
 
@@ -236,11 +241,11 @@ class GenDatabase(DirectInput):
             if num_days <= 1:
                 res.append(num_rows)
                 break
-            r = self.rnd.in_range(100, num_rows / 2)
-            if r % 2 != 0:
-                r += 1
-            res.append(r)
-            num_rows -= r
+            rows_per_day = self.rnd.in_range(100, num_rows / 2)
+            if rows_per_day % 2 != 0:
+                rows_per_day += 1
+            res.append(rows_per_day)
+            num_rows -= rows_per_day
             num_days -= 1
         return res
 
