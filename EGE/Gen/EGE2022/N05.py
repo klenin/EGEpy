@@ -383,7 +383,7 @@ class NaturalNumber(DirectInput):
 
         return self
 
-    def _get_possible_results(self):
+    def _get_possible_results(self) -> dict:
         results = {}
         for number in range(101, 1000):
             digits = sorted([int(a) for a in str(number)])
@@ -395,6 +395,34 @@ class NaturalNumber(DirectInput):
                 min_number = int(str(digits[1]) + str(digits[0]))
 
             result = max_number - min_number
+            results[result] = min(results[result], number) if result in list(results) else number
+
+        return results
+
+class RemainderOfDivision(DirectInput):
+    def generate(self):
+        possible_results = self._get_possible_results()
+        result = self.rnd.pick(list(possible_results))
+        initial = possible_results[result]
+
+        self.text = f"""
+            Автомат получает на вход <b>нечётное</b> число X. По этому числу строится трёхзначное число Y по следующим
+            правилам.<ol><li>Первая цифра числа Y (разряд сотен) — остаток от деления X на 4.</li><li>Вторая цифра
+            числа Y (разряд десятков) — остаток от деления X на 3.</li><li>Третья цифра числа Y (разряд единиц) —
+            остаток от деления X на 2.</li></ol><i>Пример.</i> Исходное число: 63179. Остаток от деления на 4 равен 3;
+            остаток от деления на 3 равен 2; остаток от деления на 2 равен 1. Результат работы автомата: 321.<br/>
+            Укажите <b>наименьшее двузначное</b> число, при обработке которого автомат выдаёт результат {result}."""
+        self.correct = initial
+        self.accept_number()
+
+        return self
+
+    def _get_possible_results(self) -> dict:
+        results = {}
+        for number in range(10, 100):
+            if number % 2 == 0:
+                continue
+            result = (number % 4) * 100 + (number % 3) * 10 + (number % 2)
             results[result] = min(results[result], number) if result in list(results) else number
 
         return results
