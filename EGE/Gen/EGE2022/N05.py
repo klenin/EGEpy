@@ -324,6 +324,36 @@ class FiveDigitNumber(DecimalSymbolConversion):
 
         return self
 
+class NaturalNumber(DirectInput):
+    def generate(self):
+        possible_results = self._get_possible_results()
+        result = self.rnd.pick(list(possible_results))
+        initial = possible_results[result]
+
+        self.text = f"""
+            На вход алгоритма подаётся натуральное число N. Алгоритм строит по нему новое число следующим образом.
+            <ol><li>Из цифр, образующих десятичную запись N, строятся наибольшее и наименьшее возможные двузначные числа
+            (числа не могут начинаться с нуля).</li><li>На экран выводится разность полученных двузначных чисел.</li>
+            </ol><i>Пример.</i> Дано число N = 238. Алгоритм работает следующим образом:<ol><li>Наибольшее двузначное
+            число из заданных цифр — 83, наименьшее - 23.</li><li>На экран выводится разность 83 − 23 = 60.</li></ol>
+            Чему равно <b>наименьшее</b> возможное <b>трёхзначное</b> число N, в результате обработки которого на экране
+            автомата появится число <b>{result}</b>?"""
+        self.correct = initial
+        self.accept_number()
+
+        return self
+
+    def _get_possible_results(self):
+        results = {}
+        for number in range(101, 1000):
+            digits = sorted([int(a) for a in str(number)])
+            max_number = int(str(digits[2]) + str(digits[1]))
+            min_number = int(str(digits[0]) + str(digits[1])) if digits[0] != 0 else int(str(digits[1]) + str(digits[0]))
+            result = max_number - min_number
+            results[result] = min(results[result], number) if result in list(results) else number
+
+        return results
+
 class BinaryNumberMachine(DirectInput):
     def generate(self):
         result = self.rnd.in_range(2, 3000, 13)
