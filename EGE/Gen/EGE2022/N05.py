@@ -167,10 +167,6 @@ class DecimalSymbolConversion(DirectInput):
     def __init__(self, rnd: EGE.Random.Random):
         super().__init__(rnd)
 
-        self.THREE_DIGIT_NUMBER = 3
-        self.FOUR_DIGIT_NUMBER = 4
-        self.FIVE_DIGIT_NUMBER = 5
-
         self.selections = [{
             "function": min,
             "text": "Укажите <b>наименьшее</b> число, в результате обработки которого автомат выдаст число",
@@ -227,12 +223,13 @@ class DecimalSymbolConversion(DirectInput):
 
 class ThreeDigitNumber(DecimalSymbolConversion):
     def generate(self):
+        number_of_digits = 3
         sort = self.rnd.pick(self.sorts)
         action = self.rnd.pick(self.actions)
         selection = self.rnd.pick(self.selections)
 
         possible_results = self._get_possible_results(
-            number_of_digits=self.THREE_DIGIT_NUMBER,
+            number_of_digits=number_of_digits,
             function=action["function"],
             remove_min_processed_digit=False,
             reverse=sort["reverse"],
@@ -258,6 +255,7 @@ class ThreeDigitNumber(DecimalSymbolConversion):
 
 class FourDigitNumber(DecimalSymbolConversion):
     def generate(self):
+        number_of_digits = 4
         sort = self.rnd.pick(self.sorts)
         action = self.rnd.pick(self.actions)
         selection = self.rnd.pick(self.selections, self.selections[2])
@@ -272,7 +270,7 @@ class FourDigitNumber(DecimalSymbolConversion):
         }, ])
 
         possible_results = self._get_possible_results(
-            number_of_digits=self.FOUR_DIGIT_NUMBER,
+            number_of_digits=number_of_digits,
             function=action["function"],
             remove_min_processed_digit=variant["remove_min_processed_digit"],
             reverse=sort["reverse"],
@@ -289,6 +287,38 @@ class FourDigitNumber(DecimalSymbolConversion):
             разделителей.</li></ol>{selection["text"]} <b>{result}</b>.<br/>
             {"<b>Примечание.</b> Если меньшие из чисел равны на 2 шаге, то отбрасывают только одно число."
             if variant["remove_min_processed_digit"] else ""}"""
+        self.correct = initial
+        self.accept_number()
+
+        return self
+
+class FiveDigitNumber(DecimalSymbolConversion):
+    def generate(self):
+        number_of_digits = 5
+        action = self.actions[1]
+        sort = self.sorts[1]
+        selection = self.selections[0]
+
+        possible_results = self._get_possible_results(
+            number_of_digits=number_of_digits,
+            function=action["function"],
+            remove_min_processed_digit=False,
+            reverse=sort["reverse"],
+        )
+        result = self.rnd.pick(list(possible_results))
+        initial = selection["function"](possible_results[result])
+
+        example_text = f"""
+            <i>Пример.</i> Исходное число: 63179. {action["noun"]}: 6 {action["operator"]} 1 {action["operator"]} 9 =
+            {action["function"](action["function"](6, 1), 9)}; 3 {action["operator"]} 7 = {action["function"](3, 7)}.
+            Результат: {"".join(map(str, sorted([action["function"](action["function"](6, 1), 9), action["function"](3, 7)], reverse=sort["reverse"])))}.
+            <br/>"""
+
+        self.text = f"""
+            Автомат получает на вход пятизначное число. По этому числу строится новое число по следующим правилам.
+            <ol><li>{action["verb"]} отдельно первая, третья и пятая цифры, а также вторая и четвёртая цифры.</li>
+            <li>Полученные два числа записываются друг за другом в порядке {sort["text"][self.rnd.coin()]} без 
+            разделителей.</li></ol>{example_text}{selection["text"]} <b>{result}</b>."""
         self.correct = initial
         self.accept_number()
 
