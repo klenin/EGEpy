@@ -186,9 +186,13 @@ class DecimalSymbolConversion(DirectInput):
             {"reverse": False, "text": ["возрастания", "неубывания"]},
         ]
 
-    def _get_possible_results(self, number_of_digits: int, function, remove_min_processed_digit: bool, reverse: bool, step: int = 1) -> dict:
+    def _get_possible_results(self, number_of_digits: int, function, remove_min_processed_digit: bool, reverse: bool,
+                              step: int = 1, only_odd_digits: bool = False) -> dict:
         results = {}
         for number in range(10 ** (number_of_digits - 1), 10 ** number_of_digits):
+            if only_odd_digits and not self._odd_parity_check(number):
+                continue
+
             processed_digits = self._get_processed_digits(number, function, step)
             if remove_min_processed_digit:
                 processed_digits.remove(min(processed_digits))
@@ -221,6 +225,13 @@ class DecimalSymbolConversion(DirectInput):
     def _get_product(self, a: int, b: int) -> int:
         return a * b
 
+    def _odd_parity_check(self, number: int) -> bool:
+        for digit in str(number):
+            if int(digit) % 2 == 0:
+                return False
+
+        return True
+
 class ThreeDigitNumber(DecimalSymbolConversion):
     def generate(self):
         number_of_digits = 3
@@ -248,6 +259,35 @@ class ThreeDigitNumber(DecimalSymbolConversion):
             <ol><li>{action["verb"]} первая и вторая, а также вторая и третья цифры исходного числа.</li><li>Полученные
             два числа записываются друг за другом в порядке {sort["text"][self.rnd.coin()]} (без разделителей).
             </li></ol>{example_text}{selection["text"]} <b>{result}</b>."""
+        self.correct = initial
+        self.accept_number()
+
+        return self
+
+class FourDigitOddNumber(DecimalSymbolConversion):
+    def generate(self):
+        number_of_digits = 4
+        sort = self.sorts[1]
+        action = self.actions[1]
+        selection = self.selections[2]
+
+        possible_results = self._get_possible_results(
+            number_of_digits=number_of_digits,
+            function=action["function"],
+            remove_min_processed_digit=False,
+            reverse=sort["reverse"],
+            step=2,
+            only_odd_digits=True,
+        )
+        result = self.rnd.pick(list(possible_results))
+        initial = selection["function"](possible_results[result])
+
+        self.text = f"""
+            Автомат получает на вход четырёхзначное десятичное число, в котором все цифры <b>нечётные</b>.
+            По этому числу строится новое число по следующим правилам.<ol><li>{action["verb"]} первая и вторая,
+            а также третья и четвёртая цифры исходного числа.</li><li>Получившиеся два числа записываются
+            друг за другом в порядке {sort["text"][self.rnd.coin()]} без разделителей.</li></ol>{selection["text"]}
+            <b>{result}</b>.<br/>"""
         self.correct = initial
         self.accept_number()
 
@@ -347,8 +387,13 @@ class NaturalNumber(DirectInput):
         results = {}
         for number in range(101, 1000):
             digits = sorted([int(a) for a in str(number)])
+
             max_number = int(str(digits[2]) + str(digits[1]))
-            min_number = int(str(digits[0]) + str(digits[1])) if digits[0] != 0 else int(str(digits[1]) + str(digits[0]))
+            if digits[0] != 0:
+                min_number = int(str(digits[0]) + str(digits[1]))
+            else:
+                min_number = int(str(digits[1]) + str(digits[0]))
+
             result = max_number - min_number
             results[result] = min(results[result], number) if result in list(results) else number
 
