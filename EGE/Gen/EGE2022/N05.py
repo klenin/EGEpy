@@ -477,19 +477,43 @@ class BinarySymbolConversion(DirectInput):
 
         self.target = self.rnd.in_range(100, 300)
         self.task = self.rnd.pick([{
-            "text": f"Укажите <b>максимальное</b> число R, которое <b>не превышает {self.target}</b>.",
+            "selection": [{
+                "text": f"Укажите <b>максимальное</b> число R, которое <b>не превышает {self.target}</b>.",
+                "get_initial": False,
+            }, {
+                "text": f"Укажите <b>максимальное</b> число N, для которого результат <b>не превышает {self.target}</b>.",
+                "get_initial": True,
+            }, ][self.rnd.coin()],
             "step": -1,
             "check_equal": True,
         }, {
-            "text": f"Укажите <b>максимальное</b> число R, которое <b>меньше {self.target}</b>.",
+            "selection": [{
+                "text": f"Укажите <b>максимальное</b> число R, которое <b>меньше {self.target}</b>.",
+                "get_initial": False,
+            }, {
+                "text": f"Укажите <b>максимальное</b> число N, для которого результат будет <b>меньше {self.target}</b>.",
+                "get_initial": True,
+            }, ][self.rnd.coin()],
             "step": -1,
             "check_equal": False,
         }, {
-            "text": f"Укажите <b>минимальное</b> число R, которое <b>не меньше {self.target}</b>.",
+            "selection": [{
+                "text": f"Укажите <b>минимальное</b> число R, которое <b>не меньше {self.target}</b>.",
+                "get_initial": False,
+            }, {
+                "text": f"Укажите <b>минимальное</b> число N, для которого результат будет <b>не меньше {self.target}</b>.",
+                "get_initial": True,
+            }, ][self.rnd.coin()],
             "step": 1,
             "check_equal": True,
         },  {
-            "text": f"Укажите <b>минимальное</b> число R, которое <b>больше {self.target}</b>.",
+            "selection": [{
+                "text": f"Укажите <b>минимальное</b> число R, которое <b>больше {self.target}</b>.",
+                "get_initial": False,
+            }, {
+                "text": f"Укажите <b>минимальное</b> число N, для которого результат будет <b>больше {self.target}</b>.",
+                "get_initial": True,
+            }, ][self.rnd.coin()],
             "step": 1,
             "check_equal": False,
         }, ])
@@ -499,19 +523,20 @@ class BinarySymbolConversion(DirectInput):
     def generate(self):
         self.text = f"""
             На вход алгоритма подаётся натуральное число N. Алгоритм строит по нему новое число R следующим
-            образом. {self.algorithm}{self.example}{self.task["text"]} В ответе укажите число в десятичной системе
-            счисления, которое может являться результатом работы данного алгоритма."""
+            образом. {self.algorithm}{self.example}{self.task["selection"]["text"]} В ответе укажите число в десятичной
+            системе счисления, которое может являться результатом работы данного алгоритма."""
         self.correct = self._find_suitable_number(
             target=self.target,
             step=self.task["step"],
             check_equal=self.task["check_equal"],
+            get_initial=self.task["selection"]["get_initial"],
         )
         self.accept_number()
 
         return self
 
     @abstractmethod
-    def _find_suitable_number(self, target: int, step: int, check_equal: bool) -> int:
+    def _find_suitable_number(self, target: int, step: int, check_equal: bool, get_initial: bool) -> int:
         pass
 
 class EvenOddNumber(BinarySymbolConversion):
@@ -524,6 +549,9 @@ class EvenOddNumber(BinarySymbolConversion):
         }, {
             "even": {"text": "чётное", "addition": [1, 0]},
             "odd": {"text": "нечётное", "addition": [0, 1]},
+        }, {
+            "even": {"text": "чётное", "addition": [0, 0]},
+            "odd": {"text": "нечётное", "addition": [1, 1]},
         }, ])
         self.algorithm = f"""
             <ol><li>Строится двоичная запись числа N.</li><li>К этой записи дописываются справа ещё
@@ -536,19 +564,20 @@ class EvenOddNumber(BinarySymbolConversion):
             <i>Пример.</i> Двоичная запись 1001 числа 9 будет преобразована
             в 1001{"".join(map(str, self.variant["odd"]["addition"]))}.<br/>"""
 
-    def _find_suitable_number(self, target: int, step: int, check_equal: bool) -> int:
+    def _find_suitable_number(self, target: int, step: int, check_equal: bool, get_initial: bool) -> int:
         number = target if check_equal else target + step
         while True:
             bits = Bits().set_dec(number).get_bits()
             last_bits = bits[-2:]
-            if last_bits == self.variant["even"]["addition"] and Bits().set_bin_array(bits[:-2]).get_dec() % 2 == 0:
+            initial_number = Bits().set_bin_array(bits[:-2]).get_dec()
+            if last_bits == self.variant["even"]["addition"] and initial_number % 2 == 0:
                 break
-            if last_bits == self.variant["odd"]["addition"] and Bits().set_bin_array(bits[:-2]).get_dec() % 2 == 1:
+            if last_bits == self.variant["odd"]["addition"] and initial_number % 2 == 1:
                 break
 
             number += step
 
-        return number
+        return initial_number if get_initial else number
 
 class BitsSumRemainder(BinarySymbolConversion):
     def __init__(self, rnd: EGE.Random.Random):
@@ -563,7 +592,7 @@ class BitsSumRemainder(BinarySymbolConversion):
             исходного числа N) является двоичной записью числа — результатаработы данного алгоритма.<br/>"""
         self.example = f"""<i>Пример.</i> Двоичная запись 11100 преобразуется в запись 1110010.<br/>"""
 
-    def _find_suitable_number(self, target: int, step: int, check_equal: bool) -> int:
+    def _find_suitable_number(self, target: int, step: int, check_equal: bool, get_initial: bool) -> int:
         number = target if check_equal else target + step
         while True:
             bits = Bits().set_dec(number).get_bits()
@@ -588,7 +617,7 @@ class EvenOddBitsSum(BinarySymbolConversion):
             </li></ol>Полученная таким образом запись (в ней на два разряда больше, чем в записи исходного
             числа N) является двоичной записью числа — результата работы данного алгоритма.<br/>"""
 
-    def _find_suitable_number(self, target: int, step: int, check_equal: bool) -> int:
+    def _find_suitable_number(self, target: int, step: int, check_equal: bool, get_initial: bool) -> int:
         number = target if check_equal else target + step
         while True:
             bits = Bits().set_dec(number).get_bits()
@@ -614,7 +643,7 @@ class ComparingZerosAndOnes(BinarySymbolConversion):
             числа N: 1101.</li><li>В записи больше единиц, справа приписывается единица: 11011.</li>
             <li>На экран выводится десятичное значение полученного числа 27.</li></ol>"""
 
-    def _find_suitable_number(self, target: int, step: int, check_equal: bool) -> int:
+    def _find_suitable_number(self, target: int, step: int, check_equal: bool, get_initial: bool) -> int:
         number = target if check_equal else target + step
         while True:
             bits = Bits().set_dec(number).get_bits()
