@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from dataclasses import dataclass
 from math import dist
 
@@ -427,7 +428,7 @@ class RemainderOfDivision(DirectInput):
 
         return results
 
-class BinaryNumberMachine(DirectInput):
+class RemoveLastBit(DirectInput):
     def generate(self):
         result = self.rnd.in_range(1000, 3000, 26)
         number = Bits().set_dec(result)
@@ -437,8 +438,8 @@ class BinaryNumberMachine(DirectInput):
         self.text = f"""
             Автомат обрабатывает натуральное число N > 1 по следующему алгоритму.<br/><ol><li>Строится
             двоичная запись числа N.</li><li>Последняя цифра двоичной записи удаляется.</li><li>Если исходное число N
-            было нечётным, в конец записи (справа) дописываются цифры 10, если чётным - 01.</li><li>Результат
-            переводится в десятичную систему и выводится на экран.</li></ol><i>Пример.</i> Дано число 
+            было нечётным, в конец записи (справа) дописываются цифры <b>10</b>, если чётным - <b>01</b>.</li><li>
+            Результат переводится в десятичную систему и выводится на экран.</li></ol><i>Пример.</i> Дано число 
             N = 13. Алгоритм работает следующим образом.<ol><li>Двоичная запись числа N: 1101.</li>
             <li>Удаляется последняя цифра, новая запись: 110.</li><li>Исходное число нечётно, дописываются цифры 10,
             новая запись: 11010</li><li>На экран выводится число 26.</li></ol>Какое число нужно ввести в автомат,
@@ -470,51 +471,166 @@ class EightBitNumber(DirectInput):
 
         return self
 
-class LessOrEqualMachine(DirectInput):
+class BinarySymbolConversion(DirectInput):
+    def __init__(self, rnd: EGE.Random.Random):
+        super().__init__(rnd)
+
+        self.target = self.rnd.in_range(100, 300)
+        self.task = self.rnd.pick([{
+            "text": f"Укажите <b>максимальное</b> число R, которое <b>не превышает {self.target}</b>.",
+            "step": -1,
+            "check_equal": True,
+        }, {
+            "text": f"Укажите <b>максимальное</b> число R, которое <b>меньше {self.target}</b>.",
+            "step": -1,
+            "check_equal": False,
+        }, {
+            "text": f"Укажите <b>минимальное</b> число R, которое <b>не меньше {self.target}</b>.",
+            "step": 1,
+            "check_equal": True,
+        },  {
+            "text": f"Укажите <b>минимальное</b> число R, которое <b>больше {self.target}</b>.",
+            "step": 1,
+            "check_equal": False,
+        }, ])
+        self.algorithm = ""
+        self.example = ""
+
     def generate(self):
-        target = self.rnd.in_range(100, 3000)
-        variant = self.rnd.pick([{
+        self.text = f"""
+            На вход алгоритма подаётся натуральное число N. Алгоритм строит по нему новое число R следующим
+            образом. {self.algorithm}{self.example}{self.task["text"]} В ответе укажите число в десятичной системе
+            счисления, которое может являться результатом работы данного алгоритма."""
+        self.correct = self._find_suitable_number(
+            target=self.target,
+            step=self.task["step"],
+            check_equal=self.task["check_equal"],
+        )
+        self.accept_number()
+
+        return self
+
+    @abstractmethod
+    def _find_suitable_number(self, target: int, step: int, check_equal: bool) -> int:
+        pass
+
+class EvenOddNumber(BinarySymbolConversion):
+    def __init__(self, rnd: EGE.Random.Random):
+        super().__init__(rnd)
+
+        self.variant = self.rnd.pick([{
             "even": {"text": "чётное", "addition": [0, 1]},
             "odd": {"text": "нечётное", "addition": [1, 0]},
         }, {
             "even": {"text": "чётное", "addition": [1, 0]},
             "odd": {"text": "нечётное", "addition": [0, 1]},
         }, ])
-        task = self.rnd.pick([{
-            "text": f"Укажите <b>максимальное</b> число R, которое <b>не превышает {target}</b>.",
-            "step": -1,
-        }, {
-            "text": f"Укажите <b>минимальное</b> число R, которое <b>не меньше {target}</b> и может .",
-            "step": 1,
-        }, ])
+        self.algorithm = f"""
+            <ol><li>Строится двоичная запись числа N.</li><li>К этой записи дописываются справа ещё
+            два разряда по следующему правилу: если N {self.variant["even"]["text"]}, в конец числа
+            (справа) дописывается <b>{"".join(map(str, self.variant["even"]["addition"]))}</b>, в противном
+            случае справа дописывается <b>{"".join(map(str, self.variant["odd"]["addition"]))}</b>.</li></ol>
+            Полученная таким образом запись (в ней на два разряда больше, чем в записи исходного числа N)
+            является двоичной записью числа — результата работы данного алгоритма.<br/>"""
+        self.example = f"""
+            <i>Пример.</i> Двоичная запись 1001 числа 9 будет преобразована
+            в 1001{"".join(map(str, self.variant["odd"]["addition"]))}.<br/>"""
 
-        number = target
+    def _find_suitable_number(self, target: int, step: int, check_equal: bool) -> int:
+        number = target if check_equal else target + step
         while True:
             bits = Bits().set_dec(number).get_bits()
             last_bits = bits[-2:]
-            if last_bits != [1, 1] and last_bits != [0, 0]:
-                if last_bits == variant["even"]["addition"] and Bits().set_bin_array(bits[:-2]).get_dec() % 2 == 0:
-                    break
-                if last_bits == variant["odd"]["addition"] and Bits().set_bin_array(bits[:-2]).get_dec() % 2 == 1:
-                    break
-            number += task["step"]
+            if last_bits == self.variant["even"]["addition"] and Bits().set_bin_array(bits[:-2]).get_dec() % 2 == 0:
+                break
+            if last_bits == self.variant["odd"]["addition"] and Bits().set_bin_array(bits[:-2]).get_dec() % 2 == 1:
+                break
 
-        self.text = f"""
-            Автомат обрабатывает натуральное число N по следующему алгоритму: <ol><li>Строится двоичная запись числа
-            N.</li><li>К этой записи дописываются справа ещё два разряда по следующему правилу:
-            если N {variant["even"]["text"]}, в конец числа (справа) дописывается
-            {"".join(map(str, variant["even"]["addition"]))}, в противном случае справа дописывается
-            {"".join(map(str, variant["odd"]["addition"]))}.</li></ol><i>Пример.</i>Двоичная запись 1001 числа 9
-            будет преобразована в 1001{"".join(map(str, variant["odd"]["addition"]))}.<br/>Полученная таким образом
-            запись (в ней на два разряда больше, чем в записи исходного числа N) является двоичной записью числа —
-            результата работы данного алгоритма.<br/>{task["text"]} В ответе укажите число в десятичной системе
-            счисления, которое может являться результатом работы данного алгоритма."""
-        self.correct = number
-        self.accept_number()
+            number += step
 
-        return self
+        return number
 
-class ReverseBitsMachine(DirectInput):
+class BitsSumRemainder(BinarySymbolConversion):
+    def __init__(self, rnd: EGE.Random.Random):
+        super().__init__(rnd)
+
+        self.algorithm = f"""
+            <ol><li>Строится двоичная запись числа N.</li><li>К этой записи дописываются справа ещё два
+            разряда по следующему правилу:<ol type="a"><li>складываются все цифры двоичной записи, и
+            остаток от деления суммы на 2 дописывается в конец числа (справа);</li><li>над получившейся
+            записью производятся те же действия — справа дописывается остаток от деления суммы цифр на 2.
+            </li></ol></li></ol>Полученная таким образом запись (в ней на два разряда больше, чем в записи
+            исходного числа N) является двоичной записью числа — результатаработы данного алгоритма.<br/>"""
+        self.example = f"""<i>Пример.</i> Двоичная запись 11100 преобразуется в запись 1110010.<br/>"""
+
+    def _find_suitable_number(self, target: int, step: int, check_equal: bool) -> int:
+        number = target if check_equal else target + step
+        while True:
+            bits = Bits().set_dec(number).get_bits()
+            last_bits = bits[-2:]
+            if last_bits == [0, 0] and Bits().set_bin_array(bits[:-2]).count_ones() % 2 == 0:
+                break
+            if last_bits == [1, 0] and Bits().set_bin_array(bits[:-2]).count_ones() % 2 == 1:
+                break
+
+            number += step
+
+        return number
+
+class EvenOddBitsSum(BinarySymbolConversion):
+    def __init__(self, rnd: EGE.Random.Random):
+        super().__init__(rnd)
+
+        self.algorithm = f"""
+            <ol><li>Строится двоичная запись числа N.</li><li>К этой записи дописываются справа ещё два
+            разряда по следующему правилу: складываются все цифры двоичной записи, если<ol type="a"><li>сумма
+            нечетная, к числу дописывается <b>11</b>;</li><li>сумма четная, дописывается <b>00</b>.</li></ol>
+            </li></ol>Полученная таким образом запись (в ней на два разряда больше, чем в записи исходного
+            числа N) является двоичной записью числа — результата работы данного алгоритма.<br/>"""
+
+    def _find_suitable_number(self, target: int, step: int, check_equal: bool) -> int:
+        number = target if check_equal else target + step
+        while True:
+            bits = Bits().set_dec(number).get_bits()
+            last_bits = bits[-2:]
+            if last_bits == [0, 0] and Bits().set_bin_array(bits[:-2]).count_ones() % 2 == 0:
+                break
+            if last_bits == [1, 1] and Bits().set_bin_array(bits[:-2]).count_ones() % 2 == 1:
+                break
+            number += step
+
+        return number
+
+class ComparingZerosAndOnes(BinarySymbolConversion):
+    def __init__(self, rnd: EGE.Random.Random):
+        super().__init__(rnd)
+
+        self.algorithm = f"""
+            <ol><li>Строится двоичная запись числа N.</li><li>Если в полученной записи единиц больше, чем нулей, то
+            справа приписывается <b>единица</b>. Если нулей больше или нулей и единиц поровну, то справа приписывается
+            <b>ноль</b>.</li><li>Полученное число переводится в десятичную запись и выводится на экран.</li></ol>"""
+        self.example = f"""
+            <i>Пример.</i> Дано число N = 13. Алгоритм работает следующим образом.<ol><li>Двоичная запись
+            числа N: 1101.</li><li>В записи больше единиц, справа приписывается единица: 11011.</li>
+            <li>На экран выводится десятичное значение полученного числа 27.</li></ol>"""
+
+    def _find_suitable_number(self, target: int, step: int, check_equal: bool) -> int:
+        number = target if check_equal else target + step
+        while True:
+            bits = Bits().set_dec(number).get_bits()
+            last_bit = bits[-1]
+            ones_counter = Bits().set_bin_array(bits[:-1]).count_ones()
+            zeros_counter = Bits().set_bin_array(bits[:-1]).get_size() - ones_counter
+            if last_bit == 0 and zeros_counter >= ones_counter:
+                break
+            if last_bit == 1 and zeros_counter < ones_counter:
+                break
+
+            number += step
+
+        return number
+
+class ReverseBits(DirectInput):
     def generate(self):
         result = self.rnd.in_range(1, 50)
         limit = self.rnd.in_range(100, 300)
