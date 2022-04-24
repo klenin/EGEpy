@@ -597,14 +597,15 @@ class BitsSumRemainder(BinarySymbolConversion):
         while True:
             bits = Bits().set_dec(number).get_bits()
             last_bits = bits[-2:]
-            if last_bits == [0, 0] and Bits().set_bin_array(bits[:-2]).count_ones() % 2 == 0:
+            initial_bits = bits[:-2]
+            if last_bits == [0, 0] and Bits().set_bin_array(initial_bits).count_ones() % 2 == 0:
                 break
-            if last_bits == [1, 0] and Bits().set_bin_array(bits[:-2]).count_ones() % 2 == 1:
+            if last_bits == [1, 0] and Bits().set_bin_array(initial_bits).count_ones() % 2 == 1:
                 break
 
             number += step
 
-        return number
+        return Bits().set_bin_array(initial_bits).get_dec() if get_initial else number
 
 class EvenOddBitsSum(BinarySymbolConversion):
     def __init__(self, rnd: EGE.Random.Random):
