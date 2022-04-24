@@ -663,3 +663,46 @@ class ReverseBits(DirectInput):
                 break
 
         return index
+
+class TernaryNumber(DirectInput):
+    def generate(self):
+        variant = self.rnd.pick([{
+            "text": "трёхзначное",
+            "number_of_digits": 3,
+        }, {
+            "text": "четырёхзначное",
+            "number_of_digits": 4,
+        }, {
+            "text": "пятизначное",
+            "number_of_digits": 5,
+        }, ])
+
+        self.text = f"""
+            Автомат обрабатывает натуральное число N по следующему алгоритму:<ol><li>Строится троичная запись
+            числа N.</li><li>В конец записи (справа) дописывается остаток от деления числа N на <b>3</b>.</li><li>
+            Результат переводится из троичной системы в десятичную и выводится на экран.</li></ol><i>Пример.</i>
+            Дано число N = 11. Алгоритм работает следующим образом:<ol><li>Троичная запись числа N: 102.</li>
+            <li>Остаток от деления 11 на 3 равен 2, новая запись 1022.</li><li>На экран выводится число 35.</li></ol>
+            Какое <b>наименьшее {variant["text"]}</b> число может появиться на экране в результате работы автомата?"""
+        self.correct = self._find_suitable_number(variant["number_of_digits"])
+        self.accept_number()
+
+        return self
+
+    def _find_suitable_number(self, number_of_digits: int) -> int:
+        for number in range(10 ** (number_of_digits - 1), 10 ** number_of_digits):
+            ternary = self._get_ternary_array(number)
+            if ternary[-2] == ternary[-1]:
+                return number
+
+        return -1
+
+    def _get_ternary_array(self, number: int) -> list:
+        if number == 0:
+            return [0]
+        digits = []
+        while number:
+            number, r = divmod(number, 3)
+            digits.append(r)
+
+        return digits[::-1]
