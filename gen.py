@@ -10,7 +10,7 @@ from EGE.Gen.EGE import Z06, Z09, Z10, Z11, Z12, Z13, Z15, Z16, Z18, Z22
 
 from EGE.Gen.EGE2022 import N05
 
-rnd = EGE.Random.Random(1000)
+rnd = EGE.Random.Random(1111222133111444)
 
 questions = [q.generate() for q in [
     A01.Recode(rnd),
@@ -129,18 +129,27 @@ questions = [q.generate() for q in [
 ]]
 
 questions_2022 = [q.generate() for q in [
+    N05.FindNumber(rnd),
+    N05.MinAddDigits(rnd),
     N05.Draftsman(rnd),
     N05.RobotMigrant(rnd),
     N05.RobotAndIronCurtain(rnd),
     N05.Grasshopper(rnd),
     N05.CalculatorBothWays(rnd),
-    N05.FindBinaryNumber(rnd),
-    N05.MachineMinAddDigits(rnd),
-    N05.BinaryNumberMachine(rnd),
-    N05.EightBitNumber(rnd),
     N05.FourDigitNumber(rnd),
-    N05.LessOrEqualMachine(rnd),
-    N05.ReverseBitsMachine(rnd),
+    N05.ThreeDigitNumber(rnd),
+    N05.FiveDigitNumber(rnd),
+    N05.NaturalNumber(rnd),
+    N05.FourDigitOddNumber(rnd),
+    N05.RemainderOfDivision(rnd),
+    N05.RemoveLastBit(rnd),
+    N05.EightBitNumber(rnd),
+    N05.EvenOddNumber(rnd),
+    N05.BitsSumRemainder(rnd),
+    N05.EvenOddBitsSum(rnd),
+    N05.ReverseBits(rnd),
+    N05.ComparingZerosAndOnes(rnd),
+    N05.TernaryNumber(rnd),
 ]]
 
 if not sys.stdout.isatty():

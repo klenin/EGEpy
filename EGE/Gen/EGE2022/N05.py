@@ -10,12 +10,6 @@ from ...GenBase import DirectInput
 
 import EGE.Random
 
-class FindBinaryNumber(FindNumber):
-    pass
-
-class MachineMinAddDigits(MinAddDigits):
-    pass
-
 @dataclass
 class Offset:
     x: float = 0
