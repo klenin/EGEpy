@@ -49,18 +49,35 @@ class BlackWhiteBalls(DirectInput):
         return self
 
 
-def _pencils_to_text(n):
-    return num_text(n, ['цветной карандаш', 'цветных карандаша', 'цветных карадашей'])
+class ShannonProb(DirectInput):
+    def _get_condition(self):
+        bits = self.rnd.in_range(1, 10)
+        num = self.rnd.in_range(bits ** 2, 1025)
+
+        while num % (bits ** 2) != 0:
+            print(num)
+            num -= 1
+
+        return bits, num, ceil(num / bits ** 2)
 
 
-class Pencils(DirectInput):
+class Pencils(ShannonProb):
+    def _pencils_to_text(self, n):
+        return num_text(n, ['цветной карандаш', 'цветных карандаша', 'цветных карадашей'])
 
     def generate(self):
-        power = self.rnd.in_range(2, 10)
-        pencils_count = 2 ** power
-        bits = self.rnd.in_range(1, power - 1)
+        bits, num, self.correct = self._get_condition()
+        self.text = f"В коробке лежат {self._pencils_to_text(num)}. Сообщение о том, что достали белый карандаш, несет {num_bits(bits)} информации. Сколько белых карандашей было в коробке?"
 
-        self.correct = 2 ** (power - bits)
-        self.text = f"В коробке лежат {_pencils_to_text(pencils_count)}. Сообщение о том, что достали белый карандаш, несет {num_bits(bits)} информации. Сколько белых карандашей было в коробке?"
+        return self
+
+
+class VasyaMarks(ShannonProb):
+    def _marks_to_text(self, n):
+        return num_text(n, ['оценку', 'оценки', 'оценок'])
+
+    def generate(self):
+        bits, num, self.correct = self._get_condition()
+        self.text = f"За четверть Василий Пупкин получил {num} оценок. Сообщение о том, что он вчера получил четверку, несет {num_bits(bits)} информации. Сколько четверок получил Василий за четверть?"
 
         return self
