@@ -1,4 +1,5 @@
 from ...GenBase import DirectInput
+from ...RussianModules.NumText import num_bits, num_text
 from math import ceil, log, log2
 
 
@@ -44,5 +45,22 @@ class BlackWhiteBalls(DirectInput):
 
         self.correct = ceil(log2(prob_inverse))
         self.text = f"В корзине лежат {black} черных шаров и {white} белых. Сколько бит информации несет сообщение о том, что достали черный шар?"
+
+        return self
+
+
+def _pencils_to_text(n):
+    return num_text(n, ['цветной карандаш', 'цветных карандаша', 'цветных карадашей'])
+
+
+class Pencils(DirectInput):
+
+    def generate(self):
+        power = self.rnd.in_range(2, 10)
+        pencils_count = 2 ** power
+        bits = self.rnd.in_range(1, power - 1)
+
+        self.correct = 2 ** (power - bits)
+        self.text = f"В коробке лежат {_pencils_to_text(pencils_count)}. Сообщение о том, что достали белый карандаш, несет {num_bits(bits)} информации. Сколько белых карандашей было в коробке?"
 
         return self
