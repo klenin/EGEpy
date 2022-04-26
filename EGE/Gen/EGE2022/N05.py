@@ -119,7 +119,8 @@ class RobotAndIronCurtain(Robot):
 
         return self
 
-    def _remove_cycles(self, path: list) -> list:
+    @staticmethod
+    def _remove_cycles(path: list) -> list:
         cycles = ["1324", "1423", "2314", "2413", "3142", "3241", "4132", "4231"]
         path = "".join(map(str, path))
         for cycle in cycles:
@@ -200,7 +201,8 @@ class DecimalSymbolConversion(DirectInput):
 
         return results
 
-    def _get_processed_digits(self, number: int, function, step: int = 1) -> list:
+    @staticmethod
+    def _get_processed_digits(number: int, function, step: int = 1) -> list:
         string_number = str(number)
         if len(string_number) == 5:
             processed = [int(string_number[0]), int(string_number[1])]
@@ -214,13 +216,16 @@ class DecimalSymbolConversion(DirectInput):
 
         return processed
 
-    def _get_sum(self, a: int, b: int) -> int:
+    @staticmethod
+    def _get_sum(a: int, b: int) -> int:
         return a + b
 
-    def _get_product(self, a: int, b: int) -> int:
+    @staticmethod
+    def _get_product(a: int, b: int) -> int:
         return a * b
 
-    def _odd_parity_check(self, number: int) -> bool:
+    @staticmethod
+    def _odd_parity_check(number: int) -> bool:
         for digit in str(number):
             if int(digit) % 2 == 0:
                 return False
@@ -343,10 +348,14 @@ class FiveDigitNumber(DecimalSymbolConversion):
         result = self.rnd.pick(list(possible_results))
         initial = selection["function"](possible_results[result])
 
+        example_result_text = "".join(map(str, sorted(
+            [action["function"](action["function"](6, 1), 9), action["function"](3, 7)],
+            reverse=sort["reverse"]
+        )))
         example_text = f"""
             <i>Пример.</i> Исходное число: 63179. {action["noun"]}: 6 {action["operator"]} 1 {action["operator"]} 9 =
             {action["function"](action["function"](6, 1), 9)}; 3 {action["operator"]} 7 = {action["function"](3, 7)}.
-            Результат: {"".join(map(str, sorted([action["function"](action["function"](6, 1), 9), action["function"](3, 7)], reverse=sort["reverse"])))}.
+            Результат: {example_result_text}.
             <br/>"""
 
         self.text = f"""
@@ -378,7 +387,8 @@ class NaturalNumber(DirectInput):
 
         return self
 
-    def _get_possible_results(self) -> dict:
+    @staticmethod
+    def _get_possible_results() -> dict:
         results = {}
         for number in range(101, 1000):
             digits = sorted([int(a) for a in str(number)])
@@ -412,7 +422,8 @@ class RemainderOfDivision(DirectInput):
 
         return self
 
-    def _get_possible_results(self) -> dict:
+    @staticmethod
+    def _get_possible_results() -> dict:
         results = {}
         for number in range(10, 100):
             if number % 2 == 0:
@@ -592,9 +603,9 @@ class BitsSumRemainder(BinarySymbolConversion):
             bits = Bits().set_dec(number).get_bits()
             last_bits = bits[-2:]
             initial_bits = bits[:-2]
-            if last_bits == [0, 0] and Bits().set_bin_array(initial_bits).count_ones() % 2 == 0:
-                break
             if last_bits == [1, 0] and Bits().set_bin_array(initial_bits).count_ones() % 2 == 1:
+                break
+            if last_bits == [0, 0] and Bits().set_bin_array(initial_bits).count_ones() % 2 == 0:
                 break
 
             number += step
@@ -617,13 +628,14 @@ class EvenOddBitsSum(BinarySymbolConversion):
         while True:
             bits = Bits().set_dec(number).get_bits()
             last_bits = bits[-2:]
-            if last_bits == [0, 0] and Bits().set_bin_array(bits[:-2]).count_ones() % 2 == 0:
+            initial_bits = bits[:-2]
+            if last_bits == [0, 0] and Bits().set_bin_array(initial_bits).count_ones() % 2 == 0:
                 break
-            if last_bits == [1, 1] and Bits().set_bin_array(bits[:-2]).count_ones() % 2 == 1:
+            if last_bits == [1, 1] and Bits().set_bin_array(initial_bits).count_ones() % 2 == 1:
                 break
             number += step
 
-        return number
+        return Bits().set_bin_array(initial_bits).get_dec() if get_initial else number
 
 class ComparingZerosAndOnes(BinarySymbolConversion):
     def __init__(self, rnd: EGE.Random.Random):
@@ -643,8 +655,9 @@ class ComparingZerosAndOnes(BinarySymbolConversion):
         while True:
             bits = Bits().set_dec(number).get_bits()
             last_bit = bits[-1]
-            ones_counter = Bits().set_bin_array(bits[:-1]).count_ones()
-            zeros_counter = Bits().set_bin_array(bits[:-1]).get_size() - ones_counter
+            initial_bits = bits[:-1]
+            ones_counter = Bits().set_bin_array(initial_bits).count_ones()
+            zeros_counter = Bits().set_bin_array(initial_bits).get_size() - ones_counter
             if last_bit == 0 and zeros_counter >= ones_counter:
                 break
             if last_bit == 1 and zeros_counter < ones_counter:
@@ -652,7 +665,7 @@ class ComparingZerosAndOnes(BinarySymbolConversion):
 
             number += step
 
-        return number
+        return Bits().set_bin_array(initial_bits).get_dec() if get_initial else number
 
 class ReverseBits(DirectInput):
     def generate(self):
@@ -679,7 +692,8 @@ class ReverseBits(DirectInput):
 
         return self
 
-    def _get_valuable_index(self, bits: list) -> int:
+    @staticmethod
+    def _get_valuable_index(bits: list) -> int:
         index = -1
         for i, bit in enumerate(bits):
             if bit == 1:
@@ -721,7 +735,8 @@ class TernaryNumber(DirectInput):
 
         return -1
 
-    def _get_ternary_array(self, number: int) -> list:
+    @staticmethod
+    def _get_ternary_array(number: int) -> list:
         if number == 0:
             return [0]
         digits = []
