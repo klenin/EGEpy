@@ -2,13 +2,15 @@ from ...GenBase import DirectInput
 from ...RussianModules.NumText import num_text
 
 from collections import namedtuple
-from math import log, ceil
+from math import log, ceil, pow
 
 
-range_tuple = namedtuple('range_tuple', ['min', 'max'])
-speed_range = range_tuple(19500, 50000)
+range_tuple = namedtuple('range_tuple', [ 'min', 'max' ])
+speed_range = range_tuple(19500, 120000)
 palette_range = range_tuple(8, 64)
 size_range = range_tuple(50, 2000)
+bits_range = range_tuple(1, 64)
+time_range = range_tuple(1, 360)
 
 
 class LoggableData:
@@ -46,6 +48,51 @@ class ImageTransferTime(DirectInput):
 растровое изображение размером {data.w} на {data.h} пикселей, 
 при условии, что {variant}? 
 Ответ округлить вверх до ближайшего целого.'''
+        self.correct = data.time
+        self.accept_number()
+
+        return self
+
+
+class TextData(LoggableData):
+    def __init__(self, rnd):
+        get_root = lambda m, n: int(ceil(pow(m, 1.0/n)))
+        pages = get_root(rnd.in_range(speed_range.min, speed_range.max), 2)
+        x = get_root(rnd.in_range(bits_range.min, bits_range.max), 2)
+        y = get_root(rnd.in_range(bits_range.min, bits_range.max), 2)
+        rows = get_root(rnd.in_range(time_range.min, time_range.max), 3)
+        cols = get_root(rnd.in_range(time_range.min, time_range.max), 3)
+
+        self.pages = pages
+        self.rows = rows
+        self.cols = cols
+ 
+        self.symbols_per_page = self.rows * self.cols
+        self.symbols_n = self.pages * self.symbols_per_page
+
+        self.speed = self.pages * x
+        self.time = y * self.symbols_per_page
+        self.encoding_bits = x * y
+
+
+class TextTransferTime(DirectInput):
+    def generate(self):
+        data = TextData(self.rnd)
+
+        pages_word = num_text(data.pages, [ 'страница', 'страницы', 'страниц' ])
+        symbols_n_word = num_text(data.symbols_n, [ 'символ', 'символа', 'символов' ])
+        rows_word = num_text(data.rows, [ 'строку', 'строки', 'строк' ])
+        cols_word = num_text(data.cols, [ 'символ', 'символа', 'символов' ])
+        encoding_bits_word = num_text(data.encoding_bits, [ 'битом', 'битами', 'битами' ])
+        variant = self.rnd.pick([
+            f'{pages_word} текста по {symbols_n_word} каждая',
+            f'{pages_word} текста в {rows_word} по {cols_word} каждая',
+        ])
+
+        self.text = f'''
+Сколько секунд потребуется модему, передающему сообщения 
+со скоростью {data.speed} бит/с, чтобы передать {variant}, 
+при условии, что каждый символ кодируется {encoding_bits_word}?'''
         self.correct = data.time
         self.accept_number()
 
