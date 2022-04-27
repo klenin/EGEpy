@@ -10,7 +10,7 @@ from EGE.Gen.EGE import Z06, Z09, Z10, Z11, Z12, Z13, Z15, Z16, Z18, Z22
 
 from EGE.Gen.EGE2022 import N05
 
-rnd = EGE.Random.Random(1111222133111444)
+rnd = EGE.Random.Random(2342134)
 
 questions = [q.generate() for q in [
     A01.Recode(rnd),
