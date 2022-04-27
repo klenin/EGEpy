@@ -29,7 +29,7 @@ class ImageData(LoggableData):
         self.time = int(ceil(self.size / self.speed))
 
 
-class ImageTransfer(DirectInput):
+class ImageTransferTime(DirectInput):
     def generate(self):
         data = ImageData(self.rnd)
 
