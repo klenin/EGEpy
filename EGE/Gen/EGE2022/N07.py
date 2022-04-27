@@ -20,9 +20,6 @@ class ImageData:
         self.h = rnd.in_range(size_range.min, size_range.max)
         self.size = self.bits * self.w * self.h
         self.time = int(ceil(self.size / self.speed))
-        self.colors_word = num_text(self.palette, [ 'цвета', 'цветов', 'цветов' ])
-        self.bits_word = num_text(self.bits, [ 'битом', 'битами', 'битами' ])
-        self.is_bits = rnd.coin()
 
     def __str__(self):
         attrs = vars(self)
@@ -33,20 +30,21 @@ class ImageData:
 class ImageTransfer(DirectInput):
     def generate(self):
         data = ImageData(self.rnd)
-        self.correct = data.time
-        self.accept_number()
-        variant = self.get_variants(data)[data.is_bits]
+
+        colors_word = num_text(data.palette, [ 'цвета', 'цветов', 'цветов' ])
+        bits_word = num_text(data.bits, [ 'битом', 'битами', 'битами' ])
+        variant = self.rnd.pick([
+            f'цвет каждого пикселя кодируется {bits_word}',
+            f'в палитре {colors_word}',
+        ])
+
         self.text = f'''
 Сколько секунд потребуется модему, передающему информацию 
 со скоростью {data.speed} бит/с, чтобы передать 
 растровое изображение размером {data.w} на {data.h} пикселей, 
 при условии, что {variant}? 
 Ответ округлить вверх до ближайшего целого.'''
+        self.correct = data.time
+        self.accept_number()
+
         return self
-
-    def get_variants(self, data):
-        return [
-            f'цвет каждого пикселя кодируется {data.bits_word}',
-            f'в палитре {data.colors_word}',
-        ]
-
