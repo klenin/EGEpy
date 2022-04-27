@@ -36,15 +36,12 @@ class ImageTransfer(DirectInput):
         self.correct = data.time
         self.accept_number()
         variant = self.get_variants(data)[data.is_bits]
-        self.text = \
-                f'''
-                Сколько секунд потребуется модему, передающему информацию 
-                со скоростью {data.speed} бит/с, чтобы передать 
-                растровое изображение размером {data.w} на {data.h} пикселей, 
-                при условии, что {variant}? 
-                Ответ округлить вверх до ближайшего целого.
-                '''
-        self.text = self.text.replace('\n', '').replace('    ', '')
+        self.text = f'''
+Сколько секунд потребуется модему, передающему информацию 
+со скоростью {data.speed} бит/с, чтобы передать 
+растровое изображение размером {data.w} на {data.h} пикселей, 
+при условии, что {variant}? 
+Ответ округлить вверх до ближайшего целого.'''
         return self
 
     def get_variants(self, data):
