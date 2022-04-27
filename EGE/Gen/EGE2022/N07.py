@@ -11,7 +11,14 @@ palette_range = range_tuple(8, 64)
 size_range = range_tuple(50, 2000)
 
 
-class ImageData:
+class LoggableData:
+    def __str__(self):
+        attrs = vars(self)
+        fields = ', '.join("%s: %s" % item for item in attrs.items())
+        return f'{self.__class__.__name__}: {fields}'
+
+
+class ImageData(LoggableData):
     def __init__(self, rnd):
         self.speed = rnd.in_range(speed_range.min, speed_range.max)
         self.palette = rnd.in_range(palette_range.min, palette_range.max)
@@ -20,11 +27,6 @@ class ImageData:
         self.h = rnd.in_range(size_range.min, size_range.max)
         self.size = self.bits * self.w * self.h
         self.time = int(ceil(self.size / self.speed))
-
-    def __str__(self):
-        attrs = vars(self)
-        fields = ', '.join("%s: %s" % item for item in attrs.items())
-        return f'{self.__class__.__name__}: {fields}'
 
 
 class ImageTransfer(DirectInput):
