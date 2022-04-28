@@ -72,7 +72,12 @@ class TextData(LoggableData):
 
         self.speed = self.pages * x
         self.time = y * self.symbols_per_page
+
         self.encoding_bits = x * y
+        self.size = self.symbols_n * self.encoding_bits
+        self.bigger_encoding_bits = rnd.in_range(self.encoding_bits, 2 * self.encoding_bits)
+        self.bigger_size = self.symbols_n * self.bigger_encoding_bits
+        self.size_diff_kb = int(ceil((self.bigger_size - self.size) / 2 ** 10))
 
 
 class TextTransferTime(DirectInput):
@@ -98,6 +103,7 @@ class TextTransferTime(DirectInput):
 
         return self
 
+
 class TextTransferDataLength(DirectInput):
     def generate(self):
         data = TextData(self.rnd)
@@ -115,6 +121,24 @@ class TextTransferDataLength(DirectInput):
 Определите, сколько {variant[0]}, 
 если известно, что он был представлен в {data.encoding_bits}-битной кодировке.'''
         self.correct = variant[1]
+        self.accept_number()
+
+        return self
+
+
+class TextFileResizeDiff(DirectInput):
+    def generate(self):
+        data = TextData(self.rnd)
+
+        symbols_n_word = num_text(data.symbols_n, [ 'символа', 'символов', 'символов' ])
+
+        self.text = f'''
+Текстовый документ, состоящий из {symbols_n_word}, 
+хранился в {data.encoding_bits}-битной кодировке. 
+Этот документ был преобразован в {data.bigger_encoding_bits}-битную кодировку. 
+Укажите, какое дополнительное количество Кбайт потребуется 
+для хранения документа. В ответе запишите только число с округлением вверх.'''
+        self.correct = data.size_diff_kb
         self.accept_number()
 
         return self
