@@ -142,3 +142,21 @@ class TextFileResizeDiff(DirectInput):
         self.accept_number()
 
         return self
+
+
+class TextFileResizeSymbolsN(DirectInput):
+    def generate(self):
+        data = TextData(self.rnd)
+
+        self.text = f'''
+Текстовый документ хранился в {data.encoding_bits}-битной кодировке. 
+Этот документ был преобразован в {data.bigger_encoding_bits}-битную кодировку, 
+при этом размер памяти, необходимой для хранения документа 
+увеличился на {data.size_diff_kb} Кбайт. 
+При этом хранится только последовательность кодов символов. 
+Укажите, сколько символов в документе. 
+В ответе запишите только число.'''
+        self.correct = data.symbols_n
+        self.accept_number()
+
+        return self
