@@ -10,7 +10,7 @@ class CellEncoding(DirectInput):
 
 class ChessCellEncoding(CellEncoding):
     def generate(self):
-        cols = self.rnd.in_range(3, 33)
+        cols = self.rnd.in_range(3, 32)
         rows = cols
         self.correct = self._resolve(rows * cols)
         self.text = f"Шахматная доска состоит из {cols} столбцов и {rows} строк. Какое минимальное количество бит потребуется для кодирования координат одной шахматной клетки?"
@@ -20,7 +20,7 @@ class ChessCellEncoding(CellEncoding):
 
 class PositiveInts(CellEncoding):
     def generate(self):
-        n = self.rnd.in_range(2, 1025)
+        n = self.rnd.in_range(2, 1024)
         self.correct = self._resolve(n - 1)
         self.text = f"Какое минимальное количество бит потребуется для кодирования целых положительных чисел, меньших {n}?"
 
@@ -29,7 +29,7 @@ class PositiveInts(CellEncoding):
 
 class TicTacToe(CellEncoding):
     def generate(self):
-        cols = self.rnd.in_range(3, 33)
+        cols = self.rnd.in_range(3, 32)
         rows = cols
         self.correct = self._resolve(cols * rows)
         self.text = f"Двое играют в «крестики-нолики» на поле {cols} на {rows} клетки. Какое количество информации (в битах) получил второй игрок, узнав ход первого игрока?"
@@ -52,7 +52,7 @@ class BlackWhiteBalls(DirectInput):
 class ShannonProb(DirectInput):
     def _get_condition(self):
         bits = self.rnd.in_range(1, 10)
-        num = self.rnd.in_range(bits ** 2, 1025)
+        num = self.rnd.in_range(bits ** 2, 1024)
 
         while num % (bits ** 2) != 0:
             print(num)
@@ -79,5 +79,25 @@ class VasyaMarks(ShannonProb):
     def generate(self):
         bits, num, self.correct = self._get_condition()
         self.text = f"За четверть Василий Пупкин получил {num} оценок. Сообщение о том, что он вчера получил четверку, несет {num_bits(bits)} информации. Сколько четверок получил Василий за четверть?"
+
+        return self
+
+
+def is_int(n):
+    return int(n) == float(n)
+
+
+class BlackWhiteBalls2(ShannonProb):
+    def _balls_to_text(self, n):
+        return num_text(n, ['черный шар', 'черных шара', 'черных шаров'])
+
+    def generate(self):
+        bits = self.rnd.in_range(2, 5)
+        num = self.rnd.in_range(bits ** 2 + 10, 256)
+
+        while not is_int((num * 2 ** bits) / (2 ** bits - 1)):
+            num += 1
+        self.correct = ceil((num * 2 ** bits) / (2 ** bits - 1))
+        self.text = f"В корзине лежат черные и белые шары. Среди них {self._balls_to_text(num)}. Сообщение о том, что достали белый шар, несет {num_bits(bits)} бита информации. Сколько всего шаров в корзине?"
 
         return self
