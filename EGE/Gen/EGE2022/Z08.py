@@ -117,3 +117,45 @@ class Pencils2(DirectInput):
         self.text = f"В закрытом ящике находится {self._pencils_to_text(num)}, некоторые из них синего цвета. Наугад вынимается один карандаш. Сообщение «этот карандаш – НЕ синий» несёт {num_bits(bits)} информации. Сколько синих карандашей в ящике?"
 
         return self
+
+
+class WordCount(DirectInput):
+    def _word_size_to_text(self, n):
+        text = ['трехбуквенных', 'четырехбуквенных', 'пятибуквенных', 'шестибуквенных', 'семибуквенных']
+
+        return text[n - 3]
+
+    def generate(self):
+        n = self.rnd.in_range(3, 7)
+        m = self.rnd.in_range(3, 5)
+
+        self.correct = m ** n
+        self.text = f"Некоторый алфавит содержит {num_text(m, ['', 'различных символа', 'различных символов'])}. Сколько {self._word_size_to_text(n)} слов можно составить из символов этого алфавита, если символы в слове могут повторяться?"
+
+        return self
+
+
+class WordCount2(DirectInput):
+    def _alphabet_size_to_text(self, n):
+        text = [
+            'трехбуквенном алфавите {A, B, C}',
+            'четырехбуквенном алфавите {A, B, C, D}',
+            'пятибуквенном алфавите {A, B, C, D, E}',
+        ]
+
+        return text[n - 3]
+
+    def _len_to_text(self, n):
+        text = ['одного', 'двух', 'трех', 'четырех', 'пяти']
+
+        return text[n - 1]
+
+    def generate(self):
+        len_from = self.rnd.in_range(1, 3)
+        len_to = self.rnd.in_range(len_from + 1, 5)
+        alphabet_size = self.rnd.in_range(3, 5)
+
+        self.correct = sum([alphabet_size ** n for n in range(len_from, len_to + 1)])
+        self.text = f"Сколько есть различных символьных последовательностей длины от {self._len_to_text(len_from)} до {self._len_to_text(len_to)} в {self._alphabet_size_to_text(alphabet_size)}?"
+
+        return self
