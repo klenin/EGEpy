@@ -74,6 +74,24 @@ class ImageStorageSize(DirectInput):
 
         return self
 
+
+class ImageStoragePalette(DirectInput):
+    def generate(self):
+        data = ImageData(self.rnd)
+
+        pixel_word = num_text(data.h, [ 'пиксель', 'пикселя', 'пикселей' ])
+
+        self.text = f'''
+Автоматическая фотокамера производит растровые изображения 
+размером {data.w} на {pixel_word}. При этом объём файла с изображением 
+не может превышать {data.size_kb} Кбайт, упаковка данных не производится. 
+Какое максимальное количество цветов можно использовать в палитре?'''
+        self.correct = data.palette
+        self.accept_number()
+
+        return self
+
+
 class TextData(LoggableData):
     def __init__(self, rnd):
         get_root = lambda m, n: int(ceil(pow(m, 1.0/n)))
