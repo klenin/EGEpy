@@ -1,9 +1,10 @@
 from ...GenBase import DirectInput
 from ...RussianModules.NumText import num_text, num_bits, num_bytes
+from ...Random import Random
 
 class AmountOfInformation(DirectInput):
-    def __init__(self, rnd):
-        self.rnd = rnd
+    def __init__(self, rnd: Random):
+        super().__init__(rnd)
         self.letters = [ 'А', 'Б', 'В', 'Г', 'Д', 'Е', 'Ж', 'З', 'И', 'К', 'Л', 'М', 'Н', 'О', 'П', 'Р', 'С', 'Т', 'У',
                          'Ф', 'Х', 'Ц', 'Ч', 'Ш', 'Щ', 'Ы', 'Э', 'Ю', 'Я' ]
         self.digits = [ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' ]
@@ -16,12 +17,12 @@ class AmountOfInformation(DirectInput):
         return ','.join(self.rnd.pick_n(amount_of_symbols, self.letters_and_digits))
 
     def get_amount_of_bits(self, letters_and_digits):
-        amount_of_bits_for_one_symbol = 0
+        amount_of_bits = 0
         for i in range(1, 11):
             if 2 ** i >= letters_and_digits:
-                amount_of_bits_for_one_symbol = i
+                amount_of_bits = i
                 break
-        return amount_of_bits_for_one_symbol
+        return amount_of_bits
 
     def get_amount_of_bytes(self, amount_of_bits):
         amount_of_bytes = amount_of_bits // 8
@@ -234,6 +235,7 @@ class AmountOfInformationSport(AmountOfInformation):
 
     def generate_text_2(self):
         finished_athletes = self.rnd.in_range(10, self.amount_of_athletes - 5)
+        finished_athletes = finished_athletes // 8 * 8
         text_for_athletes = num_text(self.amount_of_athletes, [ 'спортсмен', 'спортсмена', 'спортсменов' ])
         text_for_finished_athletes = num_text(finished_athletes, [ 'велосипедист', 'велосипедиста', 'велосипедистов' ])
 
