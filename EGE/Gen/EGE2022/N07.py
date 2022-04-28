@@ -31,6 +31,11 @@ class ImageData(LoggableData):
         self.size_kb = int(ceil(self.size / 2 ** 10))
         self.time = int(ceil(self.size / self.speed))
 
+        self.bigger_palette = rnd.in_range(self.palette + 1, 2 * self.palette)
+        self.bigger_bits = int(ceil(log(self.bigger_palette)))
+        self.bigger_size = self.bigger_bits * self.w * self.h
+        self.bigger_size_kb = int(ceil(self.bigger_size / 2 ** 10))
+
 
 class ImageTransferTime(DirectInput):
     def generate(self):
@@ -87,6 +92,21 @@ class ImageStoragePalette(DirectInput):
 не может превышать {data.size_kb} Кбайт, упаковка данных не производится. 
 Какое максимальное количество цветов можно использовать в палитре?'''
         self.correct = data.palette
+        self.accept_number()
+
+        return self
+
+
+class ImageStorageResizePalette(DirectInput):
+    def generate(self):
+        data = ImageData(self.rnd)
+
+        self.text = f'''
+Автоматическая фотокамера с {data.size_kb} Кбайт видеопамяти производит 
+растровые изображения c фиксированным разрешением и {data.palette}-цветной палитрой. 
+Сколько цветов можно будет использовать в палитре, 
+если увеличить видеопамять до {data.bigger_size_kb} Кбайт?'''
+        self.correct = data.bigger_palette
         self.accept_number()
 
         return self
