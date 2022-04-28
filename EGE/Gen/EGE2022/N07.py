@@ -28,6 +28,7 @@ class ImageData(LoggableData):
         self.w = rnd.in_range(size_range.min, size_range.max)
         self.h = rnd.in_range(size_range.min, size_range.max)
         self.size = self.bits * self.w * self.h
+        self.size_kb = int(ceil(self.size / 2 ** 10))
         self.time = int(ceil(self.size / self.speed))
 
 
@@ -53,6 +54,25 @@ class ImageTransferTime(DirectInput):
 
         return self
 
+
+class ImageStorageSize(DirectInput):
+    def generate(self):
+        data = ImageData(self.rnd)
+
+        pixel_word = num_text(data.h, [ 'пиксель', 'пикселя', 'пикселей' ])
+        colors_word = num_text(data.palette, [ 'цвет', 'цвета', 'цветов' ])
+
+        self.text = f'''
+Какой минимальный объём памяти (в Кбайт) нужно зарезервировать, 
+чтобы можно было сохранить любое растровое изображение 
+размером {data.w} на {pixel_word} при условии, 
+что в изображении могут использоваться {colors_word}? 
+В ответе запишите только целое число с округлением вверх, 
+единицу измерения писать не нужно.'''
+        self.correct = data.size_kb
+        self.accept_number()
+
+        return self
 
 class TextData(LoggableData):
     def __init__(self, rnd):
