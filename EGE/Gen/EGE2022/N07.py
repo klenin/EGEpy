@@ -133,7 +133,7 @@ class TextData(LoggableData):
 
         self.encoding_bits = x * y
         self.size = self.symbols_n * self.encoding_bits
-        self.bigger_encoding_bits = rnd.in_range(self.encoding_bits, 2 * self.encoding_bits)
+        self.bigger_encoding_bits = rnd.in_range(self.encoding_bits + 1, 2 * self.encoding_bits)
         self.bigger_size = self.symbols_n * self.bigger_encoding_bits
         self.size_diff_kb = int(ceil((self.bigger_size - self.size) / 2 ** 10))
 
