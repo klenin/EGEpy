@@ -1,7 +1,8 @@
+from EGE import Random
 from ...GenBase import DirectInput
 from ...RussianModules.NumText import num_bits, num_text
 from math import ceil, log, log2
-
+from string import ascii_uppercase
 
 class CellEncoding(DirectInput):
     def _resolve(self, q):
@@ -125,12 +126,22 @@ class WordCount(DirectInput):
 
         return text[n - 3]
 
+    def _get_alphabet(self, n):
+        return ', '.join(list(ascii_uppercase[0:n]))
+
+    def _get_text(self, n, m):
+        v = self.rnd.in_range(1, 2)
+        if v == 1:
+            return f"Некоторый алфавит содержит {num_text(m, ['', 'различных символа', 'различных символов'])}. Сколько {self._word_size_to_text(n)} слов можно составить из символов этого алфавита, если символы в слове могут повторяться?"
+        if v == 2:
+            return f"Сколько слов длины {n} можно составить из букв {self._get_alphabet(m)}? Каждая буква может входить в слово несколько раз."
+
     def generate(self):
         n = self.rnd.in_range(3, 7)
         m = self.rnd.in_range(3, 5)
 
         self.correct = m ** n
-        self.text = f"Некоторый алфавит содержит {num_text(m, ['', 'различных символа', 'различных символов'])}. Сколько {self._word_size_to_text(n)} слов можно составить из символов этого алфавита, если символы в слове могут повторяться?"
+        self.text = self._get_text(n, m)
 
         return self
 
