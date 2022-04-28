@@ -97,3 +97,24 @@ class TextTransferTime(DirectInput):
         self.accept_number()
 
         return self
+
+class TextTransferDataLength(DirectInput):
+    def generate(self):
+        data = TextData(self.rnd)
+
+        symbols_per_page_word = num_text(data.symbols_per_page, [ 'символ', 'символа', 'символов' ])
+        time_word = num_text(data.time, ['секунду', 'секунды', 'секунд'])
+        variant = self.rnd.pick([
+            [f'страниц содержал переданный текст, при условии, что на одной странице в среднем {symbols_per_page_word}', data.pages],
+            [f'символов содержал переданный текст', data.symbols_n],
+        ])
+
+        self.text = f'''
+Скорость передачи данных через интернет соединение равна {data.speed} бит/с. 
+Передача текстового файла через это соединение заняла {time_word}. 
+Определите, сколько {variant[0]}, 
+если известно, что он был представлен в {data.encoding_bits}-битной кодировке.'''
+        self.correct = variant[1]
+        self.accept_number()
+
+        return self
