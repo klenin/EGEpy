@@ -87,7 +87,7 @@ def is_int(n):
     return int(n) == float(n)
 
 
-class BlackWhiteBalls2(ShannonProb):
+class BlackWhiteBalls2(DirectInput):
     def _balls_to_text(self, n):
         return num_text(n, ['черный шар', 'черных шара', 'черных шаров'])
 
@@ -98,6 +98,22 @@ class BlackWhiteBalls2(ShannonProb):
         while not is_int((num * 2 ** bits) / (2 ** bits - 1)):
             num += 1
         self.correct = ceil((num * 2 ** bits) / (2 ** bits - 1))
-        self.text = f"В корзине лежат черные и белые шары. Среди них {self._balls_to_text(num)}. Сообщение о том, что достали белый шар, несет {num_bits(bits)} бита информации. Сколько всего шаров в корзине?"
+        self.text = f"В корзине лежат черные и белые шары. Среди них {self._balls_to_text(num)}. Сообщение о том, что достали белый шар, несет {num_bits(bits)} информации. Сколько всего шаров в корзине?"
+
+        return self
+
+
+class Pencils2(DirectInput):
+    def _pencils_to_text(self, n):
+        return num_text(n, ['карандаш', 'карандаша', 'карадашей'])
+
+    def generate(self):
+        bits = self.rnd.in_range(2, 5)
+        num = self.rnd.in_range(bits ** 2 + 10, 256)
+
+        while not is_int((num * 2 ** bits - num) / 2 ** bits):
+            num += 1
+        self.correct = ceil((num * 2 ** bits - num) / 2 ** bits)
+        self.text = f"В закрытом ящике находится {self._pencils_to_text(num)}, некоторые из них синего цвета. Наугад вынимается один карандаш. Сообщение «этот карандаш – НЕ синий» несёт {num_bits(bits)} информации. Сколько синих карандашей в ящике?"
 
         return self
