@@ -9,10 +9,10 @@ from EGE.Gen.EGE import B01, B02, B03, B04, B05, B06, B07, B08, B10, B11, B12, B
 from EGE.Gen.EGE import Z06, Z09, Z10, Z11, Z12, Z13, Z15, Z16, Z18, Z22
 from EGE.Gen.EGE2022 import N05, N11, N14
 
-rnd = EGE.Random.Random(200000000)
+rnd = EGE.Random.Random(89789789000000)
 
 questions = [q.generate() for q in [
-    y3.GenDatabase(rnd, 3)
+    y3.GenDatabase(rnd)
     # A01.Recode(rnd),
     # A01.Simple(rnd),
     # A02.SportsmanNumbers(rnd),

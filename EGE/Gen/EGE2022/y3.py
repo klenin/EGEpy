@@ -27,7 +27,8 @@ class Problem:
                  district: str,
                  dates_info: list[str],
                  movement_type1_3,
-                 movement_type4):
+                 movement_type4,
+                 mutations):
         self.rnd = rnd
         self.name = name
         self.price = price
@@ -41,17 +42,17 @@ class Problem:
         self.movement_type4 = movement_type4
         self.text = ""
         self.correct = -1
+        self.mutations = mutations
 
     def mutation(self):
-        global mutations
-        return self.rnd.pick(list(mutations.keys()))
+        return self.mutations[self.rnd.pick(list(self.mutations.keys()))]
 
 
 class FirstProblemType(Problem):
     def __init__(self, rnd, name, price, provider, measurement, prod_id, amount, district, dates_info, movement_type1_3,
                  movement_type4):
         super().__init__(rnd, name, price, provider, measurement, prod_id, amount, district, dates_info,
-                         movement_type1_3, movement_type4)
+                         movement_type1_3, movement_type4, {})
 
     def gen(self):
         movement = self.movement_type1_3[self.movement_type1_3['Артикул'] == self.prod_id]
@@ -67,18 +68,15 @@ class FirstProblemType(Problem):
 
 
 class SecondProblemType(Problem):
-    mutations = {1: 'было продано',
-                 2: 'появилось'}
-
     def __init__(self, rnd, name, price, provider, measurement, prod_id, amount, district, dates_info, movement_type1_3,
                  movement_type4):
         super().__init__(rnd, name, price, provider, measurement, prod_id, amount, district, dates_info,
-                         movement_type1_3, movement_type4)
+                         movement_type1_3, movement_type4, {1: 'было продано', 2: 'появилось'})
 
     def gen(self):
-        mutation = mutations[self.mutation()]
+        var = -1
+        mutation = self.mutation()
         movement = self.movement_type1_3[self.movement_type1_3['Артикул'] == self.prod_id]
-        # var = 0
         self.text = (f"сколько {measure_genetive(self.measurement)} "
                      f"товара \"{self.name}\" {mutation} в "
                      f"магазинах {districts_genetive(self.district)} района за период с "
@@ -96,18 +94,16 @@ class SecondProblemType(Problem):
 
 
 class ThirdProblemType(Problem):
-    mutations = {1: ['потребовалось магазинам', 'для закупки'],
-                 2: ['выручили магазины', 'от продажи']}
-
     def __init__(self, rnd, name, price, provider, measurement, prod_id, amount, district, dates_info, movement_type1_3,
                  movement_type4):
         super().__init__(rnd, name, price, provider, measurement, prod_id, amount, district, dates_info,
-                         movement_type1_3, movement_type4)
+                         movement_type1_3, movement_type4,
+                         {1: ['потребовалось магазинам', 'для закупки'], 2: ['выручили магазины', 'от продажи']})
 
     def gen(self):
-        mutation = mutations[self.mutation()]
+        mutation = self.mutation()
+        var = -1
         movement = self.movement_type1_3[self.movement_type1_3['Артикул'] == self.prod_id]
-        # var = 0
         self.text = (f"сколько рублей {mutation[0]} "
                      f"{districts_genetive(self.district)} района {mutation[1]} "
                      f"товара \"{self.name}\" за период с "
@@ -132,6 +128,7 @@ class ForthProblemType(ThirdProblemType):
 
     def gen(self):
         mutation = self.mutation()
+        var = -1
         self.text = (f"сколько рублей {mutation[0]} "
                      f"{districts_genetive(self.district)} района {mutation[1]} "
                      f"товаров поставщика \"{self.provider}\" за период с "
@@ -145,7 +142,7 @@ class ForthProblemType(ThirdProblemType):
             var = var.sum()
         elif mutation[0] == 'выручили магазины':
             var = self.movement_type4[self.movement_type4['Тип операции'] == 'Продажа'][
-                'Количество упаковок, шт.'].sum()
+                'Количество упаковок, шт.']
             var = var * self.movement_type4[self.movement_type4['Тип операции'] == 'Продажа'][
                 'Цена руб./шт.']
             var = var.sum()
@@ -155,9 +152,7 @@ class ForthProblemType(ThirdProblemType):
 
 
 class GenDatabase(DirectInput):
-    CONST_rows_per_shop = 142
-
-    def __init__(self, rnd, num):
+    def __init__(self, rnd):
         self.text = (
             "<p>В файле приведён фрагмент базы данных «Продукты», содержащей"
             "информацию о поставках товаров и их продаже.База данных состоит из трёх таблиц.</p>"
@@ -170,13 +165,11 @@ class GenDatabase(DirectInput):
             "style = \"display: block; margin-left: auto;margin-right: auto;\"/>\n"
             "<p>Используя информацию из приведённой базы данных, определите, "
         )
-
-        global CONST_rows_per_shop
+        self.CONST_rows_per_shop = 142
         self.rnd = rnd
-        self.num = num
         self.dates = ['0' + str(i + 1) + '.06.2021' for i in range(rnd.in_range(3, 6))]  # rnd.pick([4, 6, 8])
         self.number_of_shops = rnd.in_range(10, 18)
-        self.number_of_rows = self.number_of_shops * CONST_rows_per_shop
+        self.number_of_rows = self.number_of_shops * self.CONST_rows_per_shop
 
         self.number_of_products = rnd.in_range(20, 64)
 
@@ -248,7 +241,7 @@ class GenDatabase(DirectInput):
 
     def gen_movement(self, price_list, shops_ids):
         movement = []
-        lines_per_shop = self.number_of_rows / self.number_of_shops
+        lines_per_shop = self.CONST_rows_per_shop
         lines_per_day = self.lines_per_day(self.number_of_rows, len(self.dates))
         shops_lst = shops_ids.copy()
 
@@ -291,7 +284,7 @@ class GenDatabase(DirectInput):
                              })
         return movement
 
-    def gen_text(self, product, shops, movement, price_list, num=0):
+    def gen_text(self, product, shops, movement, price_list):
         product_id = self.rnd.in_range(1, self.number_of_products - 1)
         shops_list = movement['ID Магазина'].unique()
         district_list = shops[shops['ID Магазина'].isin(shops_list)]['Район'].unique()
@@ -304,17 +297,19 @@ class GenDatabase(DirectInput):
         movement_type4 = movement[movement['Артикул'].isin(product_list)].copy()
         movement_type4 = movement_type4[movement_type4['ID Магазина'].isin(shop_to_filter)]
         task_type = [FirstProblemType, SecondProblemType, ThirdProblemType, ForthProblemType]
-        task = task_type[num](rnd=self.rnd,
-                              name=products[product_id].name,
-                              price=price_list[product_id],
-                              provider=provider,
-                              measurement=product[product['Артикул'] == product_id][['Ед. изм']].values[0],
-                              prod_id=product_id,
-                              amount=product[product['Артикул'] == product_id][['Количество в упаковке']].values[0],
-                              district=district,
-                              dates_info=self.dates,
-                              movement_type1_3=movement_type1_3,
-                              movement_type4=movement_type4)
+        task = task_type[self.rnd.pick([0, 1, 2, 3])](rnd=self.rnd,
+                                                      name=products[product_id].name,
+                                                      price=price_list[product_id],
+                                                      provider=provider,
+                                                      measurement=
+                                                      product[product['Артикул'] == product_id][['Ед. изм']].values[0],
+                                                      prod_id=product_id,
+                                                      amount=product[product['Артикул'] == product_id][
+                                                          ['Количество в упаковке']].values[0],
+                                                      district=district,
+                                                      dates_info=self.dates,
+                                                      movement_type1_3=movement_type1_3,
+                                                      movement_type4=movement_type4)
         task, ans = task.gen()
         self.text += task
         self.correct = ans
@@ -325,7 +320,7 @@ class GenDatabase(DirectInput):
         product = pd.DataFrame(product)
         movement = pd.DataFrame(self.gen_movement(price_list, shops_ids))
         shops = pd.DataFrame(self.gen_shops(movement))
-        self.gen_text(product, shops, movement, price_list, self.num)
+        self.gen_text(product, shops, movement, price_list)
 
         write = pd.ExcelWriter(r'EGE/Gen/EGE2022/multiple.xlsx', engine='xlsxwriter')
         movement.to_excel(write, sheet_name='Движение товаров', index=False)
