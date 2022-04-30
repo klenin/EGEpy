@@ -28,13 +28,13 @@ class ImageData(LoggableData):
         self.w = rnd.in_range(size_range.min, size_range.max)
         self.h = rnd.in_range(size_range.min, size_range.max)
         self.size = self.bits * self.w * self.h
-        self.size_kb = int(ceil(self.size / 2 ** 10))
+        self.size_kb = int(ceil(self.size / 2 ** 10 / 8))
         self.time = int(ceil(self.size / self.speed))
 
         self.bigger_palette = rnd.in_range(self.palette + 1, 2 * self.palette)
         self.bigger_bits = int(ceil(log(self.bigger_palette)))
         self.bigger_size = self.bigger_bits * self.w * self.h
-        self.bigger_size_kb = int(ceil(self.bigger_size / 2 ** 10))
+        self.bigger_size_kb = int(ceil(self.bigger_size / 2 ** 10 / 8))
 
 
 class ImageTransferTime(DirectInput):
@@ -135,7 +135,7 @@ class TextData(LoggableData):
         self.size = self.symbols_n * self.encoding_bits
         self.bigger_encoding_bits = rnd.in_range(self.encoding_bits + 1, 2 * self.encoding_bits)
         self.bigger_size = self.symbols_n * self.bigger_encoding_bits
-        self.size_diff_kb = int(ceil((self.bigger_size - self.size) / 2 ** 10))
+        self.size_diff_kb = int(ceil((self.bigger_size - self.size) / 2 ** 10 / 8))
 
 
 class TextTransferTime(DirectInput):
