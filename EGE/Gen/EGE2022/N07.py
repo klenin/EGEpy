@@ -1,5 +1,5 @@
 from ...GenBase import DirectInput
-from ...RussianModules.NumText import num_text
+from ...RussianModules.NumText import num_text, num_bits
 
 from collections import namedtuple
 from math import log, ceil, pow
@@ -43,8 +43,10 @@ class ImageData(LoggableData):
 
         self.time = rnd.in_range(time_range.min, time_range.max)#[i for i in range(1, 24 * 60 * 60 + 1) if abs(i * self.pictures_n - 24 * 60 * 60) < i][0]#int(ceil((24 * 60 * 60) / self.pictures_n))
         self.pictures_n = 24 * 60 * 60 // self.time
-        self.file_size_pure_kb = int(ceil((self.size * self.pictures_n) / 2 ** 13))
-        self.file_size_kb = int(ceil(self.with_extra_size * self.pictures_n / 2 ** 13))      
+        self.file_size_pure = self.size * self.pictures_n
+        self.file_size_pure_kb = int(ceil(self.file_size_pure / 2 ** 13))
+        self.file_size_with_extra = self.with_extra_size * self.pictures_n
+        self.file_size_kb = int(ceil(self.file_size_with_extra / 2 ** 13))   
 
 
 class ImageTransferTime(DirectInput):
@@ -167,6 +169,27 @@ class ImageStoragePicturesNForPeriod(DirectInput):
 В ответе укажите только целое число — количество Кбайт с округлением вверх,
 единицу измерения указывать не надо.'''
         self.correct = data.file_size_pure_kb
+        self.accept_number()
+
+        return self
+
+
+class ImageStoragePicturesNPalette(DirectInput):
+    def generate(self):
+        data = ImageData(self.rnd)
+
+        pixel_word = num_text(data.h, [ 'пиксель', 'пикселя', 'пикселей' ])
+        colors_word = num_text(data.palette, [ 'оттенок', 'оттенка', 'оттенков' ])
+        file_size_bits_word = num_bits(data.file_size_with_extra)
+
+        self.text = f'''
+В информационной системе хранятся изображения 
+размером {data.w} × {pixel_word}. Методы сжатия изображений не используются. 
+Каждое изображение дополняется служебной информацией, 
+которая занимает {data.extra_kb} Кбайт. Для хранения {data.pictures_n} изображений 
+потребовалось {file_size_bits_word}. Сколько цветов использовано 
+в палитре каждого изображения?'''
+        self.correct = data.palette
         self.accept_number()
 
         return self
