@@ -11,6 +11,7 @@ palette_range = range_tuple(8, 64)
 size_range = range_tuple(50, 2000)
 bits_range = range_tuple(1, 64)
 degrees_range = range_tuple(3, 9)
+degrees_range = range_tuple(3, 64)
 time_range = range_tuple(1, 360)
 
 
@@ -36,6 +37,8 @@ class ImageData(LoggableData):
 
         self.bigger_palette = rnd.in_range(self.palette + 1, 2 * self.palette)
         self.bigger_bits = int(ceil(log(self.bigger_palette)))
+        self.bigger_bits = rnd.pick([i for i in range(self.bits + 1, degrees_range.max + 7) if i % 3 == 0])
+        self.bigger_palette = 2 ** self.bigger_bits
         self.bigger_size = self.bigger_bits * self.w * self.h
         self.bigger_size_kb = int(ceil(self.bigger_size / 2 ** 10 / 8))
 
