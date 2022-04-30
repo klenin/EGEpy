@@ -9,8 +9,7 @@ range_tuple = namedtuple('range_tuple', [ 'min', 'max' ])
 speed_range = range_tuple(19500, 120000)
 palette_range = range_tuple(8, 64)
 size_range = range_tuple(50, 2000)
-bits_range = range_tuple(1, 64)
-degrees_range = range_tuple(3, 9)
+bits_range = range_tuple(8, 256)
 degrees_range = range_tuple(3, 64)
 time_range = range_tuple(1, 360)
 
@@ -25,8 +24,6 @@ class LoggableData:
 class ImageData(LoggableData):
     def __init__(self, rnd):
         self.speed = rnd.in_range(speed_range.min, speed_range.max)
-        self.palette = rnd.in_range(palette_range.min, palette_range.max)
-        self.bits = int(ceil(log(self.palette)))
         self.bits = rnd.pick([i for i in range(degrees_range.min, degrees_range.max + 1) if i % 3 == 0])
         self.w = rnd.in_range(size_range.min, size_range.max)
         self.h = rnd.in_range(size_range.min, size_range.max)
@@ -35,8 +32,6 @@ class ImageData(LoggableData):
         self.size_kb = int(ceil(self.size / 2 ** 10 / 8))
         self.time = int(ceil(self.size / self.speed))
 
-        self.bigger_palette = rnd.in_range(self.palette + 1, 2 * self.palette)
-        self.bigger_bits = int(ceil(log(self.bigger_palette)))
         self.bigger_bits = rnd.pick([i for i in range(self.bits + 1, degrees_range.max + 7) if i % 3 == 0])
         self.bigger_palette = 2 ** self.bigger_bits
         self.bigger_size = self.bigger_bits * self.w * self.h
