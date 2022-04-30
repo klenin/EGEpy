@@ -41,8 +41,10 @@ class ImageData(LoggableData):
         self.with_extra_size = self.size + self.extra_kb * 2 ** 13
         self.with_extra_size_kb = int(ceil(self.with_extra_size / 2 ** 13))
 
-        self.pictures_n = rnd.in_range(50, 5000)
-        self.file_size_kb = int(ceil(self.with_extra_size * self.pictures_n / 2 ** 13))
+        self.time = rnd.in_range(time_range.min, time_range.max)#[i for i in range(1, 24 * 60 * 60 + 1) if abs(i * self.pictures_n - 24 * 60 * 60) < i][0]#int(ceil((24 * 60 * 60) / self.pictures_n))
+        self.pictures_n = 24 * 60 * 60 // self.time
+        self.file_size_pure_kb = int(ceil((self.size * self.pictures_n) / 2 ** 13))
+        self.file_size_kb = int(ceil(self.with_extra_size * self.pictures_n / 2 ** 13))      
 
 
 class ImageTransferTime(DirectInput):
@@ -142,6 +144,29 @@ class ImageStoragePicturesN(DirectInput):
 Сколько изображений удастся записать, 
 если для их хранения выделено {data.file_size_kb} Кбайт?'''
         self.correct = data.pictures_n
+        self.accept_number()
+
+        return self
+
+
+class ImageStoragePicturesNForPeriod(DirectInput):
+    def generate(self):
+        data = ImageData(self.rnd)
+
+        pixel_word = num_text(data.h, [ 'пиксель', 'пикселя', 'пикселей' ])
+        colors_word = num_text(data.palette, [ 'оттенок', 'оттенка', 'оттенков' ])
+
+        self.text = f'''
+Автоматическая фотокамера каждые {data.time} секунд 
+создаёт черно-белое растровое изображение, 
+содержащее {colors_word}. Размер изображения — {data.w} × {pixel_word}. 
+Все полученные изображения и коды пикселей внутри одного изображения 
+записываются подряд, никакая дополнительная информация не сохраняется, 
+данные не сжимаются. Сколько Кбайт нужно выделить для хранения 
+всех изображений, полученных за сутки? 
+В ответе укажите только целое число — количество Кбайт с округлением вверх,
+единицу измерения указывать не надо.'''
+        self.correct = data.file_size_pure_kb
         self.accept_number()
 
         return self
