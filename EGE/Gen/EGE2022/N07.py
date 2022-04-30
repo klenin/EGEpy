@@ -38,8 +38,11 @@ class ImageData(LoggableData):
         self.bigger_size_kb = int(ceil(self.bigger_size / 2 ** 10 / 8))
 
         self.extra_kb = rnd.in_range(10, 60)
-        self.with_extra_size_kb = self.size_kb + self.extra_kb
+        self.with_extra_size = self.size + self.extra_kb * 2 ** 13
+        self.with_extra_size_kb = int(ceil(self.with_extra_size / 2 ** 13))
 
+        self.pictures_n = rnd.in_range(50, 5000)
+        self.file_size_kb = int(ceil(self.with_extra_size * self.pictures_n / 2 ** 13))
 
 
 class ImageTransferTime(DirectInput):
@@ -116,6 +119,29 @@ class ImageStorageResizePalette(DirectInput):
 Сколько цветов можно будет использовать в палитре, 
 если увеличить видеопамять до {data.bigger_size_kb} Кбайт?'''
         self.correct = data.bigger_palette
+        self.accept_number()
+
+        return self
+
+
+class ImageStoragePicturesN(DirectInput):
+    def generate(self):
+        data = ImageData(self.rnd)
+
+        pixel_word = num_text(data.h, [ 'пиксель', 'пикселя', 'пикселей' ])
+        colors_word = num_text(data.palette, [ 'цвет', 'цвета', 'цветов' ])
+
+        self.text = f'''
+Для проведения эксперимента создаются изображения, 
+содержащие случайные наборы цветных пикселей. 
+В палитре {colors_word}, размер изображения — {data.w} x {pixel_word}, 
+при сохранении каждый пиксель кодируется одинаковым числом битов, 
+все коды пикселей записываются подряд, методы сжатия не используются. 
+Для каждого изображения дополнительно записывается 
+{data.extra_kb} Кбайт служебной информации. 
+Сколько изображений удастся записать, 
+если для их хранения выделено {data.file_size_kb} Кбайт?'''
+        self.correct = data.pictures_n
         self.accept_number()
 
         return self
