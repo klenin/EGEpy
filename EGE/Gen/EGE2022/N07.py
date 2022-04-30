@@ -39,6 +39,10 @@ class ImageData(LoggableData):
         self.bigger_size = self.bigger_bits * self.w * self.h
         self.bigger_size_kb = int(ceil(self.bigger_size / 2 ** 10 / 8))
 
+        self.extra_kb = rnd.in_range(10, 60)
+        self.with_extra_size_kb = self.size_kb + self.extra_kb
+
+
 
 class ImageTransferTime(DirectInput):
     def generate(self):
@@ -88,11 +92,15 @@ class ImageStoragePalette(DirectInput):
         data = ImageData(self.rnd)
 
         pixel_word = num_text(data.h, [ 'пиксель', 'пикселя', 'пикселей' ])
+        variant = self.rnd.pick([
+            [f'никакая дополнительная информация не сохраняется', data.size_kb],
+            [f'{data.extra_kb} Кбайт необходимо выделить для служебной информации', data.with_extra_size_kb],
+        ])
 
         self.text = f'''
 Автоматическая фотокамера производит растровые изображения 
 размером {data.w} на {pixel_word}. При этом объём файла с изображением 
-не может превышать {data.size_kb} Кбайт, упаковка данных не производится. 
+не может превышать {variant[1]} Кбайт и {variant[0]}, упаковка данных не производится. 
 Какое максимальное количество цветов можно использовать в палитре?'''
         self.correct = data.palette
         self.accept_number()
