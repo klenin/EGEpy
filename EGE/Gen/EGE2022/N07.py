@@ -10,6 +10,7 @@ speed_range = range_tuple(19500, 120000)
 palette_range = range_tuple(8, 64)
 size_range = range_tuple(50, 2000)
 bits_range = range_tuple(1, 64)
+degrees_range = range_tuple(3, 9)
 time_range = range_tuple(1, 360)
 
 
@@ -25,8 +26,10 @@ class ImageData(LoggableData):
         self.speed = rnd.in_range(speed_range.min, speed_range.max)
         self.palette = rnd.in_range(palette_range.min, palette_range.max)
         self.bits = int(ceil(log(self.palette)))
+        self.bits = rnd.pick([i for i in range(degrees_range.min, degrees_range.max + 1) if i % 3 == 0])
         self.w = rnd.in_range(size_range.min, size_range.max)
         self.h = rnd.in_range(size_range.min, size_range.max)
+        self.palette = 2 ** self.bits
         self.size = self.bits * self.w * self.h
         self.size_kb = int(ceil(self.size / 2 ** 10 / 8))
         self.time = int(ceil(self.size / self.speed))
