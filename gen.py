@@ -156,4 +156,5 @@ questions = [q.generate() for q in [
 #
 with open('test.xhtml', 'w', encoding='utf-8') as f:
     print(EGE.Html.make_html(questions), file=f)
+
 print(EGE.Html.make_html(questions))
