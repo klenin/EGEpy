@@ -7,9 +7,7 @@ import EGE.Random
 from EGE.Gen.EGE import A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11, A12, A13, A15, A16, A17, A18
 from EGE.Gen.EGE import B01, B02, B03, B04, B05, B06, B07, B08, B10, B11, B12, B13, B14, B15
 from EGE.Gen.EGE import Z06, Z09, Z10, Z11, Z12, Z13, Z15, Z16, Z18, Z22
-from EGE.Gen.EGE2022 import N14
-
-from EGE.Gen.EGE2022 import N05, N11
+from EGE.Gen.EGE2022 import N05, N11, N14
 
 rnd = EGE.Random.Random(2342134)
 
@@ -127,7 +125,6 @@ questions = [q.generate() for q in [
     Z16.BaseGcd(rnd),
     Z18.BitwiseConjunction(rnd),
     Z22.CalculatorFindPrgmCount(rnd),
-    N14.DirectSumDigits(rnd),
 ]]
 
 questions_2022 = [q.generate() for q in [
@@ -156,6 +153,7 @@ questions_2022 = [q.generate() for q in [
     N11.AmountOfInformationPasswordsExtra(rnd),
     N11.AmountOfInformationPasswords(rnd),
     N11.AmountOfInformationCars(rnd),
+    N14.DirectSumDigits(rnd),
 ]]
 
 if not sys.stdout.isatty():
