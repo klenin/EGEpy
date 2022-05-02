@@ -11,6 +11,6 @@ class Ones(SingleChoice):
         case = self.rnd.pick(Ones.cases)
         n = 2 ** npower + case['d']
         self.text = f"Сколько единиц в двоичной записи числа {n}?"
-        self.set_variants([1, 2, npower - 1, npower ])
+        self.set_variants([ 1, 2, npower - 1, npower ])
         self.correct = case['a']
         return self

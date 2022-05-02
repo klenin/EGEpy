@@ -1,9 +1,9 @@
 import re
 
-districts = ['Октябрьский',
-             'Первомайский',
-             'Заречный'
-             ]
+districts = [ 'Октябрьский',
+              'Первомайский',
+              'Заречный'
+              ]
 
 
 def districts_genetive(district):
