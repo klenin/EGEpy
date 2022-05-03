@@ -4,11 +4,12 @@ import EGE.GenBase
 import EGE.Html
 import EGE.Random
 
-from EGE.Gen.EGE2022 import N03, N05, N06, N07, N08, N11, N14
+from EGE.Gen.EGE2022 import N01, N03, N05, N06, N07, N08, N11, N14
 
 rnd = EGE.Random.Random(2342134)
 
 questions = [q.generate() for q in [
+    N01.AmbiguousTableAndGraphCorrelation(rnd),
     N03.GenDatabase(rnd),
     N05.FindNumber(rnd),
     N05.MinAddDigits(rnd),
