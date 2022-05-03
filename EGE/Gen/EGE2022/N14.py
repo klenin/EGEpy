@@ -88,7 +88,7 @@ class DirectSumDigits(DirectInput):
     def _get_different_digits(example: int, base: int) -> int:
         s = set()
         while example > 0:
-            s.update(example % base)
+            s.add(example % base)
             example = example // base
         return len(s)
 
