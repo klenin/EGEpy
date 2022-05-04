@@ -361,3 +361,34 @@ class TableAndGraphCorrelation(AmbiguousTableAndGraphCorrelation):
         self.accept_number()
 
         return self
+
+
+class OptimalWayInTable(AmbiguousTableAndGraphCorrelation):
+    def generate(self):
+        graph_data = self._pick_graph_data()
+
+        weights = []
+        while len(weights) != len(graph_data['edges']):
+            weight = self.rnd.in_range(1, 20) * 5
+            if weight not in weights:
+                weights.append(weight)
+
+        g = Graph(graph_data['vertices'])
+        for v1, v2 in graph_data['edges']:
+            g.edge2(v1, v2, weights.pop())
+
+        first_vertex, last_vertex = self.rnd.pick_n(2, list(g.vertex_names()))
+
+        self.text = f'''
+Между населёнными пунктами {', '.join(sorted(g.vertex_names()))} построены дороги, протяжённость 
+которых приведена в таблице. (Отсутствие числа в таблице означает, что прямой дороги между пунктами нет.)
+{g.html_matrix()} Определите длину кратчайшего пути между пунктами {first_vertex} и {last_vertex} (при 
+условии, что передвигаться можно только по построенным дорогам).'''
+
+        self.correct = g.count_path_min_weight(
+            first_vertex,
+            last_vertex)
+
+        self.accept_number()
+
+        return self
