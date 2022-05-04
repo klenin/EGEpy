@@ -26,7 +26,7 @@ class LoggableData:
 class ImageData(LoggableData):
     def __init__(self, rnd):
         self.speed = rnd.in_range(speed_range.min, speed_range.max)
-        self.bits = rnd.pick([i for i in range(degrees_range.min, degrees_range.max + 1) if i % 3 == 0])
+        self.bits = rnd.pick([ i for i in range(degrees_range.min, degrees_range.max + 1) if i % 3 == 0 ])
         self.w = rnd.in_range(size_range.min, size_range.max)
         self.h = rnd.in_range(size_range.min, size_range.max)
         self.palette = 2 ** self.bits
@@ -34,7 +34,7 @@ class ImageData(LoggableData):
         self.size_kb = int(ceil(self.size / 2 ** 10 / 8))
         self.time = int(ceil(self.size / self.speed))
 
-        self.bigger_bits = rnd.pick([i for i in range(self.bits + 1, degrees_range.max + 7) if i % 3 == 0])
+        self.bigger_bits = rnd.pick([ i for i in range(self.bits + 1, degrees_range.max + 7) if i % 3 == 0 ])
         self.bigger_palette = 2 ** self.bigger_bits
         self.bigger_size = self.bigger_bits * self.w * self.h
         self.bigger_size_kb = int(ceil(self.bigger_size / 2 ** 10 / 8))
@@ -110,8 +110,8 @@ class ImageStoragePalette(DirectInput):
 
         pixel_word = num_text(data.h, [ 'пиксель', 'пикселя', 'пикселей' ])
         variant = self.rnd.pick([
-            [f'никакая дополнительная информация не сохраняется', data.size_kb],
-            [f'{data.extra_kb} Кбайт необходимо выделить для служебной информации', data.with_extra_size_kb],
+            [ f'никакая дополнительная информация не сохраняется', data.size_kb ],
+            [ f'{data.extra_kb} Кбайт необходимо выделить для служебной информации', data.with_extra_size_kb ],
         ])
 
         self.text = f'''
@@ -306,8 +306,8 @@ class TextTransferDataLength(DirectInput):
         symbols_per_page_word = num_text(data.symbols_per_page, [ 'символ', 'символа', 'символов' ])
         time_word = num_text(data.time, ['секунду', 'секунды', 'секунд'])
         variant = self.rnd.pick([
-            [f'страниц содержал переданный текст, при условии, что на одной странице в среднем {symbols_per_page_word}', data.pages],
-            [f'символов содержал переданный текст', data.symbols_n],
+            [ f'страниц содержал переданный текст, при условии, что на одной странице в среднем {symbols_per_page_word}', data.pages ],
+            [ f'символов содержал переданный текст', data.symbols_n ],
         ])
 
         self.text = f'''
