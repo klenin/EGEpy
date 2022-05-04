@@ -57,6 +57,9 @@ class ImageData(LoggableData):
         self.size_inches_bits = self.dots * self.bits
         self.size_inches_kb = int(ceil(self.size_inches_bits / 2 ** 13))
 
+        self.bigger_dpi = rnd.in_range(self.dpi + 1, 2 * self.dpi)
+        self.bigger_size_inches_bits = self.inches_w * self.inches_h * self.bigger_dpi * self.bigger_bits
+
 
 class ImageTransferTime(DirectInput):
     def generate(self):
@@ -218,6 +221,29 @@ class ImageStorageDpiSize(DirectInput):
 служебных данных и возможного сжатия. 
 В ответе запишите целое число — размер файла в Кбайтах с округлением вверх.'''
         self.correct = data.size_inches_kb
+        self.accept_number()
+
+        return self
+
+
+class ImageStorageDpiResize(DirectInput):
+    def generate(self):
+        data = ImageData(self.rnd)
+
+        bigger_colors_word = num_text(data.bigger_palette, [ 'цвет', 'цветв', 'цветов' ])
+        colors_word = num_text(data.palette, [ 'цвет', 'цветв', 'цветов' ])
+        bigger_size_inches_bits_word = num_bits(data.bigger_size_inches_bits)
+
+        self.text = f'''
+Для хранения в информационной системе документы 
+сканируются с разрешением {data.bigger_dpi} dpi и цветовой системой, 
+содержащей {bigger_colors_word}. Методы сжатия изображений 
+не используются. Средний размер отсканированного документа 
+составляет {bigger_size_inches_bits_word}. В целях экономии было решено перейти 
+на разрешение {data.dpi} dpi и цветовую систему, содержащую {colors_word}. 
+Сколько бит будет составлять средний размер документа, 
+отсканированного с изменёнными параметрами?'''
+        self.correct = data.size_inches_bits
         self.accept_number()
 
         return self
