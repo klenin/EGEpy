@@ -279,7 +279,7 @@ class TextTransferTime(DirectInput):
     def generate(self):
         data = TextData(self.rnd)
 
-        pages_word = num_text(data.pages, [ 'страница', 'страницы', 'страниц' ])
+        pages_word = num_text(data.pages, [ 'страницу', 'страницы', 'страниц' ])
         symbols_number_word = num_text(data.symbols_number, [ 'символ', 'символа', 'символов' ])
         rows_word = num_text(data.rows, [ 'строку', 'строки', 'строк' ])
         cols_word = num_text(data.cols, [ 'символ', 'символа', 'символов' ])
