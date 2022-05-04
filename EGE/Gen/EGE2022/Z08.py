@@ -321,3 +321,24 @@ class WordEncoding3(DirectInput):
         return self
 
 
+class WordEncoding4(DirectInput):
+    def generate(self):
+        code_len = self.rnd.in_range(5, 9)
+        consonants_count = self.rnd.in_range(3, 5)
+        vowels_count = 2
+        vowels = self.rnd.pick_n(vowels_count, Russian.vowels)
+        consonants = self.rnd.pick_n(consonants_count, Russian.consonants)
+
+        alphabet = self.rnd.shuffle(vowels + consonants)
+
+        self.text = f"""Настя составляет {code_len}-буквенные коды из букв {', '.join(alphabet)}. 
+        Каждая допустимая гласная буква может входить в код не более одного раза. 
+        Сколько кодов может составить Настя?"""
+
+        without_consonants = consonants_count ** code_len
+        only_one_vowel = code_len * consonants_count ** (code_len - 1)
+        two_vowels = consonants_count ** (code_len - vowels_count) * (code_len - 1) * code_len
+
+        self.correct = two_vowels + only_one_vowel * 2 + without_consonants
+
+        return self
