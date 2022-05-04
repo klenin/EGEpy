@@ -11,18 +11,6 @@ class CellEncoding():
         return ceil(log(q) / log(2))
 
 
-class ShannonProb(Random):
-    def _get_condition(self):
-        bits = self.rnd.in_range(1, 10)
-        num = self.rnd.in_range(bits ** 2, 1024)
-
-        while num % (bits ** 2) != 0:
-            print(num)
-            num -= 1
-
-        return bits, num, ceil(num / bits ** 2)
-
-
 class ChessCellEncoding(DirectInput, CellEncoding):
     def generate(self):
         cols = self.rnd.in_range(3, 32)
@@ -64,24 +52,20 @@ class BlackWhiteBalls(DirectInput):
         return self
 
 
-class Pencils(DirectInput, ShannonProb):
+class Pencils(DirectInput):
     def _pencils_to_text(self, n):
         return num_text(n, [ 'цветной карандаш', 'цветных карандаша', 'цветных карадашей' ])
 
     def generate(self):
-        bits, num, self.correct = self._get_condition()
+        bits = self.rnd.in_range(1, 10)
+        num = self.rnd.in_range(bits ** 2, 1024)
+
+        while num % (bits ** 2) != 0:
+            print(num)
+            num -= 1
+
         self.text = f"В коробке лежат {self._pencils_to_text(num)}. Сообщение о том, что достали белый карандаш, несет {num_bits(bits)} информации. Сколько белых карандашей было в коробке?"
-
-        return self
-
-
-class VasyaMarks(DirectInput, ShannonProb):
-    def _marks_to_text(self, n):
-        return num_text(n, [ 'оценку', 'оценки', 'оценок' ])
-
-    def generate(self):
-        bits, num, self.correct = self._get_condition()
-        self.text = f"За четверть Василий Пупкин получил {num} оценок. Сообщение о том, что он вчера получил четверку, несет {num_bits(bits)} информации. Сколько четверок получил Василий за четверть?"
+        self.correct = ceil(num / bits ** 2)
 
         return self
 
@@ -126,6 +110,24 @@ class Pencils2(DirectInput):
         Сколько синих карандашей в ящике?"""
         self.correct = ceil((num * 2 ** bits - num) / 2 ** bits)
         self.accept_number()
+
+        return self
+
+
+class VasyaMarks(DirectInput):
+    def _marks_to_text(self, n):
+        return num_text(n, [ 'оценку', 'оценки', 'оценок' ])
+
+    def generate(self):
+        bits = self.rnd.in_range(1, 10)
+        num = self.rnd.in_range(bits ** 2, 1024)
+
+        while num % (bits ** 2) != 0:
+            print(num)
+            num -= 1
+
+        self.text = f"За четверть Василий Пупкин получил {num} оценок. Сообщение о том, что он вчера получил четверку, несет {num_bits(bits)} информации. Сколько четверок получил Василий за четверть?"
+        self.correct = ceil(num / bits ** 2)
 
         return self
 
