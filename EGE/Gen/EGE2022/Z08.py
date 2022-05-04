@@ -1,9 +1,9 @@
-from EGE import Random
+from EGE import Random, Russian
 from ...GenBase import DirectInput
 from ...RussianModules.NumText import num_bits, num_text
 from math import ceil, log, log2
 from string import ascii_uppercase
-from EGE.Gen.EGE.B04 import LexOrder, Bulbs
+from EGE.Gen.EGE.B04 import LexOrder, Bulbs, SignalRockets
 
 
 class CellEncoding(DirectInput):
@@ -207,20 +207,26 @@ class LightPanel2(DirectInput):
         return self
 
 
-class SignalRockets(DirectInput):
-    def _len_to_text(self, n):
-        text = ['одного', 'двух', 'трех', 'четырех', 'пяти']
+class WordsWithRestrictions(DirectInput):
+    def _type_to_text(self, type):
+        return ['гласной', 'согласной'][type]
 
-        return text[n - 1]
 
     def generate(self):
-        n = self.rnd.in_range(2, 5)
-        m = self.rnd.in_range(2, 5)
+        word_length = self.rnd.in_range(3, 6)
+        vowels_count = self.rnd.in_range(2, 5)
+        consonants_count = self.rnd.in_range(2, 5)
+        vowels = self.rnd.pick_n(vowels_count, Russian.vowels)
+        consonants = self.rnd.pick_n(consonants_count, Russian.consonants)
 
-        self.correct = m ** n
-        self.text = f"""Для передачи аварийных сигналов договорились использовать специальные цветные сигнальные ракеты, 
-        запускаемые последовательно. Одна последовательность ракет - один сигнал; в каком порядке идут цвета - существенно. 
-        Какое количество различных сигналов можно передать при помощи запуска ровно {self._len_to_text(n)} таких сигнальных ракет, если 
-        в запасе имеются ракеты {self._len_to_text(m)} различных цветов (ракет каждого вида неограниченное количество, цвет ракет в последовательности может повторяться)?"""
+        task_type = self.rnd.coin()
+        alphabet = self.rnd.shuffle(vowels + consonants)
+
+        if task_type == 1:
+            self.correct = vowels_count * (len(alphabet)) ** (word_length - 1)
+        else:
+            self.correct = consonants_count * (len(alphabet)) ** (word_length - 1)
+        self.text = f"""Сколько слов длины {word_length}, начинающихся с {self._type_to_text(task_type)} буквы, можно составить из букв {', '.join(alphabet)}? 
+        Каждая буква может входить в слово несколько раз. Слова не обязательно должны быть осмысленными словами русского языка."""
 
         return self
