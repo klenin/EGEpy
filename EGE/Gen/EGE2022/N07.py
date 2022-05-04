@@ -50,15 +50,15 @@ class ImageData(LoggableData):
         self.file_size_with_extra = self.with_extra_size * self.pictures_number
         self.file_size_kilobytes = int(ceil(self.file_size_with_extra / 2 ** 13))   
 
-        self.inches_w = rnd.in_range(inches_range.min, inches_range.max)
-        self.inches_h = rnd.in_range(inches_range.min, inches_range.max)
+        self.inches_width = rnd.in_range(inches_range.min, inches_range.max)
+        self.inches_height = rnd.in_range(inches_range.min, inches_range.max)
         self.dpi = rnd.in_range(dpi_range.min, dpi_range.max)
-        self.dots = self.inches_w * self.inches_h * self.dpi
+        self.dots = self.inches_width * self.inches_height * self.dpi
         self.size_inches_bits = self.dots * self.bits
         self.size_inches_kilobytes = int(ceil(self.size_inches_bits / 2 ** 13))
 
         self.bigger_dpi = rnd.in_range(self.dpi + 1, 2 * self.dpi)
-        self.bigger_size_inches_bits = self.inches_w * self.inches_h * self.bigger_dpi * self.bigger_bits
+        self.bigger_size_inches_bits = self.inches_width * self.inches_height * self.bigger_dpi * self.bigger_bits
 
 
 class ImageTransferTime(DirectInput):
@@ -212,10 +212,10 @@ class ImageStorageDpiSize(DirectInput):
         data = ImageData(self.rnd)
 
         colors_word = num_text(data.palette, [ 'цвета', 'цветов', 'цветов' ])
-        inches_word = num_text(data.inches_h, [ 'дюйм', 'дюйма', 'дюймов' ])
+        inches_word = num_text(data.inches_height, [ 'дюйм', 'дюйма', 'дюймов' ])
 
         self.text = f'''
-Рисунок размером {data.inches_w} x {inches_word} отсканировали 
+Рисунок размером {data.inches_width} x {inches_word} отсканировали 
 с разрешением {data.dpi} dpi и использованием {colors_word}. 
 Определите размер полученного файла без учёта 
 служебных данных и возможного сжатия. 
