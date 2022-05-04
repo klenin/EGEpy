@@ -6,12 +6,24 @@ from string import ascii_uppercase
 from EGE.Gen.EGE.B04 import LexOrder, Bulbs, SignalRockets, LetterCombinatorics
 
 
-class CellEncoding(DirectInput):
+class CellEncoding():
     def _resolve(self, q):
         return ceil(log(q) / log(2))
 
 
-class ChessCellEncoding(CellEncoding):
+class ShannonProb(Random):
+    def _get_condition(self):
+        bits = self.rnd.in_range(1, 10)
+        num = self.rnd.in_range(bits ** 2, 1024)
+
+        while num % (bits ** 2) != 0:
+            print(num)
+            num -= 1
+
+        return bits, num, ceil(num / bits ** 2)
+
+
+class ChessCellEncoding(DirectInput, CellEncoding):
     def generate(self):
         cols = self.rnd.in_range(3, 32)
         rows = cols
@@ -21,7 +33,7 @@ class ChessCellEncoding(CellEncoding):
         return self
 
 
-class PositiveInts(CellEncoding):
+class PositiveInts(DirectInput, CellEncoding):
     def generate(self):
         n = self.rnd.in_range(2, 1024)
         self.correct = self._resolve(n - 1)
@@ -30,7 +42,7 @@ class PositiveInts(CellEncoding):
         return self
 
 
-class TicTacToe(CellEncoding):
+class TicTacToe(DirectInput, CellEncoding):
     def generate(self):
         cols = self.rnd.in_range(3, 32)
         rows = cols
@@ -52,19 +64,7 @@ class BlackWhiteBalls(DirectInput):
         return self
 
 
-class ShannonProb(DirectInput):
-    def _get_condition(self):
-        bits = self.rnd.in_range(1, 10)
-        num = self.rnd.in_range(bits ** 2, 1024)
-
-        while num % (bits ** 2) != 0:
-            print(num)
-            num -= 1
-
-        return bits, num, ceil(num / bits ** 2)
-
-
-class Pencils(ShannonProb):
+class Pencils(DirectInput, ShannonProb):
     def _pencils_to_text(self, n):
         return num_text(n, [ 'цветной карандаш', 'цветных карандаша', 'цветных карадашей' ])
 
@@ -75,7 +75,7 @@ class Pencils(ShannonProb):
         return self
 
 
-class VasyaMarks(ShannonProb):
+class VasyaMarks(DirectInput, ShannonProb):
     def _marks_to_text(self, n):
         return num_text(n, [ 'оценку', 'оценки', 'оценок' ])
 
@@ -100,8 +100,12 @@ class BlackWhiteBalls2(DirectInput):
 
         while not is_int((num * 2 ** bits) / (2 ** bits - 1)):
             num += 1
+
         self.correct = ceil((num * 2 ** bits) / (2 ** bits - 1))
-        self.text = f"В корзине лежат черные и белые шары. Среди них {self._balls_to_text(num)}. Сообщение о том, что достали белый шар, несет {num_bits(bits)} информации. Сколько всего шаров в корзине?"
+        self.text = f"""В корзине лежат черные и белые шары. Среди них {self._balls_to_text(num)}. 
+        Сообщение о том, что достали белый шар, несет {num_bits(bits)} информации. 
+        Сколько всего шаров в корзине?"""
+        self.accept_number()
 
         return self
 
@@ -116,8 +120,12 @@ class Pencils2(DirectInput):
 
         while not is_int((num * 2 ** bits - num) / 2 ** bits):
             num += 1
+
+        self.text = f"""В закрытом ящике находится {self._pencils_to_text(num)}, некоторые из них синего цвета. 
+        Наугад вынимается один карандаш. Сообщение «этот карандаш – НЕ синий» несёт {num_bits(bits)} информации. 
+        Сколько синих карандашей в ящике?"""
         self.correct = ceil((num * 2 ** bits - num) / 2 ** bits)
-        self.text = f"В закрытом ящике находится {self._pencils_to_text(num)}, некоторые из них синего цвета. Наугад вынимается один карандаш. Сообщение «этот карандаш – НЕ синий» несёт {num_bits(bits)} информации. Сколько синих карандашей в ящике?"
+        self.accept_number()
 
         return self
 
@@ -142,8 +150,9 @@ class WordCount(DirectInput):
         n = self.rnd.in_range(3, 7)
         m = self.rnd.in_range(3, 5)
 
-        self.correct = m ** n
         self.text = self._get_text(n, m)
+        self.correct = m ** n
+        self.accept_number()
 
         return self
 
@@ -168,8 +177,9 @@ class WordCount2(DirectInput):
         len_to = self.rnd.in_range(len_from + 1, 5)
         alphabet_size = self.rnd.in_range(3, 5)
 
-        self.correct = sum([ alphabet_size ** n for n in range(len_from, len_to + 1) ])
         self.text = f"Сколько есть различных символьных последовательностей длины от {self._len_to_text(len_from)} до {self._len_to_text(len_to)} в {self._alphabet_size_to_text(alphabet_size)}?"
+        self.correct = sum([ alphabet_size ** n for n in range(len_from, len_to + 1) ])
+        self.accept_number()
 
         return self
 
@@ -179,12 +189,14 @@ class LightPanel(DirectInput):
         first = self.rnd.in_range(5, 10)
         last = self.rnd.in_range(4, 9)
         n = first + last
+
         self.text = f'''На световой панели в ряд расположены {n} лампочек.
                     Каждая из первых {first} лампочек может гореть красным, жёлтым или зелёным цветом.
                     Каждая из остальных {last} лампочек может гореть одним из двух цветов — красным или белым.
                     Сколько различных сигналов можно передать с помощью панели
                     все лампочки должны гореть, порядок цветов имеет значение)?'''
         self.correct = 3 ** first * 2 ** last
+        self.accept_number()
 
         return self
 
@@ -199,10 +211,11 @@ class LightPanel2(DirectInput):
         n = self.rnd.in_range(2, 5)
         m = self.rnd.in_range(2, 5)
 
-        self.correct = m ** n
         self.text = f"""Световое табло состоит из {self._len_to_text(n)} светящихся элементов, каждый из которых может светиться одним 
         из {self._len_to_text(m)} различных цветов. Каждая комбинация из {self._len_to_text(n)} цветов кодирует определённый сигнал. Сколько различных 
         сигналов можно передать при помощи табло при условии, что все элементы должны светиться?"""
+        self.correct = m ** n
+        self.accept_number()
 
         return self
 
@@ -221,12 +234,13 @@ class WordsWithRestrictions(DirectInput):
         task_type = self.rnd.coin()
         alphabet = self.rnd.shuffle(vowels + consonants)
 
+        self.text = f"""Сколько слов длины {word_length}, начинающихся с {self._type_to_text(task_type)} буквы, можно составить из букв {', '.join(alphabet)}? 
+        Каждая буква может входить в слово несколько раз. Слова не обязательно должны быть осмысленными словами русского языка."""
         if task_type == 1:
             self.correct = vowels_count * (len(alphabet)) ** (word_length - 1)
         else:
             self.correct = consonants_count * (len(alphabet)) ** (word_length - 1)
-        self.text = f"""Сколько слов длины {word_length}, начинающихся с {self._type_to_text(task_type)} буквы, можно составить из букв {', '.join(alphabet)}? 
-        Каждая буква может входить в слово несколько раз. Слова не обязательно должны быть осмысленными словами русского языка."""
+        self.accept_number()
 
         return self
 
@@ -244,16 +258,12 @@ class WordEncoding(DirectInput):
 
         alphabet = self.rnd.shuffle(vowels + consonants)
         banned_first_letter = self.rnd.pick(alphabet)
-        type = self.rnd.coin()
-
-        self.text = f"""Андрей составляет {code_len}-буквенные коды из букв {', '.join(alphabet)}. 
-        Каждую букву можно использовать любое количество раз, при этом код не может начинаться с буквы {banned_first_letter} и должен 
-        содержать хотя бы одну {self._type_to_text(type)}. Сколько различных кодов может составить Андрей?"""
+        task_type = self.rnd.coin()
 
         alphabet_len = len(alphabet)
         dont_start_with_banned = (alphabet_len - 1) * (code_len - 1) ** alphabet_len
 
-        if type == 1:
+        if task_type == 1:
             if banned_first_letter in vowels:
                 first = alphabet_len - vowels_count
             else:
@@ -266,8 +276,12 @@ class WordEncoding(DirectInput):
                 first = alphabet_len - consonants_count - alphabet_len - 1
             dont_start_with_banned_and_without_task_type = first * (code_len - 1) ** (alphabet_len - consonants_count)
 
+        self.text = f"""Андрей составляет {code_len}-буквенные коды из букв {', '.join(alphabet)}. 
+        Каждую букву можно использовать любое количество раз, при этом код не может начинаться с буквы {banned_first_letter} и должен 
+        содержать хотя бы одну {self._type_to_text(task_type )}. Сколько различных кодов может составить Андрей?"""
         self.correct = dont_start_with_banned - dont_start_with_banned_and_without_task_type
-
+        self.accept_number()
+        
         return self
 
 
@@ -280,18 +294,17 @@ class WordEncoding2(DirectInput):
         consonants = self.rnd.pick_n(consonants_count, Russian.consonants)
 
         alphabet = self.rnd.shuffle(vowels + consonants)
-
-        self.text = f"""Света составляет {code_len}-буквенные коды из букв {', '.join(alphabet)}. 
-        Каждую букву нужно использовать ровно один раз, при этом нельзя ставить рядом две гласные. 
-        Сколько различных кодов может составить Света?"""
-
         one_letter_usage = factorial(code_len)
         vowels_1_2 = vowels_count * (vowels_count - 1)
         tail = 1
         for i in range(0, code_len - 2):
             tail *= consonants_count - i
 
+        self.text = f"""Света составляет {code_len}-буквенные коды из букв {', '.join(alphabet)}. 
+        Каждую букву нужно использовать ровно один раз, при этом нельзя ставить рядом две гласные. 
+        Сколько различных кодов может составить Света?"""
         self.correct = one_letter_usage - (vowels_1_2 * tail * (code_len - 1))
+        self.accept_number()
 
         return self
 
@@ -308,15 +321,16 @@ class WordEncoding3(DirectInput):
         one_usage_required = self.rnd.pick_n(2, alphabet)
         banned_on_start = self.rnd.pick(one_usage_required)
 
+        alphabet_size = len(alphabet)
+        n = (code_len - 1) * (alphabet_size - 2) ** (code_len - 2)
+        m = ((alphabet_size - 1) * (alphabet_size - 2) ** (code_len - 2)) * (code_len - 1)
+
         self.text = f"""Андрей составляет {code_len}-буквенные коды из букв {', '.join(alphabet)}. 
         Буквы {one_usage_required[0]} и {one_usage_required[1]} должны встречаться в коде ровно по одному разу, при этом буква {banned_on_start} не может стоять на первом месте. 
         Остальные допустимые буквы могут встречаться произвольное количество раз или не встречаться совсем. 
         Сколько различных кодов может составить Андрей?"""
-
-        alphabet_size = len(alphabet)
-        n = (code_len - 1) * (alphabet_size - 2) ** (code_len - 2)
-        m = ((alphabet_size - 1) * (alphabet_size - 2) ** (code_len - 2)) * (code_len - 1)
         self.correct = n + m
+        self.accept_number()
 
         return self
 
@@ -330,15 +344,14 @@ class WordEncoding4(DirectInput):
         consonants = self.rnd.pick_n(consonants_count, Russian.consonants)
 
         alphabet = self.rnd.shuffle(vowels + consonants)
-
-        self.text = f"""Настя составляет {code_len}-буквенные коды из букв {', '.join(alphabet)}. 
-        Каждая допустимая гласная буква может входить в код не более одного раза. 
-        Сколько кодов может составить Настя?"""
-
         without_consonants = consonants_count ** code_len
         only_one_vowel = code_len * consonants_count ** (code_len - 1)
         two_vowels = consonants_count ** (code_len - vowels_count) * (code_len - 1) * code_len
 
+        self.text = f"""Настя составляет {code_len}-буквенные коды из букв {', '.join(alphabet)}. 
+        Каждая допустимая гласная буква может входить в код не более одного раза. 
+        Сколько кодов может составить Настя?"""
         self.correct = two_vowels + only_one_vowel * 2 + without_consonants
+        self.accept_number()
 
         return self
