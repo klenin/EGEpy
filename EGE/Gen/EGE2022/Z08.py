@@ -3,6 +3,8 @@ from ...GenBase import DirectInput
 from ...RussianModules.NumText import num_bits, num_text
 from math import ceil, log, log2
 from string import ascii_uppercase
+from EGE.Gen.EGE.B04 import LexOrder, Bulbs
+
 
 class CellEncoding(DirectInput):
     def _resolve(self, q):
@@ -130,7 +132,7 @@ class WordCount(DirectInput):
         return ', '.join(list(ascii_uppercase[0:n]))
 
     def _get_text(self, n, m):
-        v = self.rnd.in_range(1, 2)
+        v = self.rnd.coin()
         if v == 1:
             return f"Некоторый алфавит содержит {num_text(m, ['', 'различных символа', 'различных символов'])}. Сколько {self._word_size_to_text(n)} слов можно составить из символов этого алфавита, если символы в слове могут повторяться?"
         if v == 2:
@@ -168,5 +170,38 @@ class WordCount2(DirectInput):
 
         self.correct = sum([alphabet_size ** n for n in range(len_from, len_to + 1)])
         self.text = f"Сколько есть различных символьных последовательностей длины от {self._len_to_text(len_from)} до {self._len_to_text(len_to)} в {self._alphabet_size_to_text(alphabet_size)}?"
+
+        return self
+
+
+class LightPanel(DirectInput):
+    def generate(self):
+        first = self.rnd.in_range(5, 10)
+        last = self.rnd.in_range(4, 9)
+        n = first + last
+        self.text = f'''На световой панели в ряд расположены {n} лампочек.
+                    Каждая из первых {first} лампочек может гореть красным, жёлтым или зелёным цветом.
+                    Каждая из остальных {last} лампочек может гореть одним из двух цветов — красным или белым.
+                    Сколько различных сигналов можно передать с помощью панели
+                    все лампочки должны гореть, порядок цветов имеет значение)?'''
+        self.correct = 3 ** first * 2 ** last
+
+        return self
+
+
+class LightPanel2(DirectInput):
+    def _len_to_text(self, n):
+        text = ['одного', 'двух', 'трех', 'четырех', 'пяти']
+
+        return text[n - 1]
+
+    def generate(self):
+        n = self.rnd.in_range(2, 5)
+        m = self.rnd.in_range(2, 5)
+
+        self.correct = m ** n
+        self.text = f"""Световое табло состоит из {self._len_to_text(n)} светящихся элементов, каждый из которых может светиться одним 
+        из {self._len_to_text(m)} различных цветов. Каждая комбинация из {self._len_to_text(n)} цветов кодирует определённый сигнал. Сколько различных 
+        сигналов можно передать при помощи табло при условии, что все элементы должны светиться?"""
 
         return self
