@@ -43,7 +43,7 @@ class ImageData(LoggableData):
         self.with_extra_size = self.size + self.extra_kb * 2 ** 13
         self.with_extra_size_kb = int(ceil(self.with_extra_size / 2 ** 13))
 
-        self.time = rnd.in_range(time_range.min, time_range.max)#[i for i in range(1, 24 * 60 * 60 + 1) if abs(i * self.pictures_n - 24 * 60 * 60) < i][0]#int(ceil((24 * 60 * 60) / self.pictures_n))
+        self.time = rnd.in_range(time_range.min, time_range.max)
         self.pictures_n = 24 * 60 * 60 // self.time
         self.file_size_pure = self.size * self.pictures_n
         self.file_size_pure_kb = int(ceil(self.file_size_pure / 2 ** 13))
