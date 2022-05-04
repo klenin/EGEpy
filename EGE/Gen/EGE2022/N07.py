@@ -12,6 +12,8 @@ size_range = range_tuple(50, 2000)
 bits_range = range_tuple(8, 256)
 degrees_range = range_tuple(3, 64)
 time_range = range_tuple(1, 360)
+inches_range = range_tuple(2, 9)
+dpi_range = range_tuple(100, 600)
 
 
 class LoggableData:
@@ -47,6 +49,13 @@ class ImageData(LoggableData):
         self.file_size_pure_kb = int(ceil(self.file_size_pure / 2 ** 13))
         self.file_size_with_extra = self.with_extra_size * self.pictures_n
         self.file_size_kb = int(ceil(self.file_size_with_extra / 2 ** 13))   
+
+        self.inches_w = rnd.in_range(inches_range.min, inches_range.max)
+        self.inches_h = rnd.in_range(inches_range.min, inches_range.max)
+        self.dpi = rnd.in_range(dpi_range.min, dpi_range.max)
+        self.dots = self.inches_w * self.inches_h * self.dpi
+        self.size_inches_bits = self.dots * self.bits
+        self.size_inches_kb = int(ceil(self.size_inches_bits / 2 ** 13))
 
 
 class ImageTransferTime(DirectInput):
@@ -190,6 +199,25 @@ class ImageStoragePicturesNPalette(DirectInput):
 потребовалось {file_size_bits_word}. Сколько цветов использовано 
 в палитре каждого изображения?'''
         self.correct = data.palette
+        self.accept_number()
+
+        return self
+
+
+class ImageStorageDpiSize(DirectInput):
+    def generate(self):
+        data = ImageData(self.rnd)
+
+        colors_word = num_text(data.palette, [ 'цвета', 'цветов', 'цветов' ])
+        inches_word = num_text(data.inches_h, [ 'дюйм', 'дюйма', 'дюймов' ])
+
+        self.text = f'''
+Рисунок размером {data.inches_w} x {inches_word} отсканировали 
+с разрешением {data.dpi} dpi и использованием {colors_word}. 
+Определите размер полученного файла без учёта 
+служебных данных и возможного сжатия. 
+В ответе запишите целое число — размер файла в Кбайтах с округлением вверх.'''
+        self.correct = data.size_inches_kb
         self.accept_number()
 
         return self
