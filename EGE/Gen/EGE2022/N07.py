@@ -272,7 +272,8 @@ class TextData(LoggableData):
         self.size = self.symbols_number * self.encoding_bits
         self.bigger_encoding_bits = rnd.in_range(self.encoding_bits + 1, 2 * self.encoding_bits)
         self.bigger_size = self.symbols_number * self.bigger_encoding_bits
-        self.size_diff_kilobytes = int(ceil((self.bigger_size - self.size) / 2 ** 10 / 8))
+        self.size_diff_bits = self.bigger_size - self.size
+        self.size_diff_kilobytes = int(ceil(self.size_diff_bits / 2 ** 10 / 8))
 
 
 class TextTransferTime(DirectInput):
@@ -347,7 +348,7 @@ class TextFileResizeSymbolsN(DirectInput):
 Текстовый документ хранился в {data.encoding_bits}-битной кодировке. 
 Этот документ был преобразован в {data.bigger_encoding_bits}-битную кодировку, 
 при этом размер памяти, необходимой для хранения документа 
-увеличился на {data.size_diff_kilobytes} Кбайт. 
+увеличился на {data.size_diff_bits} бит. 
 При этом хранится только последовательность кодов символов. 
 Укажите, сколько символов в документе. 
 В ответе запишите только число.'''
