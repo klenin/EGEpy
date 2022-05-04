@@ -7,7 +7,7 @@ from math import log, ceil, pow
 
 range_tuple = namedtuple('range_tuple', [ 'min', 'max' ])
 speed_range = range_tuple(19500, 120000)
-palette_range = range_tuple(8, 64)
+palette_range = range_tuple(8, 32)
 size_range = range_tuple(50, 2000)
 bits_range = range_tuple(8, 256)
 degrees_range = range_tuple(3, 64)
