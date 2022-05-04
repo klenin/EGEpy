@@ -3,7 +3,7 @@ from ...GenBase import DirectInput
 from ...RussianModules.NumText import num_bits, num_text
 from math import ceil, log, log2
 from string import ascii_uppercase
-from EGE.Gen.EGE.B04 import LexOrder, Bulbs, SignalRockets
+from EGE.Gen.EGE.B04 import LexOrder, Bulbs, SignalRockets, LetterCombinatorics
 
 
 class CellEncoding(DirectInput):
