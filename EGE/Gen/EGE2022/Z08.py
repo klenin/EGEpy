@@ -1,7 +1,7 @@
 from EGE import Random, Russian
 from ...GenBase import DirectInput
 from ...RussianModules.NumText import num_bits, num_text
-from math import ceil, log, log2
+from math import ceil, log, log2, factorial
 from string import ascii_uppercase
 from EGE.Gen.EGE.B04 import LexOrder, Bulbs, SignalRockets, LetterCombinatorics
 
@@ -211,7 +211,6 @@ class WordsWithRestrictions(DirectInput):
     def _type_to_text(self, type):
         return ['гласной', 'согласной'][type]
 
-
     def generate(self):
         word_length = self.rnd.in_range(3, 6)
         vowels_count = self.rnd.in_range(2, 5)
@@ -228,5 +227,70 @@ class WordsWithRestrictions(DirectInput):
             self.correct = consonants_count * (len(alphabet)) ** (word_length - 1)
         self.text = f"""Сколько слов длины {word_length}, начинающихся с {self._type_to_text(task_type)} буквы, можно составить из букв {', '.join(alphabet)}? 
         Каждая буква может входить в слово несколько раз. Слова не обязательно должны быть осмысленными словами русского языка."""
+
+        return self
+
+
+class WordEncoding(DirectInput):
+    def _type_to_text(self, type):
+        return ['гласную', 'согласную'][type]
+
+    def generate(self):
+        code_len = self.rnd.in_range(3, 6)
+        vowels_count = self.rnd.in_range(2, 5)
+        consonants_count = self.rnd.in_range(2, 5)
+        vowels = self.rnd.pick_n(vowels_count, Russian.vowels)
+        consonants = self.rnd.pick_n(consonants_count, Russian.consonants)
+
+        alphabet = self.rnd.shuffle(vowels + consonants)
+        banned_first_letter = self.rnd.pick(alphabet)
+        type = self.rnd.coin()
+
+        self.text = f"""Андрей составляет {code_len}-буквенные коды из букв {', '.join(alphabet)}. 
+        Каждую букву можно использовать любое количество раз, при этом код не может начинаться с буквы {banned_first_letter} и должен 
+        содержать хотя бы одну {self._type_to_text(type)}. Сколько различных кодов может составить Андрей?"""
+
+        alphabet_len = len(alphabet)
+        dont_start_with_banned = (alphabet_len - 1) * (code_len - 1) ** alphabet_len
+
+        if type == 1:
+            if banned_first_letter in vowels:
+                first = alphabet_len - vowels_count
+            else:
+                first = alphabet_len - vowels_count - 1
+            dont_start_with_banned_and_without_task_type = first * (code_len - 1) ** (alphabet_len - vowels_count)
+        else:
+            if banned_first_letter in consonants:
+                first = alphabet_len - consonants_count
+            else:
+                first = alphabet_len - consonants_count - alphabet_len - 1
+            dont_start_with_banned_and_without_task_type = first * (code_len - 1) ** (alphabet_len - consonants_count)
+
+        self.correct = dont_start_with_banned - dont_start_with_banned_and_without_task_type
+
+        return self
+
+
+class WordEncoding2(DirectInput):
+    def generate(self):
+        code_len = self.rnd.in_range(3, 7)
+        vowels_count = self.rnd.in_range(2, 4)
+        consonants_count = code_len - vowels_count
+        vowels = self.rnd.pick_n(vowels_count, Russian.vowels)
+        consonants = self.rnd.pick_n(consonants_count, Russian.consonants)
+
+        alphabet = self.rnd.shuffle(vowels + consonants)
+
+        self.text = f"""Света составляет {code_len}-буквенные коды из букв {', '.join(alphabet)}. 
+        Каждую букву нужно использовать ровно один раз, при этом нельзя ставить рядом две гласные. 
+        Сколько различных кодов может составить Света?"""
+
+        one_letter_usage = factorial(code_len)
+        vowels_1_2 = vowels_count * (vowels_count - 1)
+        tail = 1
+        for i in range(0, code_len - 2):
+            tail *= consonants_count - i
+
+        self.correct = one_letter_usage - (vowels_1_2 * tail * (code_len - 1))
 
         return self
