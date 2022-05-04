@@ -269,7 +269,7 @@ class TextData(LoggableData):
         self.time = y * self.symbols_per_page
 
         self.encoding_bits = x * y
-        self.size = self.symbols_number* self.encoding_bits
+        self.size = self.symbols_number * self.encoding_bits
         self.bigger_encoding_bits = rnd.in_range(self.encoding_bits + 1, 2 * self.encoding_bits)
         self.bigger_size = self.symbols_number * self.bigger_encoding_bits
         self.size_diff_kilobytes = int(ceil((self.bigger_size - self.size) / 2 ** 10 / 8))
@@ -280,12 +280,12 @@ class TextTransferTime(DirectInput):
         data = TextData(self.rnd)
 
         pages_word = num_text(data.pages, [ 'страницу', 'страницы', 'страниц' ])
-        symbols_number_word = num_text(data.symbols_number, [ 'символ', 'символа', 'символов' ])
+        symbols_per_page_word = num_text(data.symbols_per_page, [ 'символ', 'символа', 'символов' ])
         rows_word = num_text(data.rows, [ 'строку', 'строки', 'строк' ])
         cols_word = num_text(data.cols, [ 'символ', 'символа', 'символов' ])
         encoding_bits_word = num_text(data.encoding_bits, [ 'битом', 'битами', 'битами' ])
         variant = self.rnd.pick([
-            f'{pages_word} текста по {symbols_number_word} каждая',
+            f'{pages_word} текста по {symbols_per_page_word} каждая',
             f'{pages_word} текста в {rows_word} по {cols_word} каждая',
         ])
 
