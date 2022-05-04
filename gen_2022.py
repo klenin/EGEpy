@@ -10,6 +10,7 @@ rnd = EGE.Random.Random(2342134)
 
 questions = [q.generate() for q in [
     N01.AmbiguousTableAndGraphCorrelation(rnd),
+    N01.TableAndGraphCorrelation(rnd),
     N03.GenDatabase(rnd),
     N05.FindNumber(rnd),
     N05.MinAddDigits(rnd),
