@@ -66,7 +66,7 @@ class ShannonProb(DirectInput):
 
 class Pencils(ShannonProb):
     def _pencils_to_text(self, n):
-        return num_text(n, ['цветной карандаш', 'цветных карандаша', 'цветных карадашей'])
+        return num_text(n, [ 'цветной карандаш', 'цветных карандаша', 'цветных карадашей' ])
 
     def generate(self):
         bits, num, self.correct = self._get_condition()
@@ -77,7 +77,7 @@ class Pencils(ShannonProb):
 
 class VasyaMarks(ShannonProb):
     def _marks_to_text(self, n):
-        return num_text(n, ['оценку', 'оценки', 'оценок'])
+        return num_text(n, [ 'оценку', 'оценки', 'оценок' ])
 
     def generate(self):
         bits, num, self.correct = self._get_condition()
@@ -92,7 +92,7 @@ def is_int(n):
 
 class BlackWhiteBalls2(DirectInput):
     def _balls_to_text(self, n):
-        return num_text(n, ['черный шар', 'черных шара', 'черных шаров'])
+        return num_text(n, [ 'черный шар', 'черных шара', 'черных шаров' ])
 
     def generate(self):
         bits = self.rnd.in_range(2, 5)
@@ -108,7 +108,7 @@ class BlackWhiteBalls2(DirectInput):
 
 class Pencils2(DirectInput):
     def _pencils_to_text(self, n):
-        return num_text(n, ['карандаш', 'карандаша', 'карадашей'])
+        return num_text(n, [ 'карандаш', 'карандаша', 'карадашей' ])
 
     def generate(self):
         bits = self.rnd.in_range(2, 5)
@@ -124,7 +124,7 @@ class Pencils2(DirectInput):
 
 class WordCount(DirectInput):
     def _word_size_to_text(self, n):
-        text = ['трехбуквенных', 'четырехбуквенных', 'пятибуквенных', 'шестибуквенных', 'семибуквенных']
+        text = [ 'трехбуквенных', 'четырехбуквенных', 'пятибуквенных', 'шестибуквенных', 'семибуквенных' ]
 
         return text[n - 3]
 
@@ -159,7 +159,7 @@ class WordCount2(DirectInput):
         return text[n - 3]
 
     def _len_to_text(self, n):
-        text = ['одного', 'двух', 'трех', 'четырех', 'пяти']
+        text = [ 'одного', 'двух', 'трех', 'четырех', 'пяти' ]
 
         return text[n - 1]
 
@@ -168,7 +168,7 @@ class WordCount2(DirectInput):
         len_to = self.rnd.in_range(len_from + 1, 5)
         alphabet_size = self.rnd.in_range(3, 5)
 
-        self.correct = sum([alphabet_size ** n for n in range(len_from, len_to + 1)])
+        self.correct = sum([ alphabet_size ** n for n in range(len_from, len_to + 1) ])
         self.text = f"Сколько есть различных символьных последовательностей длины от {self._len_to_text(len_from)} до {self._len_to_text(len_to)} в {self._alphabet_size_to_text(alphabet_size)}?"
 
         return self
@@ -191,7 +191,7 @@ class LightPanel(DirectInput):
 
 class LightPanel2(DirectInput):
     def _len_to_text(self, n):
-        text = ['одного', 'двух', 'трех', 'четырех', 'пяти']
+        text = [ 'одного', 'двух', 'трех', 'четырех', 'пяти' ]
 
         return text[n - 1]
 
@@ -209,7 +209,7 @@ class LightPanel2(DirectInput):
 
 class WordsWithRestrictions(DirectInput):
     def _type_to_text(self, type):
-        return ['гласной', 'согласной'][type]
+        return [ 'гласной', 'согласной' ][type]
 
     def generate(self):
         word_length = self.rnd.in_range(3, 6)
@@ -233,7 +233,7 @@ class WordsWithRestrictions(DirectInput):
 
 class WordEncoding(DirectInput):
     def _type_to_text(self, type):
-        return ['гласную', 'согласную'][type]
+        return [ 'гласную', 'согласную' ][type]
 
     def generate(self):
         code_len = self.rnd.in_range(3, 6)
