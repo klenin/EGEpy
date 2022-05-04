@@ -27,35 +27,35 @@ class ImageData(LoggableData):
     def __init__(self, rnd):
         self.speed = rnd.in_range(speed_range.min, speed_range.max)
         self.bits = rnd.pick([ i for i in range(degrees_range.min, degrees_range.max + 1) if i % 3 == 0 ])
-        self.w = rnd.in_range(size_range.min, size_range.max)
-        self.h = rnd.in_range(size_range.min, size_range.max)
+        self.width = rnd.in_range(size_range.min, size_range.max)
+        self.height = rnd.in_range(size_range.min, size_range.max)
         self.palette = 2 ** self.bits
-        self.size = self.bits * self.w * self.h
-        self.size_kb = int(ceil(self.size / 2 ** 10 / 8))
+        self.size = self.bits * self.width * self.height
+        self.size_kilobytes = int(ceil(self.size / 2 ** 10 / 8))
         self.time = int(ceil(self.size / self.speed))
 
         self.bigger_bits = rnd.pick([ i for i in range(self.bits + 1, degrees_range.max + 7) if i % 3 == 0 ])
         self.bigger_palette = 2 ** self.bigger_bits
-        self.bigger_size = self.bigger_bits * self.w * self.h
-        self.bigger_size_kb = int(ceil(self.bigger_size / 2 ** 10 / 8))
+        self.bigger_size = self.bigger_bits * self.width* self.height
+        self.bigger_size_kilobytes = int(ceil(self.bigger_size / 2 ** 10 / 8))
 
-        self.extra_kb = rnd.in_range(10, 60)
-        self.with_extra_size = self.size + self.extra_kb * 2 ** 13
-        self.with_extra_size_kb = int(ceil(self.with_extra_size / 2 ** 13))
+        self.extra_kilobytes = rnd.in_range(10, 60)
+        self.with_extra_size = self.size + self.extra_kilobytes * 2 ** 13
+        self.with_extra_size_kilobytes = int(ceil(self.with_extra_size / 2 ** 13))
 
         self.time = rnd.in_range(time_range.min, time_range.max)
-        self.pictures_n = 24 * 60 * 60 // self.time
-        self.file_size_pure = self.size * self.pictures_n
-        self.file_size_pure_kb = int(ceil(self.file_size_pure / 2 ** 13))
-        self.file_size_with_extra = self.with_extra_size * self.pictures_n
-        self.file_size_kb = int(ceil(self.file_size_with_extra / 2 ** 13))   
+        self.pictures_number= 24 * 60 * 60 // self.time
+        self.file_size_pure = self.size * self.pictures_number
+        self.file_size_pure_kilobytes = int(ceil(self.file_size_pure / 2 ** 13))
+        self.file_size_with_extra = self.with_extra_size * self.pictures_number
+        self.file_size_kilobytes = int(ceil(self.file_size_with_extra / 2 ** 13))   
 
         self.inches_w = rnd.in_range(inches_range.min, inches_range.max)
         self.inches_h = rnd.in_range(inches_range.min, inches_range.max)
         self.dpi = rnd.in_range(dpi_range.min, dpi_range.max)
         self.dots = self.inches_w * self.inches_h * self.dpi
         self.size_inches_bits = self.dots * self.bits
-        self.size_inches_kb = int(ceil(self.size_inches_bits / 2 ** 13))
+        self.size_inches_kilobytes = int(ceil(self.size_inches_bits / 2 ** 13))
 
         self.bigger_dpi = rnd.in_range(self.dpi + 1, 2 * self.dpi)
         self.bigger_size_inches_bits = self.inches_w * self.inches_h * self.bigger_dpi * self.bigger_bits
@@ -75,7 +75,7 @@ class ImageTransferTime(DirectInput):
         self.text = f'''
 Сколько секунд потребуется модему, передающему информацию 
 со скоростью {data.speed} бит/с, чтобы передать 
-растровое изображение размером {data.w} на {data.h} пикселей, 
+растровое изображение размером {data.width} на {data.height} пикселей, 
 при условии, что {variant}? 
 Ответ округлить вверх до ближайшего целого.'''
         self.correct = data.time
@@ -88,17 +88,17 @@ class ImageStorageSize(DirectInput):
     def generate(self):
         data = ImageData(self.rnd)
 
-        pixel_word = num_text(data.h, [ 'пиксель', 'пикселя', 'пикселей' ])
+        pixel_word = num_text(data.height, [ 'пиксель', 'пикселя', 'пикселей' ])
         colors_word = num_text(data.palette, [ 'цвет', 'цвета', 'цветов' ])
 
         self.text = f'''
 Какой минимальный объём памяти (в Кбайт) нужно зарезервировать, 
 чтобы можно было сохранить любое растровое изображение 
-размером {data.w} на {pixel_word} при условии, 
+размером {data.width} на {pixel_word} при условии, 
 что в изображении могут использоваться {colors_word}? 
 В ответе запишите только целое число с округлением вверх, 
 единицу измерения писать не нужно.'''
-        self.correct = data.size_kb
+        self.correct = data.size_kilobytes
         self.accept_number()
 
         return self
@@ -108,15 +108,15 @@ class ImageStoragePalette(DirectInput):
     def generate(self):
         data = ImageData(self.rnd)
 
-        pixel_word = num_text(data.h, [ 'пиксель', 'пикселя', 'пикселей' ])
+        pixel_word = num_text(data.height, [ 'пиксель', 'пикселя', 'пикселей' ])
         variant = self.rnd.pick([
-            [ f'никакая дополнительная информация не сохраняется', data.size_kb ],
-            [ f'{data.extra_kb} Кбайт необходимо выделить для служебной информации', data.with_extra_size_kb ],
+            [ f'никакая дополнительная информация не сохраняется', data.size_kilobytes ],
+            [ f'{data.extra_kilobytes} Кбайт необходимо выделить для служебной информации', data.with_extra_size_kilobytes ],
         ])
 
         self.text = f'''
 Автоматическая фотокамера производит растровые изображения 
-размером {data.w} на {pixel_word}. При этом объём файла с изображением 
+размером {data.width} на {pixel_word}. При этом объём файла с изображением 
 не может превышать {variant[1]} Кбайт и {variant[0]}, упаковка данных не производится. 
 Какое максимальное количество цветов можно использовать в палитре?'''
         self.correct = data.palette
@@ -130,10 +130,10 @@ class ImageStorageResizePalette(DirectInput):
         data = ImageData(self.rnd)
 
         self.text = f'''
-Автоматическая фотокамера с {data.size_kb} Кбайт видеопамяти производит 
+Автоматическая фотокамера с {data.size_kilobytes} Кбайт видеопамяти производит 
 растровые изображения c фиксированным разрешением и {data.palette}-цветной палитрой. 
 Сколько цветов можно будет использовать в палитре, 
-если увеличить видеопамять до {data.bigger_size_kb} Кбайт?'''
+если увеличить видеопамять до {data.bigger_size_kilobytes} Кбайт?'''
         self.correct = data.bigger_palette
         self.accept_number()
 
@@ -144,20 +144,20 @@ class ImageStoragePicturesN(DirectInput):
     def generate(self):
         data = ImageData(self.rnd)
 
-        pixel_word = num_text(data.h, [ 'пиксель', 'пикселя', 'пикселей' ])
+        pixel_word = num_text(data.height, [ 'пиксель', 'пикселя', 'пикселей' ])
         colors_word = num_text(data.palette, [ 'цвет', 'цвета', 'цветов' ])
 
         self.text = f'''
 Для проведения эксперимента создаются изображения, 
 содержащие случайные наборы цветных пикселей. 
-В палитре {colors_word}, размер изображения — {data.w} x {pixel_word}, 
+В палитре {colors_word}, размер изображения — {data.width} x {pixel_word}, 
 при сохранении каждый пиксель кодируется одинаковым числом битов, 
 все коды пикселей записываются подряд, методы сжатия не используются. 
 Для каждого изображения дополнительно записывается 
-{data.extra_kb} Кбайт служебной информации. 
+{data.extra_kilobytes} Кбайт служебной информации. 
 Сколько изображений удастся записать, 
-если для их хранения выделено {data.file_size_kb} Кбайт?'''
-        self.correct = data.pictures_n
+если для их хранения выделено {data.file_size_kilobytes} Кбайт?'''
+        self.correct = data.pictures_number
         self.accept_number()
 
         return self
@@ -167,20 +167,20 @@ class ImageStoragePicturesNForPeriod(DirectInput):
     def generate(self):
         data = ImageData(self.rnd)
 
-        pixel_word = num_text(data.h, [ 'пиксель', 'пикселя', 'пикселей' ])
+        pixel_word = num_text(data.height, [ 'пиксель', 'пикселя', 'пикселей' ])
         colors_word = num_text(data.palette, [ 'оттенок', 'оттенка', 'оттенков' ])
 
         self.text = f'''
 Автоматическая фотокамера каждые {data.time} секунд 
 создаёт черно-белое растровое изображение, 
-содержащее {colors_word}. Размер изображения — {data.w} × {pixel_word}. 
+содержащее {colors_word}. Размер изображения — {data.width} × {pixel_word}. 
 Все полученные изображения и коды пикселей внутри одного изображения 
 записываются подряд, никакая дополнительная информация не сохраняется, 
 данные не сжимаются. Сколько Кбайт нужно выделить для хранения 
 всех изображений, полученных за сутки? 
 В ответе укажите только целое число — количество Кбайт с округлением вверх,
 единицу измерения указывать не надо.'''
-        self.correct = data.file_size_pure_kb
+        self.correct = data.file_size_pure_kilobytes
         self.accept_number()
 
         return self
@@ -190,15 +190,15 @@ class ImageStoragePicturesNPalette(DirectInput):
     def generate(self):
         data = ImageData(self.rnd)
 
-        pixel_word = num_text(data.h, [ 'пиксель', 'пикселя', 'пикселей' ])
+        pixel_word = num_text(data.height, [ 'пиксель', 'пикселя', 'пикселей' ])
         colors_word = num_text(data.palette, [ 'оттенок', 'оттенка', 'оттенков' ])
         file_size_bits_word = num_bits(data.file_size_with_extra)
 
         self.text = f'''
 В информационной системе хранятся изображения 
-размером {data.w} × {pixel_word}. Методы сжатия изображений не используются. 
+размером {data.width} × {pixel_word}. Методы сжатия изображений не используются. 
 Каждое изображение дополняется служебной информацией, 
-которая занимает {data.extra_kb} Кбайт. Для хранения {data.pictures_n} изображений 
+которая занимает {data.extra_kilobytes} Кбайт. Для хранения {data.pictures_number} изображений 
 потребовалось {file_size_bits_word}. Сколько цветов использовано 
 в палитре каждого изображения?'''
         self.correct = data.palette
@@ -220,7 +220,7 @@ class ImageStorageDpiSize(DirectInput):
 Определите размер полученного файла без учёта 
 служебных данных и возможного сжатия. 
 В ответе запишите целое число — размер файла в Кбайтах с округлением вверх.'''
-        self.correct = data.size_inches_kb
+        self.correct = data.size_inches_kilobytes
         self.accept_number()
 
         return self
@@ -263,16 +263,16 @@ class TextData(LoggableData):
         self.cols = cols
  
         self.symbols_per_page = self.rows * self.cols
-        self.symbols_n = self.pages * self.symbols_per_page
+        self.symbols_number= self.pages * self.symbols_per_page
 
         self.speed = self.pages * x
         self.time = y * self.symbols_per_page
 
         self.encoding_bits = x * y
-        self.size = self.symbols_n * self.encoding_bits
+        self.size = self.symbols_number* self.encoding_bits
         self.bigger_encoding_bits = rnd.in_range(self.encoding_bits + 1, 2 * self.encoding_bits)
-        self.bigger_size = self.symbols_n * self.bigger_encoding_bits
-        self.size_diff_kb = int(ceil((self.bigger_size - self.size) / 2 ** 10 / 8))
+        self.bigger_size = self.symbols_number * self.bigger_encoding_bits
+        self.size_diff_kilobytes = int(ceil((self.bigger_size - self.size) / 2 ** 10 / 8))
 
 
 class TextTransferTime(DirectInput):
@@ -280,12 +280,12 @@ class TextTransferTime(DirectInput):
         data = TextData(self.rnd)
 
         pages_word = num_text(data.pages, [ 'страница', 'страницы', 'страниц' ])
-        symbols_n_word = num_text(data.symbols_n, [ 'символ', 'символа', 'символов' ])
+        symbols_number_word = num_text(data.symbols_number, [ 'символ', 'символа', 'символов' ])
         rows_word = num_text(data.rows, [ 'строку', 'строки', 'строк' ])
         cols_word = num_text(data.cols, [ 'символ', 'символа', 'символов' ])
         encoding_bits_word = num_text(data.encoding_bits, [ 'битом', 'битами', 'битами' ])
         variant = self.rnd.pick([
-            f'{pages_word} текста по {symbols_n_word} каждая',
+            f'{pages_word} текста по {symbols_number_word} каждая',
             f'{pages_word} текста в {rows_word} по {cols_word} каждая',
         ])
 
@@ -307,7 +307,7 @@ class TextTransferDataLength(DirectInput):
         time_word = num_text(data.time, ['секунду', 'секунды', 'секунд'])
         variant = self.rnd.pick([
             [ f'страниц содержал переданный текст, при условии, что на одной странице в среднем {symbols_per_page_word}', data.pages ],
-            [ f'символов содержал переданный текст', data.symbols_n ],
+            [ f'символов содержал переданный текст', data.symbols_number],
         ])
 
         self.text = f'''
@@ -325,15 +325,15 @@ class TextFileResizeDiff(DirectInput):
     def generate(self):
         data = TextData(self.rnd)
 
-        symbols_n_word = num_text(data.symbols_n, [ 'символа', 'символов', 'символов' ])
+        symbols_number_word = num_text(data.symbols_number, [ 'символа', 'символов', 'символов' ])
 
         self.text = f'''
-Текстовый документ, состоящий из {symbols_n_word}, 
+Текстовый документ, состоящий из {symbols_number_word}, 
 хранился в {data.encoding_bits}-битной кодировке. 
 Этот документ был преобразован в {data.bigger_encoding_bits}-битную кодировку. 
 Укажите, какое дополнительное количество Кбайт потребуется 
 для хранения документа. В ответе запишите только число с округлением вверх.'''
-        self.correct = data.size_diff_kb
+        self.correct = data.size_diff_kilobytes
         self.accept_number()
 
         return self
@@ -347,11 +347,11 @@ class TextFileResizeSymbolsN(DirectInput):
 Текстовый документ хранился в {data.encoding_bits}-битной кодировке. 
 Этот документ был преобразован в {data.bigger_encoding_bits}-битную кодировку, 
 при этом размер памяти, необходимой для хранения документа 
-увеличился на {data.size_diff_kb} Кбайт. 
+увеличился на {data.size_diff_kilobytes} Кбайт. 
 При этом хранится только последовательность кодов символов. 
 Укажите, сколько символов в документе. 
 В ответе запишите только число.'''
-        self.correct = data.symbols_n
+        self.correct = data.symbols_number
         self.accept_number()
 
         return self
