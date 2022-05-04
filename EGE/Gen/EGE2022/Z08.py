@@ -294,3 +294,30 @@ class WordEncoding2(DirectInput):
         self.correct = one_letter_usage - (vowels_1_2 * tail * (code_len - 1))
 
         return self
+
+
+class WordEncoding3(DirectInput):
+    def generate(self):
+        code_len = self.rnd.in_range(5, 9)
+        consonants_count = self.rnd.in_range(2, 5)
+        vowels_count = self.rnd.in_range(2, 4)
+        vowels = self.rnd.pick_n(vowels_count, Russian.vowels)
+        consonants = self.rnd.pick_n(consonants_count, Russian.consonants)
+
+        alphabet = self.rnd.shuffle(vowels + consonants)
+        one_usage_required = self.rnd.pick_n(2, alphabet)
+        banned_on_start = self.rnd.pick(one_usage_required)
+
+        self.text = f"""Андрей составляет {code_len}-буквенные коды из букв {', '.join(alphabet)}. 
+        Буквы {one_usage_required[0]} и {one_usage_required[1]} должны встречаться в коде ровно по одному разу, при этом буква {banned_on_start} не может стоять на первом месте. 
+        Остальные допустимые буквы могут встречаться произвольное количество раз или не встречаться совсем. 
+        Сколько различных кодов может составить Андрей?"""
+
+        alphabet_size = len(alphabet)
+        n = (code_len - 1) * (alphabet_size - 2) ** (code_len - 2)
+        m = ((alphabet_size - 1) * (alphabet_size - 2) ** (code_len - 2)) * (code_len - 1)
+        self.correct = n + m
+
+        return self
+
+
