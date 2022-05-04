@@ -43,8 +43,8 @@ class ImageData(LoggableData):
         self.with_extra_size = self.size + self.extra_kilobytes * 2 ** 13
         self.with_extra_size_kilobytes = int(ceil(self.with_extra_size / 2 ** 13))
 
-        self.time = rnd.in_range(time_range.min, time_range.max)
-        self.pictures_number= 24 * 60 * 60 // self.time
+        self.daily_time_seconds = rnd.in_range(time_range.min, time_range.max)
+        self.pictures_number= 24 * 60 * 60 // self.daily_time_seconds
         self.file_size_pure = self.size * self.pictures_number
         self.file_size_pure_kilobytes = int(ceil(self.file_size_pure / 2 ** 13))
         self.file_size_with_extra = self.with_extra_size * self.pictures_number
@@ -171,7 +171,7 @@ class ImageStoragePicturesNForPeriod(DirectInput):
         colors_word = num_text(data.palette, [ 'оттенок', 'оттенка', 'оттенков' ])
 
         self.text = f'''
-Автоматическая фотокамера каждые {data.time} секунд 
+Автоматическая фотокамера каждые {data.daily_time_seconds} секунд 
 создаёт черно-белое растровое изображение, 
 содержащее {colors_word}. Размер изображения — {data.width} × {pixel_word}. 
 Все полученные изображения и коды пикселей внутри одного изображения 
