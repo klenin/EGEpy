@@ -219,6 +219,18 @@ class Print(SynElement):
         else:
             env[o] = Box(line)
 
+class Input(SynElement):
+    def __init__(self, args):
+        self.args = args
+        self.fmt = 'input_int_fmt'
+
+    def to_lang(self, lang):
+        return lang.get_fmt(self.fmt).format(
+            lang.get_fmt('args_separator').join(a.to_lang(lang) for a in self.args)
+        )
+
+    def run(self, env: dict[str, Box]):
+        pass
 
 class Op(SynElement):
 
@@ -848,6 +860,10 @@ def make_expr(src):
                 if isinstance(p, str) and re.match('[\\\n\'"%]', p):
                     raise ValueError(f"Print argument 'p' contains bad symbol")
             return Print(type_=type_, args=[ make_expr(param) for param in params ])
+        if len(rest) and op == 'input':
+            if len(rest) > 1:
+                raise ValueError(f"Input argument contains bad symbol")
+            return Input(args=[ make_expr(param) for param in rest ])
         if len(rest) == 1 and ('++' in op or '--' in op):
             return Inc(op=op, arg=make_expr(rest[0]))
         if len(rest) == 1:
