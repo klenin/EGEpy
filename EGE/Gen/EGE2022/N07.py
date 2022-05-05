@@ -7,10 +7,9 @@ from math import log, ceil, pow
 
 range_tuple = namedtuple('range_tuple', [ 'min', 'max' ])
 speed_range = range_tuple(19500, 120000)
-palette_range = range_tuple(8, 32)
 size_range = range_tuple(50, 2000)
 bits_range = range_tuple(8, 256)
-degrees_range = range_tuple(3, 64)
+degrees_range = range_tuple(3, 10)
 time_range = range_tuple(1, 360)
 inches_range = range_tuple(2, 9)
 dpi_range = range_tuple(100, 600)
@@ -230,7 +229,7 @@ class ImageStorageDpiResize(DirectInput):
     def generate(self):
         data = ImageData(self.rnd)
 
-        bigger_colors_word = num_text(data.bigger_palette, [ 'цвет', 'цветв', 'цветов' ])
+        bigger_colors_word = num_text(data.bigger_palette, [ 'цвет', 'цветов', 'цветов' ])
         colors_word = num_text(data.palette, [ 'цвет', 'цветв', 'цветов' ])
         bigger_size_inches_bits_word = num_bits(data.bigger_size_inches_bits)
 
