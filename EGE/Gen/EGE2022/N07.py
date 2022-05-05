@@ -166,11 +166,12 @@ class ImageStoragePicturesNForPeriod(DirectInput):
     def generate(self):
         data = ImageData(self.rnd)
 
+        seconds_word = num_text(data.daily_time_seconds, [ 'секунда', 'секунды', 'секунд' ])
         pixel_word = num_text(data.height, [ 'пиксель', 'пикселя', 'пикселей' ])
         colors_word = num_text(data.palette, [ 'оттенок', 'оттенка', 'оттенков' ])
 
         self.text = f'''
-Автоматическая фотокамера каждые {data.daily_time_seconds} секунд 
+Автоматическая фотокамера каждые {seconds_word} 
 создаёт черно-белое растровое изображение, 
 содержащее {colors_word}. Размер изображения — {data.width} × {pixel_word}. 
 Все полученные изображения и коды пикселей внутри одного изображения 
