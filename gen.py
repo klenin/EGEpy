@@ -7,7 +7,8 @@ import EGE.Random
 from EGE.Gen.EGE import A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11, A12, A13, A15, A16, A17, A18
 from EGE.Gen.EGE import B01, B02, B03, B04, B05, B06, B07, B08, B10, B11, B12, B13, B14, B15
 from EGE.Gen.EGE import Z06, Z09, Z10, Z11, Z12, Z13, Z15, Z16, Z18, Z22
-from EGE.Gen.EGE2022 import N03, N05, N11, N14
+
+from EGE.Gen.EGE2022 import N03, N05, N07, N11, N14
 
 rnd = EGE.Random.Random(2342134)
 
@@ -150,6 +151,19 @@ questions_2022 = [q.generate() for q in [
     N05.ReverseBits(rnd),
     N05.ComparingZerosAndOnes(rnd),
     N05.TernaryNumber(rnd),
+    N07.ImageTransferTime(rnd),
+    N07.ImageStorageSize(rnd),
+    N07.ImageStoragePalette(rnd),
+    N07.ImageStorageResizePalette(rnd),
+    N07.ImageStoragePicturesN(rnd),
+    N07.ImageStoragePicturesNForPeriod(rnd),
+    N07.ImageStoragePicturesNPalette(rnd),
+    N07.ImageStorageDpiSize(rnd),
+    N07.ImageStorageDpiResize(rnd),
+    N07.TextTransferTime(rnd),
+    N07.TextTransferDataLength(rnd),
+    N07.TextFileResizeDiff(rnd),
+    N07.TextFileResizeSymbolsN(rnd),
     N11.AmountOfInformationSport(rnd),
     N11.AmountOfInformationPasswordsExtra(rnd),
     N11.AmountOfInformationPasswords(rnd),
