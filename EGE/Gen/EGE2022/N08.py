@@ -1,9 +1,8 @@
-from EGE import Random, Russian
+from EGE import Russian
 from ...GenBase import DirectInput
 from ...RussianModules.NumText import num_bits, num_text
 from math import ceil, log, log2, factorial
 from string import ascii_uppercase
-from EGE.Gen.EGE.B04 import LexOrder, Bulbs, SignalRockets, LetterCombinatorics
 
 
 class CellEncoding():
@@ -62,7 +61,6 @@ class Pencils(DirectInput):
         num = self.rnd.in_range(bits ** 2, 1024)
 
         while num % (bits ** 2) != 0:
-            print(num)
             num -= 1
 
         self.text = f"""
@@ -125,7 +123,6 @@ class VasyaMarks(DirectInput):
         num = self.rnd.in_range(bits ** 2, 1024)
 
         while num % (bits ** 2) != 0:
-            print(num)
             num -= 1
 
         self.text = f"""

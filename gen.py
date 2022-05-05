@@ -8,7 +8,7 @@ from EGE.Gen.EGE import A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11, A
 from EGE.Gen.EGE import B01, B02, B03, B04, B05, B06, B07, B08, B10, B11, B12, B13, B14, B15
 from EGE.Gen.EGE import Z06, Z09, Z10, Z11, Z12, Z13, Z15, Z16, Z18, Z22
 
-from EGE.Gen.EGE2022 import N03, N05, N06, N07, N11, N14
+from EGE.Gen.EGE2022 import N03, N05, N06, N07, N08, N11, N14
 
 rnd = EGE.Random.Random(2342134)
 
@@ -168,6 +168,23 @@ questions_2022 = [q.generate() for q in [
     N07.TextTransferDataLength(rnd),
     N07.TextFileResizeDiff(rnd),
     N07.TextFileResizeSymbolsN(rnd),
+    N08.ChessCellEncoding(rnd),
+    N08.PositiveInts(rnd),
+    N08.TicTacToe(rnd),
+    N08.BlackWhiteBalls(rnd),
+    N08.BlackWhiteBalls2(rnd),
+    N08.Pencils(rnd),
+    N08.Pencils2(rnd),
+    N08.VasyaMarks(rnd),
+    N08.WordCount(rnd),
+    N08.WordCount2(rnd),
+    N08.LightPanel(rnd),
+    N08.LightPanel2(rnd),
+    N08.WordsWithRestrictions(rnd),
+    N08.WordEncoding(rnd),
+    N08.WordEncoding2(rnd),
+    N08.WordEncoding3(rnd),
+    N08.WordEncoding4(rnd),
     N11.AmountOfInformationSport(rnd),
     N11.AmountOfInformationPasswordsExtra(rnd),
     N11.AmountOfInformationPasswords(rnd),
