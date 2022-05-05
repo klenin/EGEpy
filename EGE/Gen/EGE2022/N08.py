@@ -164,9 +164,9 @@ class WordCount(DirectInput):
 class WordCount2(DirectInput):
     def _alphabet_size_to_text(self, n):
         text = [
-            'трехбуквенном алфавите {A, B, C}',
-            'четырехбуквенном алфавите {A, B, C, D}',
-            'пятибуквенном алфавите {A, B, C, D, E}',
+            'трехбуквенном алфавите A, B, C',
+            'четырехбуквенном алфавите A, B, C, D',
+            'пятибуквенном алфавите A, B, C, D, E',
         ]
         return text[n - 3]
 
