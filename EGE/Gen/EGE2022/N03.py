@@ -3,7 +3,7 @@ from ...RussianModules.Products import products
 from ...RussianModules.Addresses import addresses
 from ...RussianModules.Districts import districts, districts_genetive
 from ...GenBase import DirectInput
-from ..EGE2022.image import img_src
+from .image import img_src
 import pandas as pd
 
 
@@ -154,10 +154,10 @@ class GenDatabase(DirectInput):
     def __init__(self, rnd):
         self.text = (
             f"""<p>В файле приведён фрагмент базы данных «Продукты», содержащей
-            информацию о поставках товаров и их продаже.База данных состоит из трёх таблиц.</p>
+            информацию о поставках товаров и их продаже. База данных состоит из трёх таблиц.</p>
             <center><a href=\"EGE/Gen/EGE2022/multiple.xlsx\">База данных</a></center>
             <p> Таблица «Движение товаров» содержит записи о поставках товаров в магазины города 
-            в первой декаде июня 2021г. и о продаже товаров в этот же период. Таблица «Товар» содержит
+            в первой декаде июня 2021 г. и о продаже товаров в этот же период. Таблица «Товар» содержит
              данные о товарах. Таблица «Магазин» содержит адреса магазинов.
             На рисунке приведена схема базы данных, содержащая все поля каждой таблицы и связи между ними.</p>
             <img src=\"{img_src}\" 
