@@ -52,11 +52,14 @@ class Move:
 
 class OneHeapPoblem(DirectInput):
     def _generate_game(self):
-        names = Names.different_names(self.rnd, 2)
-        self.first_player = names[0]['name']
-        self.second_player = names[1]['name']
+        names = self._generate_names()
+        self.first_player = names[0]
+        self.second_player = names[1]
         self.moves = self._generate_moves()
         self.final_count = self.rnd.in_range(28, 76)
+
+    def _generate_names(self) -> list:
+        return self.rnd.pick_n(2, self.rnd.shuffle(Names.male + Names.female))
 
     def _generate_moves(self) -> list:
         moves = [ Move([ Add(1) ]) ]
