@@ -23,7 +23,7 @@ class Graph:
             self.edges[v1] = {}
         self.edges[v1][v2] = w
 
-    def edge2(self, v1: str, v2: str, w: int = None):
+    def edge2(self, v1: str, v2: str, w=None):
         self.edge1(v1, v2, w)
         if v2 not in self.edges:
             self.edges[v2] = {}
@@ -72,12 +72,37 @@ class Graph:
 
         return dfs(src)
 
-    def html_matrix(self):
+    def count_path_min_weight(self, src: str, dest: str):
+        INF = 9999999999
+        d = { i: INF for i in self.vertices }
+        used = { i: False for i in self.vertices }
+        d[src] = 0
+        for i in self.vertices:
+            v = -1
+            for j in self.vertices:
+                if not used[j] and (v == -1 or d[j] < d[v]):
+                    v = j
+            if d[v] == INF:
+                break
+            used[v] = True
+
+            for to, l in self.edges.get(v, {}).items():
+                if d[v] + l < d[to]:
+                    d[to] = d[v] + l
+
+        return d[dest]
+
+    def html_matrix(self, vertex_view_names: dict = None):
         vnames = sorted(self.vertex_names())
-        r = html.row_n('td', [ '' ] + vnames)
+        if vertex_view_names:
+            v_view_names = [vertex_view_names[v] for v in vnames]
+        else:
+            v_view_names = vnames
+        r = html.row_n('td', [ '' ] + v_view_names)
         for v in vnames:
             e = self.edges.get(v, {})
-            r += html.row_n('td', [ v ] + [ e.get(v, ' ') for v in vnames ])
+            v_view_name = vertex_view_names[v] if vertex_view_names else v
+            r += html.row_n('td', [ v_view_name ] + [ e.get(v, ' ') for v in vnames ])
         return html.tag('table', r, border=1)
 
     def bounding_box(self):
