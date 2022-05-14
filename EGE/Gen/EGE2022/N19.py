@@ -12,13 +12,13 @@ class MinimalHeapSize(OneHeapPoblem):
         return self
 
     def _calc_answer(self) -> int:
-        for candidate in range(1, self.final_count):
+        for candidate in range(1, self.final_size):
             for first_move in self.moves:
                 first_value = first_move.make(candidate)
-                if first_value < self.final_count:
+                if first_value < self.final_size:
                     for second_move in self.moves:
                         second_value = second_move.make(first_value)
-                        if second_value >= self.final_count:
+                        if second_value >= self.final_size:
                             self.correct = candidate
                             return
         raise Exception("Can't find answer in N19 problem")
