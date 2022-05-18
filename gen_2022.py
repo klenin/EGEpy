@@ -4,7 +4,7 @@ import EGE.GenBase
 import EGE.Html
 import EGE.Random
 
-from EGE.Gen.EGE2022 import N03, N05, N06, N07, N08, N11, N14, N18
+from EGE.Gen.EGE2022 import N03, N05, N06, N07, N08, N11, N14, N18, N19
 
 rnd = EGE.Random.Random(2342134)
 
@@ -71,6 +71,8 @@ questions = [q.generate() for q in [
     N11.AmountOfInformationCars(rnd),
     N14.DirectSumDigits(rnd),
     N18.RobotExecuter(rnd),
+    N19.MinimalOneHeapSize(rnd),
+    N19.MinimalTwoHeapSize(rnd),
 ]]
 
 if not sys.stdout.isatty():
