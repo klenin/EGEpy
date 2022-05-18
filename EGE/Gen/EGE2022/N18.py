@@ -5,13 +5,13 @@ import pandas as pd
 
 from ...GenBase import DirectInput
 
-class HorizonatlMove(enum.Enum):
+class HorizonatlMove(enum.IntEnum):
     Left = -1
     Right = 1
 
-class VerticalMove(enum.Enum):
-    Down = -1
-    Up = 1
+class VerticalMove(enum.IntEnum):
+    Up = -1
+    Down = 1
 
 @dataclass
 class Position:
@@ -113,13 +113,42 @@ class RobotExecuter(DirectInput):
         
         self.text += f"Для указанных входных данных ответом должна быть пара чисел {example_answer[0]} и {example_answer[1]}."
 
-    def _get_answer(self) -> int:
-        start_pos = Position(
+    def _get_answer(self) -> str:
+        self.start_pos = Position(
             0 if self.vertical_move == VerticalMove.Down else self.map_size - 1,
             0 if self.horizontal_move == HorizonatlMove.Right else self.map_size - 1
         )
 
-        end_pos = Position(
+        self.end_pos = Position(
             self.map_size - 1 if self.vertical_move == VerticalMove.Down else 0,
             self.map_size - 1 if self.horizontal_move == HorizonatlMove.Right else 0
         )
+
+        if self.horizontal_move == HorizonatlMove.Right:
+            hor_range = range(1, self.map_size)
+        else:
+            hor_range = range(self.map_size - 2, -1, -1)
+        
+        if self.vertical_move == VerticalMove.Down:
+            ver_range = range(1, self.map_size)
+        else:
+            ver_range = range(self.map_size - 2, -1, -1)
+        
+        answer_max = self.foo(hor_range, ver_range, max)
+        answer_min = self.foo(hor_range, ver_range, min)
+
+        return str(answer_max) + str(answer_min)
+
+    def foo(self, hor_range: range, ver_range: range, compare: callable):
+        dp = [[ 0 for _ in range(self.map_size)] for _ in range(self.map_size)]
+        dp[self.start_pos.row][self.start_pos.col] = self.map[self.start_pos.row][self.start_pos.col]
+
+        for i in ver_range:
+            dp[i][self.start_pos.col] = dp[i - self.vertical_move][self.start_pos.col] + self.map[i][self.start_pos.col]
+        for j in hor_range:
+            dp[self.start_pos.row][j] = dp[self.start_pos.row][j - self.horizontal_move] + self.map[self.start_pos.row][j]
+
+        for i in ver_range:
+            for j in hor_range:
+                dp[i][j] = self.map[i][j] + compare(dp[i - self.vertical_move][j], dp[i][j - self.horizontal_move])
+        return dp[self.end_pos.row][self.end_pos.col]
