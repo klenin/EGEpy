@@ -103,4 +103,8 @@ num_bits = lambda n: num_text(n, [ 'бит', 'бита', 'бит' ])
 
 num_bytes = lambda n: num_text(n, [ 'байт', 'байта', 'байтов' ])
 
+num_times = lambda n: num_text(n, [ 'раз', 'раза', 'раз' ])
+
+num_stones = lambda n: num_text(n, [ 'камень', 'камня', 'камней' ])
+
 bits_and_bytes = lambda n: (num_bytes(n), num_bits(n * 8))
