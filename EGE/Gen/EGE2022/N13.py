@@ -160,23 +160,9 @@ class PathCounting(DirectInput):
     def __get_graph_svg(self):
         return html.div_xy(self.graph.as_svg(oriented=True), (len(self.layers) - 1) * GraphSVGWidthDelta, GraphSVGHeight, margin='5px') 
 
-    def _get_path_count(self, vertex: str, cache: dict = {}) -> int:
-        if not self._check_vertex(vertex):
-            return 0
-        if vertex == self.end_vertex_name:
-            if self._check_on_end_path():
-                cache[vertex] = 1
-                return 1
-            else:
-                return 0
-        if vertex in cache:
-            return cache[vertex]
+    def _get_path_count(self, vertex: str) -> int:
         path_count = 0
-        self.visited_vertices.add(vertex)
-        for edge in self.graph.edges.get(vertex, {}).keys():
-            path_count += self._get_path_count(edge, cache)
-        self.visited_vertices.remove(vertex)
-        cache[vertex] = path_count
+        
         return path_count
 
     def _check_vertex(self, vertex: str):
