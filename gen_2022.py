@@ -4,7 +4,7 @@ import EGE.GenBase
 import EGE.Html
 import EGE.Random
 
-from EGE.Gen.EGE2022 import N03, N05, N06, N07, N08, N11, N14, N18, N19, N24
+from EGE.Gen.EGE2022 import N03, N05, N06, N07, N08, N11, N14, N17, N18, N19, N24
 
 rnd = EGE.Random.Random(2342134)
 
@@ -70,6 +70,14 @@ questions = [q.generate() for q in [
     N11.AmountOfInformationPasswords(rnd),
     N11.AmountOfInformationCars(rnd),
     N14.DirectSumDigits(rnd),
+    N17.DifferenceEvenAndMultiplicity(rnd),
+    N17.MultiplicityOfMultiplication(rnd),
+    N17.NotMultiplicityOfMultiplication(rnd),
+    N17.OddSumAndMultiplicityOfMultiplication(rnd),
+    N17.MultiplicityOfSum(rnd),
+    N17.MultiplicityOfSumAndMultiplicityOfOneElement(rnd),
+    N17.MultiplicityOfDifference(rnd),
+    N17.MultiplicityOfDifferenceAndMultiplicityOfOneElement(rnd),
     N18.RobotExecuter(rnd),
     N19.MinimalOneHeapSize(rnd),
     N19.MinimalTwoHeapSize(rnd),
