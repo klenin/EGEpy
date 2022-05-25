@@ -132,6 +132,8 @@ class Basic(Lang):
     def print_fmt(self): return 'PRINT {}'
     def print_str_fmt(self): return 'PRINT "{}"'
 
+    def input_int_fmt(self): return 'INPUT {}'
+
     def c_return_fmt(self): return 'RETURN {}'
 
 
@@ -175,6 +177,8 @@ class C(Lang):
 
     def print_fmt(self): return 'print({})'
     def print_str_fmt(self): return 'printf("{}")'
+
+    def input_int_fmt(self): return 'scanf("%d", &{})'
 
     def expr_fmt(self): return '{};'
 
@@ -229,6 +233,8 @@ class Pascal(Lang):
     def print_fmt(self): return 'write({})'
     def print_str_fmt(self): return "write('{}')"
 
+    def input_int_fmt(self): return 'readln({})'
+
     def expr_fmt(self): return '{};'
 
     def c_return_fmt(self): return 'exit({});'
@@ -266,6 +272,8 @@ class Alg(Lang):
     def print_fmt(self): return 'вывод {}'
     def print_str_fmt(self): return 'вывод "{}"'
 
+    def input_int_fmt(self): return 'ввод {}'
+
     def c_return_fmt(self):
         return 'выход_алг {} | выход_алг выраж - оператор выхода из алгоритма, с возвращением результата выраж'
     def p_return_fmt(self):
@@ -300,6 +308,8 @@ class Perl(Lang):
 
     def print_fmt(self): return 'print({})'
     def print_str_fmt(self): return "print('{}')"
+
+    def input_int_fmt(self): return '{} = <STDIN>'
 
     def expr_fmt(self): return '{};'
 
@@ -384,6 +394,8 @@ class Python(Lang):
 
     def print_fmt(self): return 'print({})'
     def print_str_fmt(self): return "print('{}')"
+
+    def input_int_fmt(self): return '{} = int(input())'
 
     def expr_fmt(self): return '{}'
 
