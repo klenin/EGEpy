@@ -80,7 +80,8 @@ def make_question_html(q):
                          + "\n" for i, v in enumerate(q.variants))
     if q.export_type() == 'di':
         result = li(q.correct) + "\n"
-    return div(f"{q.text}\n" + ol("\n" + result) + "\n", class_='q') + "\n"
+    unit = str(type(q)).split('.')[-2]
+    return div(f"<h3>{unit}</h3>{q.text}\n" + ol("\n" + result) + "\n", class_='q') + "\n"
 
 def make_html(questions):
     return global_head() + tag('body', map(make_question_html, questions)) + '</html>\n'
